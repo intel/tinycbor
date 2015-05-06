@@ -31,6 +31,11 @@
 #include <endian.h>
 #include <string.h>
 
+#if defined(__GNUC__) && !defined(__INTEL_COMPILER) && !defined(__clang__) && \
+    (__GNUC__ * 100 + __GNUC_MINOR__ >= 404)
+#  pragma GCC optimize("-ffunction-sections")
+#endif
+
 /**
  * \typedef CborValue
  * This type contains one value parsed from the CBOR stream.
@@ -62,7 +67,7 @@ static bool makeError(CborParser *parser, CborParserError error, uint64_t addend
 }
 #ifdef CBOR_PARSER_NO_DETAILED_ERROR
 // This way, the compiler should eliminate all error settings by dead code elimination
-#  define makeError(parser, err, addend)    makeError(parser, (err) * 0 + CborErrorInternalError, addend)
+#  define makeError(parser, err, addend)    makeError(parser, (err) * 0 + CborErrorUnknownError, addend)
 #endif
 
 static inline uint16_t get16(const char *ptr)
@@ -99,6 +104,10 @@ static void preparse_value(CborValue *it)
     descriptor &= SmallValueMask;
     it->extra = descriptor;
 
+    size_t bytesNeeded = descriptor < Value8Bit ? 0 : (1 << (descriptor - Value8Bit));
+    if (it->ptr + 1 + bytesNeeded > parser->end)
+        goto error_eof;
+
     switch ((CborMajorTypes)(it->type >> MajorTypeShift)) {
     case NegativeIntegerType:
         it->flags |= CborIteratorFlag_NegativeInteger;
@@ -118,12 +127,10 @@ static void preparse_value(CborValue *it)
         case HalfPrecisionFloat:
         case SinglePrecisionFloat:
         case DoublePrecisionFloat:
-            it->type = descriptor;
+            it->type = *it->ptr;
             break;
 
         case SimpleTypeInNextByte:
-            if (it->ptr + 1 > parser->end)
-                goto error_eof;
             it->extra = it->ptr[1];
 #ifndef CBOR_PARSER_NO_STRICT_CHECKS
             if (it->extra < 32) {
@@ -158,9 +165,6 @@ static void preparse_value(CborValue *it)
     if (unlikely(descriptor > Value64Bit))
         goto illegal_number_error;
 
-    size_t bytesNeeded = 1 << (descriptor - Value8Bit);
-    if (it->ptr + 1 + bytesNeeded > parser->end)
-        goto error_eof;
     if (descriptor == Value8Bit) {
         it->extra = it->ptr[1];
         return;
@@ -211,10 +215,12 @@ void cbor_parser_init(const char *buffer, size_t size, int flags, CborParser *pa
     preparse_value(it);
 }
 
+#ifndef NDEBUG
 static bool is_fixed_type(uint8_t type)
 {
     return type == CborIntegerType || type == CborTagType || type == CborSimpleType;
 }
+#endif
 
 static bool advance_internal(CborValue *it)
 {
@@ -225,7 +231,6 @@ static bool advance_internal(CborValue *it)
     it->ptr += size;
     if (it->remaining == UINT32_MAX && *it->ptr == (char)BreakByte) {
         // end of map or array
-        // ### FIXME: was it a map or array?
         it->remaining = 0;
         return true;
     }
@@ -259,7 +264,56 @@ bool cbor_value_begin_recurse(const CborValue *it, CborValue *recursed)
         if (recursed->remaining != len || len == UINT32_MAX)
             return makeError(it->parser, CborErrorDataTooLarge, len);
     }
-    if (!advance_internal(recursed))
+    return advance_internal(recursed);
+}
+
+bool cbor_value_end_recurse(CborValue *it, const CborValue *recursed)
+{
+    assert(cbor_value_is_recursive(it));
+    assert(cbor_value_at_end(recursed));
+    it->ptr = recursed->ptr;
+    return advance_internal(it);
+}
+
+static bool calculate_string_length(const CborValue *value, size_t *len)
+{
+    if (!cbor_value_is_byte_string(value) && !cbor_value_is_text_string(value))
         return false;
+    if (cbor_value_get_string_length(value, len))
+        return true;
+
+    // chunked string, iterate to calculate full size
+    size_t total = 0;
+    const char *ptr = value->ptr;
+}
+
+size_t cbor_value_dup_string(const CborValue *value, char **buffer, size_t *len, CborValue *next)
+{
+    if (!calculate_string_length(value, len))
+        return SIZE_MAX;
+
+    buffer = malloc(*len + 1);
+    if (!buffer) {
+        // out of memory
+        *len = 0;
+        return NULL;
+    }
+    size_t copied = cbor_value_copy_string(value, buffer, *len + 1, next);
+    if (copied == SIZE_MAX) {
+        free(buffer);
+        return copied;
+    }
+    assert(copied == *len);
+    return copied;
+}
+
+bool cbor_value_get_half_float(const CborValue *value, void *result)
+{
+    if (value->type != CborHalfFloatType)
+        return false;
+
+    // size has been computed already
+    uint16_t v = get16(value->ptr + 1);
+    memcpy(result, &v, sizeof(v));
     return true;
 }

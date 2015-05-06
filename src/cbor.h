@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +43,7 @@ extern "C" {
 #  define CBOR_PRIVATE_API
 #endif
 #ifndef CBOR_INLINE_API
-#  ifdef __cplusplus
+#  if defined(__cplusplus) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
 #    define CBOR_INLINE_API inline
 #  else
 #    define CBOR_INLINE_API static inline
@@ -92,6 +93,7 @@ typedef enum CborParserError {
     CborNoError = 0,
 
     /* errors in all modes */
+    CborErrorUnknownError,
     CborErrorGarbageAtEnd,
     CborErrorUnexpectedEOF,
     CborErrorBreakMissingAtEOF,      /* special case of UnexpectedEOF */
@@ -110,7 +112,6 @@ typedef enum CborParserError {
 
     /* internal implementation errors */
     CborErrorDataTooLarge = 1024,
-    CborErrorUnsupportedType,
     CborErrorInternalError = ~0U
 } CborParserError;
 
@@ -259,13 +260,10 @@ CBOR_INLINE_API bool cbor_value_get_string_length(const CborValue *value, size_t
     return true;
 }
 
-CBOR_API size_t cbor_value_copy_text_string(const CborValue *value, char *buffer,
-                                            size_t buflen, CborValue *next);
-CBOR_API size_t cbor_value_copy_byte_string(const CborValue *value, unsigned char *buffer,
-                                            size_t buflen, CborValue *next);
-CBOR_API size_t cbor_value_dup_text_string(const CborValue *value, char **buffer, CborValue *next);
-CBOR_API size_t cbor_value_dup_byte_string(const CborValue *value, unsigned char **buffer, CborValue *next);
-
+CBOR_API size_t cbor_value_copy_string(const CborValue *value, char *buffer,
+                                       size_t buflen, CborValue *next);
+CBOR_API size_t cbor_value_dup_string(const CborValue *value, char **buffer,
+                                      size_t *len, CborValue *next);
 
 /* ### TBD: partial reading API */
 
@@ -297,9 +295,23 @@ CBOR_INLINE_API bool cbor_value_get_map_length(const CborValue *value, size_t *l
 
 /* Floating point */
 CBOR_API bool cbor_value_get_half_float(const CborValue *value, void *result);
-CBOR_API bool cbor_value_get_float(const CborValue *value, float *result);
-CBOR_API bool cbor_value_get_double(const CborValue *value, double *result);
+CBOR_INLINE_API bool cbor_value_get_float(const CborValue *value, float *result)
+{
+    if (value->type != CborFloatType)
+        return false;
+    uint32_t data = _cbor_value_extract_int64_helper(value);
+    memcpy(result, &data, sizeof(*result));
+    return true;
+}
 
+CBOR_INLINE_API bool cbor_value_get_double(const CborValue *value, double *result)
+{
+    if (value->type != CborDoubleType)
+        return false;
+    uint64_t data = _cbor_value_extract_int64_helper(value);
+    memcpy(result, &data, sizeof(*result));
+    return true;
+}
 
 #ifdef __cplusplus
 }
