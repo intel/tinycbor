@@ -26,10 +26,10 @@ static void indent(int nestingLevel)
         puts("  ");
 }
 
-static void dumpbytes(const unsigned char *buf, size_t len)
+static void dumpbytes(const char *buf, size_t len)
 {
     while (len--)
-        printf("%02X ", *buf++);
+        printf("%02X ", (unsigned char)*buf++);
 }
 
 static bool dumprecursive(CborValue *it, int nestingLevel)
@@ -43,13 +43,13 @@ static bool dumprecursive(CborValue *it, int nestingLevel)
         case CborMapType: {
             // recursive type
             CborValue recursed;
-            assert(cbor_value_is_recursive(it));
+            assert(cbor_value_is_container(it));
             puts(type == CborArrayType ? "Array[" : "Map[");
-            if (!cbor_value_begin_recurse(it, &recursed))
+            if (!cbor_value_enter_container(it, &recursed))
                 return false;       // parse error
             if (!dumprecursive(&recursed, nestingLevel + 1))
                 return false;       // parse error
-            if (!cbor_value_end_recurse(it, &recursed))
+            if (!cbor_value_leave_container(it, &recursed))
                 return false;       // parse error
             indent(nestingLevel);
             puts("]");
@@ -63,23 +63,18 @@ static bool dumprecursive(CborValue *it, int nestingLevel)
             break;
         }
 
-        case CborByteStringType: {
-            unsigned char *buf;
-            size_t n = cbor_value_dup_byte_string(it, &buf, it);
-            if (n == SIZE_MAX)
-                return false;     // parse error
-            dumpbytes(buf, n);
-            puts("");
-            free(buf);
-            continue;
-        }
-
+        case CborByteStringType:
         case CborTextStringType: {
             char *buf;
-            size_t n = cbor_value_dup_text_string(it, &buf, it);
-            if (n == SIZE_MAX)
+            size_t n;
+            if (!cbor_value_dup_string(it, &buf, &n, it))
                 return false;     // parse error
-            printf("%s\n", buf);
+            if (type == CborByteStringType) {
+                dumpbytes(buf, n);
+                puts("");
+            } else {
+                puts(buf);
+            }
             free(buf);
             continue;
         }

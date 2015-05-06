@@ -29,7 +29,12 @@
 #  define _BSD_SOURCE
 #endif
 #include <endian.h>
+#include <stddef.h>
 #include <stdint.h>
+
+#ifndef __has_builtin
+#  define __has_builtin(x)  0
+#endif
 
 #ifdef __GNUC__
 #  define likely(x)     __builtin_expect(!!(x), 1)
@@ -38,6 +43,17 @@
 #  define likely(x)     x
 #  define unlikely(x)   x
 #endif
+
+static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
+{
+#if (defined(__GNUC__) && (__GNUC__ >= 5)) || __has_builtin(__builtin_add_overflow)
+    return __builtin_add_overflow(v1, v2, r);
+#else
+    // unsigned additions are well-defined
+    *r = v1 + v2;
+    return v1 > SIZE_MAX - v2;
+#endif
+}
 
 #endif // COMPILERSUPPORT_H
 
