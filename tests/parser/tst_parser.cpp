@@ -34,6 +34,8 @@ private slots:
     void initParserEmpty();
     void fixed_data();
     void fixed();
+    void strings_data();
+    void strings();
 };
 
 char toHexUpper(unsigned n)
@@ -297,6 +299,29 @@ void tst_Parser::fixed_data()
     QTest::newRow("-1*2") << raw("\x39\x00\x00") << "-1";
     QTest::newRow("-1*4") << raw("\x3a\0\0\0\0") << "-1";
     QTest::newRow("-1*8") << raw("\x3b\0\0\0\0\0\0\0\0") << "-1";
+}
+
+void tst_Parser::fixed()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    QString decoded;
+    err = parseOne(&first, &decoded);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) +
+                   "\"; decoded stream:\n" + decoded.toLatin1());
+    QCOMPARE(decoded, expected);
+}
+
+void tst_Parser::strings_data()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<QString>("expected");
 
     // byte strings
     QTest::newRow("emptybytestring") << raw("\x40") << "h''";
@@ -341,21 +366,9 @@ void tst_Parser::fixed_data()
     QTest::newRow("_emptytextstring") << raw("\x7f\xff") << "\"\"";
 }
 
-void tst_Parser::fixed()
+void tst_Parser::strings()
 {
-    QFETCH(QByteArray, data);
-    QFETCH(QString, expected);
-
-    CborParser parser;
-    CborValue first;
-    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
-    QCOMPARE(err, CborNoError);
-
-    QString decoded;
-    err = parseOne(&first, &decoded);
-    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) +
-                   "\"; decoded stream:\n" + decoded.toLatin1());
-    QCOMPARE(decoded, expected);
+    fixed();
 }
 
 QTEST_MAIN(tst_Parser)
