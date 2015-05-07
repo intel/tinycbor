@@ -169,7 +169,9 @@ static CborError preparse_value(CborValue *it)
         switch (descriptor) {
         case FalseValue:
             it->extra = false;
-            // fall through
+            type = CborBooleanType;
+            break;
+
         case TrueValue:
         case NullValue:
         case UndefinedValue:
@@ -180,11 +182,12 @@ static CborError preparse_value(CborValue *it)
             break;
 
         case SimpleTypeInNextByte:
-            it->extra = it->ptr[1];
 #ifndef CBOR_PARSER_NO_STRICT_CHECKS
-            if (it->extra < 32)
+            if ((unsigned char)it->ptr[1] < 32)
                 return CborErrorIllegalSimpleType;
 #endif
+            break;
+
         case 28:
         case 29:
         case 30:

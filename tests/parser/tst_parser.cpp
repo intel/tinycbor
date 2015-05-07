@@ -207,15 +207,20 @@ CborError parseOne(CborValue *it, QString *parsed)
         } else {
             cbor_value_get_double(it, &val);
         }
-        *parsed += QString::number(val);
-        if (type == CborFloatType)
-            *parsed += 'f';
+        QString number = QString::number(val, 'g', 10);
+        *parsed += number;
+        if (number != "inf" && number != "-inf" && number != "nan") {
+            if (!number.contains('.'))
+                *parsed += '.';
+            if (type == CborFloatType)
+                *parsed += 'f';
+        }
         break;
     }
     case CborHalfFloatType: {
         uint16_t val;
         cbor_value_get_half_float(it, &val);
-        *parsed += QString("__f16(%0)").arg(val, 4, 16, QLatin1Char('0'));
+        *parsed += QString("__f16(0x%0)").arg(val, 4, 16, QLatin1Char('0'));
         break;
     }
 
@@ -299,6 +304,36 @@ void tst_Parser::fixed_data()
     QTest::newRow("-1*2") << raw("\x39\x00\x00") << "-1";
     QTest::newRow("-1*4") << raw("\x3a\0\0\0\0") << "-1";
     QTest::newRow("-1*8") << raw("\x3b\0\0\0\0\0\0\0\0") << "-1";
+
+    QTest::newRow("simple0") << raw("\xe0") << "simple(0)";
+    QTest::newRow("simple19") << raw("\xf3") << "simple(19)";
+    QTest::newRow("false") << raw("\xf4") << "false";
+    QTest::newRow("true") << raw("\xf5") << "true";
+    QTest::newRow("null") << raw("\xf6") << "null";
+    QTest::newRow("undefined") << raw("\xf7") << "undefined";
+    QTest::newRow("simple32") << raw("\xf8\x20") << "simple(32)";
+    QTest::newRow("simple255") << raw("\xf8\xff") << "simple(255)";
+
+    // floating point
+    QTest::newRow("0f16") << raw("\xf9\0\0") << "__f16(0x0000)";
+
+    QTest::newRow("0.f") << raw("\xfa\0\0\0\0") << "0.f";
+    QTest::newRow("0.")  << raw("\xfb\0\0\0\0\0\0\0\0") << "0.";
+    QTest::newRow("-1.f") << raw("\xfa\xbf\x80\0\0") << "-1.f";
+    QTest::newRow("-1.") << raw("\xfb\xbf\xf0\0\0\0\0\0\0") << "-1.";
+    QTest::newRow("16777215.f") << raw("\xfa\x4b\x7f\xff\xff") << "16777215.f";
+    QTest::newRow("16777215.") << raw("\xfb\x41\x6f\xff\xff\xe0\0\0\0") << "16777215.";
+    QTest::newRow("-16777215.f") << raw("\xfa\xcb\x7f\xff\xff") << "-16777215.f";
+    QTest::newRow("-16777215.") << raw("\xfb\xc1\x6f\xff\xff\xe0\0\0\0") << "-16777215.";
+
+    QTest::newRow("qnan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
+    QTest::newRow("qnan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
+    QTest::newRow("qnan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
+    QTest::newRow("snan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
+    QTest::newRow("-inf_f") << raw("\xfa\xff\x80\0\0") << "-inf";
+    QTest::newRow("-inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << "-inf";
+    QTest::newRow("+inf_f") << raw("\xfa\x7f\x80\0\0") << "inf";
+    QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << "inf";
 }
 
 void tst_Parser::fixed()
