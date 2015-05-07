@@ -141,11 +141,16 @@ static CborError preparse_value(CborValue *it)
     it->flags = 0;
     it->extra = (descriptor &= SmallValueMask);
 
-    if (descriptor == IndefiniteLength && !is_fixed_type(type)) {
-        // special case
-        it->flags |= CborIteratorFlag_UnknownLength;
-        it->type = type;
-        return CborNoError;
+    if (descriptor > Value64Bit) {
+        if (unlikely(descriptor != IndefiniteLength))
+            return CborErrorIllegalNumber;
+        if (likely(!is_fixed_type(type))) {
+            // special case
+            it->flags |= CborIteratorFlag_UnknownLength;
+            it->type = type;
+            return CborNoError;
+        }
+        return type == CborSimpleType ? CborErrorUnexpectedBreak : CborErrorIllegalNumber;
     }
 
     size_t bytesNeeded = descriptor < Value8Bit ? 0 : (1 << (descriptor - Value8Bit));
@@ -199,9 +204,6 @@ static CborError preparse_value(CborValue *it)
         break;
     }
 
-    if (unlikely(descriptor > Value64Bit))
-        return CborErrorIllegalNumber;
-
     // no further errors possible
     it->type = type;
 
@@ -224,9 +226,16 @@ static CborError preparse_next_value(CborValue *it)
         // don't decrement the item count if the current item is tag: they don't count
         if (it->type != CborTagType && !--it->remaining) {
             it->type = CborInvalidType;
-            return it->ptr == it->parser->end ? CborNoError : CborErrorGarbageAtEnd;
+            return CborNoError;
         }
+    } else if (it->remaining == UINT32_MAX && it->ptr != it->parser->end && *it->ptr == (char)BreakByte) {
+        // end of map or array
+        ++it->ptr;
+        it->type = CborInvalidType;
+        it->remaining = 0;
+        return CborNoError;
     }
+
     return preparse_value(it);
 }
 
@@ -235,16 +244,12 @@ static CborError advance_internal(CborValue *it)
     uint64_t length;
     CborError err = extract_number(it->parser, &it->ptr, &length);
     assert(err == CborNoError);
+//    assert(it->type != CborArrayType && it->type != CborMapType);
 
-    if (!is_fixed_type(it->type)) {
+    if (it->type == CborByteStringType || it->type == CborTextStringType) {
         assert(length == (size_t)length);
+        assert((it->flags & CborIteratorFlag_UnknownLength) == 0);
         it->ptr += length;
-    }
-
-    if (it->remaining == UINT32_MAX && *it->ptr == (char)BreakByte) {
-        // end of map or array
-        it->remaining = 0;
-        return CborNoError;
     }
 
     return preparse_next_value(it);
@@ -364,31 +369,53 @@ CborError cbor_value_advance(CborValue *it)
  */
 CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
 {
+    CborError err;
     assert(cbor_value_is_container(it));
     *recursed = *it;
+
     if (it->flags & CborIteratorFlag_UnknownLength) {
         recursed->remaining = UINT32_MAX;
+        ++recursed->ptr;
+        err = preparse_value(recursed);
+        if (err != CborErrorUnexpectedBreak)
+            return err;
+        // actually, break was expected here
+        // it's just an empty container
+        ++recursed->ptr;
     } else {
-        uint64_t len = _cbor_value_extract_int64_helper(it);
+        uint64_t len;
+        err = extract_number(recursed->parser, &recursed->ptr, &len);
+        assert(err == CborNoError);
+        (void)err;
+
         recursed->remaining = len;
         if (recursed->remaining != len || len == UINT32_MAX)
             return CborErrorDataTooLarge;
+        if (len != 0)
+            return preparse_value(recursed);
     }
-    return advance_internal(recursed);
+
+    // the case of the empty container
+    recursed->type = CborInvalidType;
+    recursed->remaining = 0;
+    return CborNoError;
 }
 
 /**
  * Updates \a it to point to the next element after the container. The \a
- * recursed object needs to point to the last element of the container.
+ * recursed object needs to point to the element obtained either by advancing
+ * the last element of the container (via cbor_value_advance(),
+ * cbor_value_advance_fixed(), a nested cbor_value_leave_container(), or the \c
+ * next pointer from cbor_value_copy_string() or cbor_value_dup_string()).
  *
  * \sa cbor_value_enter_container(), cbor_value_at_end()
  */
 CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
 {
     assert(cbor_value_is_container(it));
-    assert(cbor_value_at_end(recursed));
+    assert(recursed->type == CborInvalidType);
     it->ptr = recursed->ptr;
-    return advance_internal(it);
+    return preparse_next_value(it);
 }
 
 /**

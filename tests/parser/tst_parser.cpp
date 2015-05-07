@@ -35,11 +35,19 @@ private slots:
     void fixed_data();
     void fixed();
     void strings_data();
-    void strings();
+    void strings() { fixed(); }
     void tags_data();
-    void tags();
+    void tags() { fixed(); }
     void tagTags_data() { tags_data(); }
     void tagTags();
+    void emptyContainers_data();
+    void emptyContainers() { fixed(); }
+    void arrays_data();
+    void arrays();
+    void undefLengthArrays_data() { arrays_data(); }
+    void undefLengthArrays();
+    void nestedArrays_data() { arrays_data(); }
+    void nestedArrays();
 };
 
 char toHexUpper(unsigned n)
@@ -244,13 +252,14 @@ CborError parseOne(CborValue *it, QString *parsed)
 
 CborError parse(CborValue *it, QString *parsed)
 {
-    const char *comma = ", ";
+    const char *comma = nullptr;
     while (!cbor_value_at_end(it)) {
+        *parsed += comma;
+        comma = ", ";
+
         CborError err = parseOne(it, parsed);
         if (err)
             return err;
-        *parsed += comma;
-        comma = nullptr;
     }
     return CborNoError;
 }
@@ -268,11 +277,36 @@ void tst_Parser::initParserEmpty()
     QCOMPARE(err, CborErrorUnexpectedEOF);
 }
 
-void tst_Parser::fixed_data()
+void addColumns()
 {
     QTest::addColumn<QByteArray>("data");
     QTest::addColumn<QString>("expected");
+}
 
+bool compareFailed = true;
+void compareOne_real(const QByteArray &data, const QString &expected, int line)
+{
+    compareFailed = true;
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray::number(line) + ": Got error \"" + cbor_error_string(err) + "\"");
+
+    QString decoded;
+    err = parseOne(&first, &decoded);
+    QVERIFY2(!err, QByteArray::number(line) + ": Got error \"" + cbor_error_string(err) +
+                   "\"; decoded stream:\n" + decoded.toLatin1());
+    QCOMPARE(decoded, expected);
+
+    // check that we consumed everything
+    QCOMPARE((void*)first.ptr, (void*)data.constEnd());
+
+    compareFailed = false;
+}
+#define compareOne(data, expected) compareOne_real(data, expected, __LINE__)
+
+void addFixedData()
+{
     // unsigned integers
     QTest::newRow("0") << raw("\x00") << "0";
     QTest::newRow("1") << raw("\x01") << "1";
@@ -341,20 +375,13 @@ void tst_Parser::fixed_data()
     QTest::newRow("-inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << "-inf";
     QTest::newRow("+inf_f") << raw("\xfa\x7f\x80\0\0") << "inf";
     QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << "inf";
+
 }
 
-void compareOne(const QByteArray &data, const QString &expected)
+void tst_Parser::fixed_data()
 {
-    CborParser parser;
-    CborValue first;
-    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
-    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
-
-    QString decoded;
-    err = parseOne(&first, &decoded);
-    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) +
-                   "\"; decoded stream:\n" + decoded.toLatin1());
-    QCOMPARE(decoded, expected);
+    addColumns();
+    addFixedData();
 }
 
 void tst_Parser::fixed()
@@ -365,11 +392,8 @@ void tst_Parser::fixed()
     compareOne(data, expected);
 }
 
-void tst_Parser::strings_data()
+void addStringsData()
 {
-    QTest::addColumn<QByteArray>("data");
-    QTest::addColumn<QString>("expected");
-
     // byte strings
     QTest::newRow("emptybytestring") << raw("\x40") << "h''";
     QTest::newRow("bytestring1") << raw("\x41 ") << "h'20'";
@@ -423,16 +447,14 @@ void tst_Parser::strings_data()
     QTest::newRow("_textstring5*6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << "\"Hello\"";
 }
 
-void tst_Parser::strings()
+void tst_Parser::strings_data()
 {
-    fixed();
+    addColumns();
+    addStringsData();
 }
 
-void tst_Parser::tags_data()
+void addTagsData()
 {
-    QTest::addColumn<QByteArray>("data");
-    QTest::addColumn<QString>("expected");
-
     // since parseOne() works recursively for tags, we can't test lone tags
     QTest::newRow("tag0") << raw("\xc0\x00") << "0(0)";
     QTest::newRow("tag1") << raw("\xc1\x00") << "1(0)";
@@ -465,9 +487,10 @@ void tst_Parser::tags_data()
                                      << "1(1431027667.122008801)";
 }
 
-void tst_Parser::tags()
+void tst_Parser::tags_data()
 {
-    fixed();
+    addColumns();
+    addTagsData();
 }
 
 void tst_Parser::tagTags()
@@ -476,7 +499,121 @@ void tst_Parser::tagTags()
     QFETCH(QString, expected);
 
     compareOne("\xd9\xd9\xf7" + data, "55799(" + expected + ')');
-    compareOne("\xd9\xd9\xf7" "\xd9\xd9\xf7" + data, "55799(55799(" + expected + "))");
+    if (!compareFailed)
+        compareOne("\xd9\xd9\xf7" "\xd9\xd9\xf7" + data, "55799(55799(" + expected + "))");
+}
+
+void addEmptyContainersData()
+{
+    QTest::newRow("emptyarray") << raw("\x80") << "[]";
+    QTest::newRow("emptymap") << raw("\xa0") << "{}";
+    QTest::newRow("_emptyarray") << raw("\x9f\xff") << "[_ ]";
+    QTest::newRow("_emptymap") << raw("\xbf\xff") << "{_ }";
+}
+
+void tst_Parser::emptyContainers_data()
+{
+    addColumns();
+    addEmptyContainersData();
+}
+
+void tst_Parser::arrays_data()
+{
+    addColumns();
+    addFixedData();
+    addStringsData();
+    addTagsData();
+}
+
+void tst_Parser::arrays()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    compareOne("\x81" + data, '[' + expected + ']');
+    if (compareFailed) return;
+
+    compareOne("\x82" + data + data, '[' + expected + ", " + expected + ']');
+    if (compareFailed) return;
+
+    // overlong length
+    compareOne("\x98\1" + data, '[' + expected + ']');
+    if (compareFailed) return;
+    compareOne(raw("\x99\0\1") + data, '[' + expected + ']');
+    if (compareFailed) return;
+    compareOne(raw("\x9a\0\0\0\1") + data, '[' + expected + ']');
+    if (compareFailed) return;
+    compareOne(raw("\x9b\0\0\0\0\0\0\0\1") + data, '[' + expected + ']');
+    if (compareFailed) return;
+
+    // medium-sized array: 32 elements (1 << 5)
+    expected += ", ";
+    for (int i = 0; i < 5; ++i) {
+        data += data;
+        expected += expected;
+    }
+    expected.chop(2);   // remove the last ", "
+    compareOne("\x98\x20" + data, '[' + expected + ']');
+    if (compareFailed) return;
+
+    // large array: 256 elements (32 << 3)
+    expected += ", ";
+    for (int i = 0; i < 3; ++i) {
+        data += data;
+        expected += expected;
+    }
+    expected.chop(2);   // remove the last ", "
+    compareOne(raw("\x99\1\0") + data, '[' + expected + ']');
+    if (compareFailed) return;
+}
+
+void tst_Parser::undefLengthArrays()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    compareOne("\x9f" + data + "\xff", "[_ " + expected + ']');
+    if (compareFailed) return;
+
+    compareOne("\x9f" + data + data + "\xff", "[_ " + expected + ", " + expected + ']');
+}
+
+void tst_Parser::nestedArrays()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    compareOne("\x81\x81" + data, "[[" + expected + "]]");
+    if (compareFailed) return;
+
+    compareOne("\x81\x81\x81" + data, "[[[" + expected + "]]]");
+    if (compareFailed) return;
+
+    compareOne("\x81\x82" + data + data, "[[" + expected + ", " + expected + "]]");
+    if (compareFailed) return;
+
+    compareOne("\x82\x81" + data + data, "[[" + expected + "], " + expected + "]");
+    if (compareFailed) return;
+
+    compareOne("\x82\x81" + data + '\x81' + data, "[[" + expected + "], [" + expected + "]]");
+    if (compareFailed) return;
+
+    // undefined length
+    compareOne("\x9f\x9f" + data + data + "\xff\xff", "[_ [_ " + expected + ", " + expected + "]]");
+    if (compareFailed) return;
+
+    compareOne("\x9f\x9f" + data + "\xff\x9f" + data + "\xff\xff", "[_ [_ " + expected + "], [_ " + expected + "]]");
+    if (compareFailed) return;
+
+    compareOne("\x9f\x9f" + data + data + "\xff\x9f" + data + "\xff\xff",
+               "[_ [_ " + expected + ", " + expected + "], [_ " + expected + "]]");
+    if (compareFailed) return;
+
+    // mix them
+    compareOne("\x81\x9f" + data + "\xff", "[[_ " + expected + "]]");
+    if (compareFailed) return;
+
+    compareOne("\x9f\x81" + data + "\xff", "[_ [" + expected + "]]");
 }
 
 QTEST_MAIN(tst_Parser)

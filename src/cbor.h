@@ -66,7 +66,7 @@ typedef enum CborType {
     CborFloatType       = 0xfa,
     CborDoubleType      = 0xfb,
 
-    CborInvalidType     = 0xff
+    CborInvalidType     = 0xff              /* equivalent to the break byte, so it will never be used */
 } CborType;
 
 typedef uint64_t CborTag;
