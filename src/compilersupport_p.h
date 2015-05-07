@@ -51,7 +51,7 @@ static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
 #else
     // unsigned additions are well-defined
     *r = v1 + v2;
-    return v1 > SIZE_MAX - v2;
+    return v1 <= SIZE_MAX - v2;
 #endif
 }
 

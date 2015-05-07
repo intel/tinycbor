@@ -364,6 +364,16 @@ void tst_Parser::strings_data()
     // strings with undefined length
     QTest::newRow("_emptybytestring") << raw("\x5f\xff") << "h''";
     QTest::newRow("_emptytextstring") << raw("\x7f\xff") << "\"\"";
+    QTest::newRow("_emptybytestring2") << raw("\x5f\x40\xff") << "h''";
+    QTest::newRow("_emptytextstring2") << raw("\x7f\x60\xff") << "\"\"";
+    QTest::newRow("_emptybytestring3") << raw("\x5f\x40\x40\xff") << "h''";
+    QTest::newRow("_emptytextstring3") << raw("\x7f\x60\x60\xff") << "\"\"";
+    QTest::newRow("_bytestring5*2") << raw("\x5f\x43Hel\x42lo\xff") << "h'48656c6c6f'";
+    QTest::newRow("_textstring5*2") << raw("\x7f\x63Hel\x62lo\xff") << "\"Hello\"";
+    QTest::newRow("_bytestring5*5") << raw("\x5f\x41H\x41""e\x41l\x41l\x41o\xff") << "h'48656c6c6f'";
+    QTest::newRow("_textstring5*5") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "\"Hello\"";
+    QTest::newRow("_bytestring5*6") << raw("\x5f\x41H\x41""e\x40\x41l\x41l\x41o\xff") << "h'48656c6c6f'";
+    QTest::newRow("_textstring5*6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << "\"Hello\"";
 }
 
 void tst_Parser::strings()
