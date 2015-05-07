@@ -36,6 +36,10 @@ private slots:
     void fixed();
     void strings_data();
     void strings();
+    void tags_data();
+    void tags();
+    void tagTags_data() { tags_data(); }
+    void tagTags();
 };
 
 char toHexUpper(unsigned n)
@@ -168,11 +172,14 @@ CborError parseOne(CborValue *it, QString *parsed)
         cbor_value_get_tag(it, &tag);       // can't fail
         *parsed += QString::number(tag);
         *parsed += '(';
+        err = cbor_value_advance_fixed(it);
+        if (err)
+            return err;
         err = parseOne(it, parsed);
         if (err)
             return err;
         *parsed += ')';
-        break;
+        return CborNoError;
     }
 
     case CborSimpleType: {
@@ -207,7 +214,7 @@ CborError parseOne(CborValue *it, QString *parsed)
         } else {
             cbor_value_get_double(it, &val);
         }
-        QString number = QString::number(val, 'g', 10);
+        QString number = QString::number(val, 'g', std::numeric_limits<double>::max_digits10 + 2);
         *parsed += number;
         if (number != "inf" && number != "-inf" && number != "nan") {
             if (!number.contains('.'))
@@ -336,11 +343,8 @@ void tst_Parser::fixed_data()
     QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << "inf";
 }
 
-void tst_Parser::fixed()
+void compareOne(const QByteArray &data, const QString &expected)
 {
-    QFETCH(QByteArray, data);
-    QFETCH(QString, expected);
-
     CborParser parser;
     CborValue first;
     CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
@@ -351,6 +355,14 @@ void tst_Parser::fixed()
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) +
                    "\"; decoded stream:\n" + decoded.toLatin1());
     QCOMPARE(decoded, expected);
+}
+
+void tst_Parser::fixed()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    compareOne(data, expected);
 }
 
 void tst_Parser::strings_data()
@@ -414,6 +426,57 @@ void tst_Parser::strings_data()
 void tst_Parser::strings()
 {
     fixed();
+}
+
+void tst_Parser::tags_data()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<QString>("expected");
+
+    // since parseOne() works recursively for tags, we can't test lone tags
+    QTest::newRow("tag0") << raw("\xc0\x00") << "0(0)";
+    QTest::newRow("tag1") << raw("\xc1\x00") << "1(0)";
+    QTest::newRow("tag24") << raw("\xd8\x18\x00") << "24(0)";
+    QTest::newRow("tag255") << raw("\xd8\xff\x00") << "255(0)";
+    QTest::newRow("tag256") << raw("\xd9\1\0\x00") << "256(0)";
+    QTest::newRow("tag65535") << raw("\xd9\xff\xff\x00") << "65535(0)";
+    QTest::newRow("tag65536") << raw("\xda\0\1\0\0\x00") << "65536(0)";
+    QTest::newRow("tagUINT32_MAX-1") << raw("\xda\xff\xff\xff\xff\x00") << "4294967295(0)";
+    QTest::newRow("tagUINT32_MAX") << raw("\xdb\0\0\0\1\0\0\0\0\x00") << "4294967296(0)";
+    QTest::newRow("tagUINT64_MAX") << raw("\xdb" "\xff\xff\xff\xff" "\xff\xff\xff\xff" "\x00")
+                                << QString::number(std::numeric_limits<uint64_t>::max()) + "(0)";
+
+    // overlong tags
+    QTest::newRow("tag0*1") << raw("\xd8\0\x00") << "0(0)";
+    QTest::newRow("tag0*2") << raw("\xd9\0\0\x00") << "0(0)";
+    QTest::newRow("tag0*4") << raw("\xda\0\0\0\0\x00") << "0(0)";
+    QTest::newRow("tag0*8") << raw("\xdb\0\0\0\0\0\0\0\0\x00") << "0(0)";
+
+    // tag other things
+    QTest::newRow("unixtime") << raw("\xc1\x1a\x55\x4b\xbf\xd3") << "1(1431027667)";
+    QTest::newRow("rfc3339date") << raw("\xc0\x78\x19" "2015-05-07 12:41:07-07:00")
+                                 << "0(\"2015-05-07 12:41:07-07:00\")";
+    QTest::newRow("tag6+false") << raw("\xc6\xf4") << "6(false)";
+    QTest::newRow("tag25+true") << raw("\xd8\x19\xf5") << "25(true)";
+    QTest::newRow("tag256+null") << raw("\xd9\1\0\xf6") << "256(null)";
+    QTest::newRow("tag65536+simple32") << raw("\xda\0\1\0\0\xf8\x20") << "65536(simple(32))";
+    QTest::newRow("float+unixtime") << raw("\xc1\xfa\x4e\xaa\x97\x80") << "1(1431027712.f)";
+    QTest::newRow("double+unixtime") << raw("\xc1\xfb" "\x41\xd5\x52\xef" "\xf4\xc7\xce\xfe")
+                                     << "1(1431027667.122008801)";
+}
+
+void tst_Parser::tags()
+{
+    fixed();
+}
+
+void tst_Parser::tagTags()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    compareOne("\xd9\xd9\xf7" + data, "55799(" + expected + ')');
+    compareOne("\xd9\xd9\xf7" "\xd9\xd9\xf7" + data, "55799(55799(" + expected + "))");
 }
 
 QTEST_MAIN(tst_Parser)

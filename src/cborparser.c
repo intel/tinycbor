@@ -130,6 +130,7 @@ static bool is_fixed_type(uint8_t type)
 static CborError preparse_value(CborValue *it)
 {
     const CborParser *parser = it->parser;
+    it->type = CborInvalidType;
 
     // are we at the end?
     if (it->ptr == parser->end)
@@ -138,7 +139,6 @@ static CborError preparse_value(CborValue *it)
     uint8_t descriptor = *it->ptr;
     uint8_t type = descriptor & MajorTypeMask;
     it->flags = 0;
-    it->type = CborInvalidType;
     it->extra = (descriptor &= SmallValueMask);
 
     if (descriptor == IndefiniteLength && !is_fixed_type(type)) {
@@ -220,9 +220,10 @@ static CborError preparse_value(CborValue *it)
 
 static CborError preparse_next_value(CborValue *it)
 {
-    it->type = CborInvalidType;
     if (it->remaining != UINT32_MAX) {
-        if (!--it->remaining) {
+        // don't decrement the item count if the current item is tag: they don't count
+        if (it->type != CborTagType && !--it->remaining) {
+            it->type = CborInvalidType;
             return it->ptr == it->parser->end ? CborNoError : CborErrorGarbageAtEnd;
         }
     }
