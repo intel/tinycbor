@@ -28,14 +28,23 @@
 #  define _(msg)    msg
 #endif
 
-const char *cbor_parser_error_string(CborParserError error)
+const char *cbor_error_string(CborError error)
 {
     switch (error) {
     case CborNoError:
         return "";
 
-    case CborErrorUnknownError:
+    case CborUnknownError:
         return _("unknown error");
+
+    case CborErrorOutOfMemory:
+        return _("out of memory/need more memory");
+
+    case CborErrorUnknownLength:
+        return _("unknown length (attempted to get the length of a map/array/string of indeterminate length");
+
+    case CborErrorAdvancePastEOF:
+        return _("attempted to advance past EOF");
 
     case CborErrorGarbageAtEnd:
         return _("garbage after the end of the content");
@@ -82,5 +91,5 @@ const char *cbor_parser_error_string(CborParserError error)
     case CborErrorInternalError:
         return _("internal error");
     }
-    return cbor_parser_error_string(CborErrorUnknownError);
+    return cbor_error_string(CborUnknownError);
 }

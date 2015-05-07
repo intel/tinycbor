@@ -60,17 +60,6 @@
  * \endomit
  */
 
-static bool makeError(CborParser *parser, CborParserError error, uint64_t addend)
-{
-    (void)addend;
-    parser->error = error;
-    return false;
-}
-#ifdef CBOR_PARSER_NO_DETAILED_ERROR
-// This way, the compiler should eliminate all error settings by dead code elimination
-#  define makeError(parser, err, addend)    makeError(parser, (err) * 0 + CborErrorUnknownError, addend)
-#endif
-
 static inline uint16_t get16(const char *ptr)
 {
     uint16_t result;
@@ -92,58 +81,87 @@ static inline uint64_t get64(const char *ptr)
     return be64toh(result);
 }
 
-static inline bool extract_length(CborParser *parser, const char **ptr, size_t *len)
+static inline CborError extract_number(const CborParser *parser, const char **ptr, uint64_t *len)
 {
     uint8_t additional_information = **ptr & SmallValueMask;
+    ++*ptr;
     if (additional_information < Value8Bit) {
         *len = additional_information;
-        ++(*ptr);
-        return true;
+        return CborNoError;
     }
     if (unlikely(additional_information > Value64Bit))
-        return makeError(parser, CborErrorIllegalNumber, additional_information);
+        return CborErrorIllegalNumber;
 
     size_t bytesNeeded = 1 << (additional_information - Value8Bit);
-    if (unlikely(*ptr + 1 + bytesNeeded > parser->end)) {
-        return makeError(parser, CborErrorUnexpectedEOF, 0);
+    if (unlikely(*ptr + bytesNeeded > parser->end)) {
+        return CborErrorUnexpectedEOF;
     } else if (bytesNeeded == 1) {
-        *len = (*ptr)[1];
+        *len = (uint8_t)(*ptr)[0];
     } else if (bytesNeeded == 2) {
-        *len = get16(*ptr + 1);
+        *len = get16(*ptr);
     } else if (bytesNeeded == 4) {
-        *len = get32(*ptr + 1);
+        *len = get32(*ptr);
     } else {
-        uint64_t v = get64(*ptr + 1);
-        *len = v;
-        if (v != *len)
-            return makeError(parser, CborErrorDataTooLarge, 0);
+        *len = get64(*ptr);
     }
     *ptr += bytesNeeded;
-    return true;
+    return CborNoError;
 }
 
-static void preparse_value(CborValue *it)
+static inline CborError extract_length(const CborParser *parser, const char **ptr, size_t *len)
 {
+    uint64_t v;
+    CborError err = extract_number(parser, ptr, &v);
+    if (err)
+        return err;
+
+    *len = v;
+    if (v != *len)
+        return CborErrorDataTooLarge;
+    return CborNoError;
+}
+
+static bool is_fixed_type(uint8_t type)
+{
+    return type != CborTextStringType && type != CborByteStringType && type != CborArrayType &&
+           type != CborMapType;
+}
+
+static CborError preparse_value(CborValue *it)
+{
+    const CborParser *parser = it->parser;
+
     // are we at the end?
-    CborParser *parser = it->parser;
     if (it->ptr == parser->end)
-        goto error_eof;
+        return CborErrorUnexpectedEOF;
 
     uint8_t descriptor = *it->ptr;
-    it->type = descriptor & MajorTypeMask;
+    uint8_t type = descriptor & MajorTypeMask;
     it->flags = 0;
-    descriptor &= SmallValueMask;
-    it->extra = descriptor;
+    it->type = CborInvalidType;
+    it->extra = (descriptor &= SmallValueMask);
+
+    if (descriptor == IndefiniteLength && !is_fixed_type(type)) {
+        // special case
+        it->flags |= CborIteratorFlag_UnknownLength;
+        it->type = type;
+        return CborNoError;
+    }
 
     size_t bytesNeeded = descriptor < Value8Bit ? 0 : (1 << (descriptor - Value8Bit));
     if (it->ptr + 1 + bytesNeeded > parser->end)
-        goto error_eof;
+        return CborErrorUnexpectedEOF;
 
-    switch ((CborMajorTypes)(it->type >> MajorTypeShift)) {
+    switch ((CborMajorTypes)(type >> MajorTypeShift)) {
     case NegativeIntegerType:
         it->flags |= CborIteratorFlag_NegativeInteger;
+        type = CborIntegerType;
         // fall through
     case UnsignedIntegerType:
+    case ByteStringType:
+    case TextStringType:
+    case ArrayType:
+    case MapType:
     case TagType:
         break;
 
@@ -158,65 +176,74 @@ static void preparse_value(CborValue *it)
         case HalfPrecisionFloat:
         case SinglePrecisionFloat:
         case DoublePrecisionFloat:
-            it->type = *it->ptr;
+            type = *it->ptr;
             break;
 
         case SimpleTypeInNextByte:
             it->extra = it->ptr[1];
 #ifndef CBOR_PARSER_NO_STRICT_CHECKS
-            if (it->extra < 32) {
-                makeError(parser, CborErrorIllegalSimpleType, it->extra);
-                goto error;
-            }
+            if (it->extra < 32)
+                return CborErrorIllegalSimpleType;
 #endif
         case 28:
         case 29:
         case 30:
-            makeError(parser, CborErrorUnknownType, *it->ptr);
-            goto error;
+            return CborErrorUnknownType;
 
         case Break:
-            makeError(parser, CborErrorUnexpectedBreak, 0);
-            goto error;
+            return CborErrorUnexpectedBreak;
         }
         break;
-
-    case ByteStringType:
-    case TextStringType:
-    case ArrayType:
-    case MapType:
-        if (descriptor == IndefiniteLength)
-            it->flags |= CborIteratorFlag_UnknownLength;
-        break;
     }
+
+    if (unlikely(descriptor > Value64Bit))
+        return CborErrorIllegalNumber;
+
+    // no further errors possible
+    it->type = type;
 
     // try to decode up to 16 bits
     if (descriptor < Value8Bit)
-        return;
-    if (unlikely(descriptor > Value64Bit))
-        goto illegal_number_error;
+        return CborNoError;
 
-    if (descriptor == Value8Bit) {
-        it->extra = it->ptr[1];
-        return;
-    }
-    if (descriptor == Value16Bit) {
+    if (descriptor == Value8Bit)
+        it->extra = (uint8_t)it->ptr[1];
+    else if (descriptor == Value16Bit)
         it->extra = get16(it->ptr + 1);
-        return;
-    }
-    // Value32Bit or Value64Bit
-    it->flags |= CborIteratorFlag_IntegerValueTooLarge;
-    return;
+    else
+        it->flags |= CborIteratorFlag_IntegerValueTooLarge;     // Value32Bit or Value64Bit
+    return CborNoError;
+}
 
-illegal_number_error:
-    makeError(parser, CborErrorIllegalNumber, it->ptr[1]);
-    goto error;
-
-error_eof:
-    makeError(parser, CborErrorUnexpectedEOF, 0);
-error:
+static CborError preparse_next_value(CborValue *it)
+{
     it->type = CborInvalidType;
-    return;
+    if (it->remaining != UINT32_MAX) {
+        if (!--it->remaining) {
+            return it->ptr == it->parser->end ? CborNoError : CborErrorGarbageAtEnd;
+        }
+    }
+    return preparse_value(it);
+}
+
+static CborError advance_internal(CborValue *it)
+{
+    uint64_t length;
+    CborError err = extract_number(it->parser, &it->ptr, &length);
+    assert(err == CborNoError);
+
+    if (!is_fixed_type(it->type)) {
+        assert(length == (size_t)length);
+        it->ptr += length;
+    }
+
+    if (it->remaining == UINT32_MAX && *it->ptr == (char)BreakByte) {
+        // end of map or array
+        it->remaining = 0;
+        return CborNoError;
+    }
+
+    return preparse_next_value(it);
 }
 
 /** \internal
@@ -253,57 +280,31 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
  * ### Write how to determine the end pointer
  * ### Write how to do limited-buffer windowed decoding
  */
-void cbor_parser_init(const char *buffer, size_t size, int flags, CborParser *parser, CborValue *it)
+CborError cbor_parser_init(const char *buffer, size_t size, int flags, CborParser *parser, CborValue *it)
 {
     memset(parser, 0, sizeof(*parser));
     parser->end = buffer + size;
-    parser->error = CborNoError;
     parser->flags = flags;
     it->parser = parser;
     it->ptr = buffer;
     it->remaining = 1;      // there's one type altogether, usually an array or map
-    preparse_value(it);
-}
-
-static bool advance_internal(CborValue *it)
-{
-    unsigned size = 1 << (*it->ptr - Value8Bit);
-    if (it->ptr + size > it->parser->end)
-        return makeError(it->parser, CborErrorUnexpectedEOF, 0);
-
-    it->ptr += size;
-    if (it->remaining == UINT32_MAX && *it->ptr == (char)BreakByte) {
-        // end of map or array
-        it->remaining = 0;
-        return true;
-    }
-
-    if (it->remaining != UINT32_MAX)
-        --it->remaining;
-    preparse_value(it);
-    return true;
-}
-
-static bool is_fixed_type(uint8_t type)
-{
-    return type != CborTextStringType && type != CborByteStringType && type != CborArrayType &&
-           type != CborMapType;
+    return preparse_value(it);
 }
 
 /**
  * Advances the CBOR value \a it by one fixed-size position. Fixed-size types
  * are: integers, tags, simple types (including boolean, null and undefined
- * values) and floating point types. This function returns true if the
- * advancing succeeded, false on a decoding error or if there are no more
- * items.
+ * values) and floating point types.
  *
  * \sa cbor_value_at_end(), cbor_value_advance(), cbor_value_begin_recurse(), cbor_value_end_recurse()
  */
-bool cbor_value_advance_fixed(CborValue *it)
+CborError cbor_value_advance_fixed(CborValue *it)
 {
     assert(it->type != CborInvalidType);
-    assert(!is_fixed_type(it->type));
-    return it->remaining && advance_internal(it);
+    assert(is_fixed_type(it->type));
+    if (!it->remaining)
+        return CborErrorAdvancePastEOF;
+    return advance_internal(it);
 }
 
 /**
@@ -315,45 +316,39 @@ bool cbor_value_advance_fixed(CborValue *it)
  * elements or chunks and will use O(n) memory for the number of nested
  * containers).
  *
- * This function returns true if it advanced by one element, false if this was
- * the last element or a decoding error happened.
- *
  * \sa cbor_value_at_end(), cbor_value_advance_fixed(), cbor_value_begin_recurse(), cbor_value_end_recurse()
  */
-bool cbor_value_advance(CborValue *it)
+CborError cbor_value_advance(CborValue *it)
 {
     assert(it->type != CborInvalidType);
     if (!it->remaining)
-        return false;
+        return CborErrorAdvancePastEOF;
     if (is_fixed_type(it->type))
-        return cbor_value_advance_fixed(it);
+        return advance_internal(it);
 
-    if (cbor_value_is_container(it)) {
-        // map or array
-        CborValue recursed;
-        if (!cbor_value_enter_container(it, &recursed))
-            return false;
-        while (!cbor_value_at_end(&recursed))
-            if (!cbor_value_advance(&recursed))
-                return false;
-        if (!cbor_value_leave_container(it, &recursed))
-            return false;
-    } else {
-        // string
-        if (!cbor_value_copy_string(it, NULL, 0, it))
-            return false;
+    if (!cbor_value_is_container(it))
+        return cbor_value_copy_string(it, NULL, 0, it);
+
+    // map or array
+    CborError err;
+    CborValue recursed;
+    err = cbor_value_enter_container(it, &recursed);
+    if (err)
+        return err;
+    while (!cbor_value_at_end(&recursed)) {
+        err = cbor_value_advance(&recursed);
+        if (err)
+            return err;
     }
-    return true;
+    return cbor_value_leave_container(it, &recursed);
 }
 
 /**
+ * \fn bool cbor_value_is_container(const CborValue *it)
+ *
  * Returns true if the \a it value is a container and requires recursion in
  * order to decode (maps and arrays), false otherwise.
  */
-bool cbor_value_is_container(const CborValue *it)
-{
-    return it->type == CborArrayType || it->type == CborMapType;
-}
 
 /**
  * Creates a CborValue iterator pointing to the first element of the container
@@ -363,7 +358,7 @@ bool cbor_value_is_container(const CborValue *it)
  *
  * \sa cbor_value_is_container(), cbor_value_leave_container(), cbor_value_advance()
  */
-bool cbor_value_enter_container(const CborValue *it, CborValue *recursed)
+CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
 {
     assert(cbor_value_is_container(it));
     *recursed = *it;
@@ -373,7 +368,7 @@ bool cbor_value_enter_container(const CborValue *it, CborValue *recursed)
         uint64_t len = _cbor_value_extract_int64_helper(it);
         recursed->remaining = len;
         if (recursed->remaining != len || len == UINT32_MAX)
-            return makeError(it->parser, CborErrorDataTooLarge, len);
+            return CborErrorDataTooLarge;
     }
     return advance_internal(recursed);
 }
@@ -384,28 +379,12 @@ bool cbor_value_enter_container(const CborValue *it, CborValue *recursed)
  *
  * \sa cbor_value_enter_container(), cbor_value_at_end()
  */
-bool cbor_value_leave_container(CborValue *it, const CborValue *recursed)
+CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
 {
     assert(cbor_value_is_container(it));
     assert(cbor_value_at_end(recursed));
     it->ptr = recursed->ptr;
     return advance_internal(it);
-}
-
-static bool copy_chunk(CborParser *parser, uint8_t expectedType, char *dst, const char **src, size_t *chunkLen)
-{
-    // is this the right type?
-    if ((**src & MajorTypeMask) != expectedType)
-        return makeError(parser, CborErrorIllegalType, **src);
-
-    if (!extract_length(parser, src, chunkLen))
-        return false;       // error condition already set
-
-    if (dst)
-        memcpy(dst, *src, *chunkLen);
-
-    *src += *chunkLen;
-    return true;
 }
 
 /**
@@ -415,42 +394,15 @@ static bool copy_chunk(CborParser *parser, uint8_t expectedType, char *dst, cons
  * this function may not run in constant time (it will run in O(n) time on the
  * number of chunks).
  *
- * This function returns true if the length was successfully calculated or false
- * if there was a decoding error.
- *
- * \note On 32-bit platforms, this function will return false and set condition
- * of \ref CborErrorDataTooLarge if the stream indicates a length that is too
- * big to fit in 32-bit.
+ * \note On 32-bit platforms, this function will return error condition of \ref
+ * CborErrorDataTooLarge if the stream indicates a length that is too big to
+ * fit in 32-bit.
  *
  * \sa cbor_value_get_string_length(), cbor_value_copy_string(), cbor_value_is_length_known()
  */
-bool cbor_value_calculate_string_length(const CborValue *value, size_t *len)
+CborError cbor_value_calculate_string_length(const CborValue *value, size_t *len)
 {
-    if (cbor_value_get_string_length(value, len))
-        return true;
-
-    // chunked string, iterate to calculate full size
-    size_t total = 0;
-    const char *ptr = value->ptr + 1;
-    while (true) {
-        if (ptr == value->parser->end)
-            return makeError(value->parser, CborErrorUnexpectedEOF, 0);
-
-        if (*ptr == (char)BreakByte) {
-            ++ptr;
-            break;
-        }
-
-        size_t chunkLen;
-        if (!copy_chunk(value->parser, value->type, NULL, &ptr, &chunkLen))
-            return false;
-
-        if (!add_check_overflow(total, chunkLen, &total))
-            return makeError(value->parser, CborErrorDataTooLarge, 0);
-    }
-
-    *len = total;
-    return true;
+    return cbor_value_copy_string(value, NULL, len, NULL);
 }
 
 /**
@@ -458,42 +410,41 @@ bool cbor_value_calculate_string_length(const CborValue *value, size_t *len)
  * buffer. The pointer to the buffer is stored in \a buffer and the number of
  * bytes copied is stored in \a len (those variables must not be NULL).
  *
- * This function returns false if a decoding error occurred or if we ran out of
- * memory. OOM situations are indicated by setting both \c{*buffer} to \c NULL.
- * If the caller needs to recover from an OOM condition, it should initialize
- * the variable to a non-NULL value (it does not have to be a valid pointer).
+ * If \c malloc returns a NULL pointer, this function will return error
+ * condition \ref CborErrorOutOfMemory.
  *
- * On success, this function returns true and \c{*buffer} will contain a valid
- * pointer that must be freed by calling \c{free()}. This is the case even for
- * zero-length strings.
+ * On success, \c{*buffer} will contain a valid pointer that must be freed by
+ * calling \c{free()}. This is the case even for zero-length strings.
  *
  * The \a next pointer, if not null, will be updated to point to the next item
- * after this string.
+ * after this string. If \a value points to the last item, then \a next will be
+ * invalid.
  *
  * \note This function does not perform UTF-8 validation on the incoming text
  * string.
  *
  * \sa cbor_value_copy_string()
  */
-bool cbor_value_dup_string(const CborValue *value, char **buffer, size_t *len, CborValue *next)
+CborError cbor_value_dup_string(const CborValue *value, char **buffer, size_t *buflen, CborValue *next)
 {
     assert(buffer);
-    assert(len);
-    if (!cbor_value_calculate_string_length(value, len))
-        return false;
+    assert(buflen);
+    CborError err = cbor_value_calculate_string_length(value, buflen);
+    if (err)
+        return err;
 
-    *buffer = malloc(*len + 1);
+    ++*buflen;
+    *buffer = malloc(*buflen);
     if (!*buffer) {
         // out of memory
-        return false;
+        return CborErrorOutOfMemory;
     }
-    size_t copied = cbor_value_copy_string(value, *buffer, *len + 1, next);
-    if (copied == SIZE_MAX) {
+    err = cbor_value_copy_string(value, *buffer, buflen, next);
+    if (err) {
         free(*buffer);
-        return false;
+        return err;
     }
-    assert(copied == *len);
-    return true;
+    return CborNoError;
 }
 
 /**
@@ -501,15 +452,15 @@ bool cbor_value_dup_string(const CborValue *value, char **buffer, size_t *len, C
  * of \a buflen bytes. If \a buffer is a NULL pointer, this function will not
  * copy anything and will only update the \a next value.
  *
- * This function returns \c SIZE_MAX if a decoding error occurred or if the
- * buffer was not large enough. If you need to calculate the length of the
- * string in order to preallocate a buffer, use
+ * If the provided buffer length was too small, this function returns an error
+ * condition of \ref CborErrorOutOfMemory. If you need to calculate the length
+ * of the string in order to preallocate a buffer, use
  * cbor_value_calculate_string_length().
  *
- * On success, this function returns the number of bytes copied. If the buffer
- * is large enough, this function will insert a null byte after the last copied
- * byte, to facilitate manipulation of text strings. That byte is not included
- * in the returned value.
+ * On success, this function sets the number of bytes copied to \c{*buflen}. If
+ * the buffer is large enough, this function will insert a null byte after the
+ * last copied byte, to facilitate manipulation of text strings. That byte is
+ * not included in the returned value of \c{*buflen}.
  *
  * The \a next pointer, if not null, will be updated to point to the next item
  * after this string. If \a value points to the last item, then \a next will be
@@ -520,29 +471,35 @@ bool cbor_value_dup_string(const CborValue *value, char **buffer, size_t *len, C
  *
  * \sa cbor_value_dup_string(), cbor_value_get_string_length(), cbor_value_calculate_string_length()
  */
-size_t cbor_value_copy_string(const CborValue *value, char *buffer,
-                              size_t buflen, CborValue *next)
+CborError cbor_value_copy_string(const CborValue *value, char *buffer,
+                                 size_t *buflen, CborValue *next)
 {
     assert(cbor_value_is_byte_string(value) || cbor_value_is_text_string(value));
 
     size_t total;
+    CborError err;
     const char *ptr = value->ptr;
     if (cbor_value_is_length_known(value)) {
         // easy case: fixed length
-        if (!extract_length(value->parser, &ptr, &total))
-            return SIZE_MAX;
+        err = extract_length(value->parser, &ptr, &total);
+        if (err)
+            return err;
         if (buffer) {
-            if (buflen < total)
-                return SIZE_MAX;
+            if (*buflen < total)
+                return CborErrorOutOfMemory;
             memcpy(buffer, ptr, total);
             ptr += total;
         }
     } else {
         // chunked
         ++ptr;
+        total = 0;
         while (true) {
+            size_t chunkLen;
+            size_t newTotal;
+
             if (ptr == value->parser->end)
-                return makeError(value->parser, CborErrorUnexpectedEOF, 0);
+                return CborErrorUnexpectedEOF;
 
             if (*ptr == (char)BreakByte) {
                 ++ptr;
@@ -551,19 +508,18 @@ size_t cbor_value_copy_string(const CborValue *value, char *buffer,
 
             // is this the right type?
             if ((*ptr & MajorTypeMask) != value->type)
-                return makeError(value->parser, CborErrorIllegalType, *ptr);
+                return CborErrorIllegalType;
 
-            size_t chunkLen;
-            if (!extract_length(value->parser, &ptr, &chunkLen))
-                return false;       // error condition already set
+            err = extract_length(value->parser, &ptr, &chunkLen);
+            if (err)
+                return err;
 
-            size_t newTotal;
             if (unlikely(!add_check_overflow(total, chunkLen, &newTotal)))
-                return makeError(value->parser, CborErrorDataTooLarge, 0);
+                return CborErrorDataTooLarge;
 
             if (buffer) {
-                if (buflen < newTotal)
-                    return SIZE_MAX;
+                if (*buflen < newTotal)
+                    return CborErrorOutOfMemory;
                 memcpy(buffer + total, ptr, chunkLen);
             }
             ptr += chunkLen;
@@ -572,30 +528,26 @@ size_t cbor_value_copy_string(const CborValue *value, char *buffer,
     }
 
     // is there enough room for the ending NUL byte?
-    if (buffer && buflen > total)
+    if (buffer && *buflen > total)
         buffer[total] = '\0';
+    *buflen = total;
 
     if (next) {
         *next = *value;
         next->ptr = ptr;
-        if (!next->remaining) {
-            next->type = CborInvalidType;
-        } else {
-            if (next->remaining != UINT32_MAX)
-                --next->remaining;
-            preparse_value(next);
-        }
+        err = preparse_next_value(next);
+        if (err)
+            return err;
     }
-    return total;
+    return CborNoError;
 }
 
-bool cbor_value_get_half_float(const CborValue *value, void *result)
+CborError cbor_value_get_half_float(const CborValue *value, void *result)
 {
-    if (value->type != CborHalfFloatType)
-        return false;
+    assert(value->type == CborHalfFloatType);
 
     // size has been computed already
     uint16_t v = get16(value->ptr + 1);
     memcpy(result, &v, sizeof(v));
-    return true;
+    return CborNoError;
 }

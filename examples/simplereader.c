@@ -35,9 +35,10 @@ static void dumpbytes(const char *buf, size_t len)
 static bool dumprecursive(CborValue *it, int nestingLevel)
 {
     while (!cbor_value_at_end(it)) {
-        indent(nestingLevel);
-
+        CborError err;
         CborType type = cbor_value_get_type(it);
+
+        indent(nestingLevel);
         switch (type) {
         case CborArrayType:
         case CborMapType: {
@@ -45,12 +46,15 @@ static bool dumprecursive(CborValue *it, int nestingLevel)
             CborValue recursed;
             assert(cbor_value_is_container(it));
             puts(type == CborArrayType ? "Array[" : "Map[");
-            if (!cbor_value_enter_container(it, &recursed))
-                return false;       // parse error
-            if (!dumprecursive(&recursed, nestingLevel + 1))
-                return false;       // parse error
-            if (!cbor_value_leave_container(it, &recursed))
-                return false;       // parse error
+            err = cbor_value_enter_container(it, &recursed);
+            if (err)
+                return err;       // parse error
+            err = dumprecursive(&recursed, nestingLevel + 1);
+            if (err)
+                return err;       // parse error
+            err = cbor_value_leave_container(it, &recursed);
+            if (err)
+                return err;       // parse error
             indent(nestingLevel);
             puts("]");
             continue;
@@ -67,8 +71,9 @@ static bool dumprecursive(CborValue *it, int nestingLevel)
         case CborTextStringType: {
             char *buf;
             size_t n;
-            if (!cbor_value_dup_string(it, &buf, &n, it))
-                return false;     // parse error
+            err = cbor_value_dup_string(it, &buf, &n, it);
+            if (err)
+                return err;     // parse error
             if (type == CborByteStringType) {
                 dumpbytes(buf, n);
                 puts("");
@@ -99,6 +104,7 @@ static bool dumprecursive(CborValue *it, int nestingLevel)
 
         case CborUndefinedType:
             puts("undefined");
+            break;
 
         case CborBooleanType: {
             bool val;
@@ -132,10 +138,11 @@ static bool dumprecursive(CborValue *it, int nestingLevel)
             break;
         }
 
-        if (!cbor_value_advance_fixed(it))
-            return false;
+        err = cbor_value_advance_fixed(it);
+        if (err)
+            return err;
     }
-    return NULL;
+    return CborNoError;
 }
 
 int main(int argc, char **argv)
@@ -154,14 +161,14 @@ int main(int argc, char **argv)
 
     CborParser parser;
     CborValue it;
-    cbor_parser_init(buf, length, 0, &parser, &it);
-    dumprecursive(&it, 0);
+    CborError err = cbor_parser_init(buf, length, 0, &parser, &it);
+    if (!err)
+        err = dumprecursive(&it, 0);
     free(buf);
 
-    CborParserError err = cbor_parser_get_error(&parser);
     if (err) {
         fprintf(stderr, "CBOR parsing failure at offset %ld: %s\n",
-                it.ptr - buf, cbor_parser_error_string(err));
+                it.ptr - buf, cbor_error_string(err));
         return 1;
     }
     return 0;
