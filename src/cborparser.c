@@ -391,6 +391,12 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
         recursed->remaining = len;
         if (recursed->remaining != len || len == UINT32_MAX)
             return CborErrorDataTooLarge;
+        if (recursed->type == CborMapType) {
+            // maps have keys and values, so we need to multiply by 2
+            if (recursed->remaining > UINT32_MAX / 2)
+                return CborErrorDataTooLarge;
+            recursed->remaining *= 2;
+        }
         if (len != 0)
             return preparse_value(recursed);
     }

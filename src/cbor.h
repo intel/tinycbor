@@ -302,8 +302,8 @@ CBOR_INLINE_API CborError cbor_value_get_map_length(const CborValue *value, size
     if (!cbor_value_is_length_known(value))
         return CborErrorUnknownLength;
     uint64_t v = _cbor_value_extract_int64_helper(value);
-    *length = v;
-    if (*length != v)
+    *length = v / 2;
+    if (*length != v / 2)
         return CborErrorDataTooLarge;
     return CborNoError;
 }

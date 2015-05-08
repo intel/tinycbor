@@ -48,6 +48,16 @@ private slots:
     void undefLengthArrays();
     void nestedArrays_data() { arrays_data(); }
     void nestedArrays();
+    void maps_data();
+    void maps();
+    void undefLengthMaps_data() { maps_data(); }
+    void undefLengthMaps();
+    void nestedMaps_data() { maps_data(); }
+    void nestedMaps();
+    void mapMixed_data();
+    void mapMixed();
+    void mapsAndArrays_data() { arrays_data(); }
+    void mapsAndArrays();
 };
 
 char toHexUpper(unsigned n)
@@ -103,7 +113,7 @@ QString escaped(const QString &raw)
     return result;
 }
 
-CborError parse(CborValue *it, QString *parsed);
+CborError parseContainer(CborValue *it, QString *parsed, CborType containerType);
 CborError parseOne(CborValue *it, QString *parsed)
 {
     CborError err;
@@ -122,7 +132,7 @@ CborError parseOne(CborValue *it, QString *parsed)
         err = cbor_value_enter_container(it, &recursed);
         if (err)
             return err;       // parse error
-        err = parse(&recursed, parsed);
+        err = parseContainer(&recursed, parsed, type);
         if (err)
             return err;       // parse error
         err = cbor_value_leave_container(it, &recursed);
@@ -250,7 +260,7 @@ CborError parseOne(CborValue *it, QString *parsed)
     return CborNoError;
 }
 
-CborError parse(CborValue *it, QString *parsed)
+CborError parseContainer(CborValue *it, QString *parsed, CborType containerType)
 {
     const char *comma = nullptr;
     while (!cbor_value_at_end(it)) {
@@ -258,6 +268,15 @@ CborError parse(CborValue *it, QString *parsed)
         comma = ", ";
 
         CborError err = parseOne(it, parsed);
+        if (err)
+            return err;
+
+        if (containerType == CborArrayType)
+            continue;
+
+        // map: that was the key, so get the value
+        *parsed += ": ";
+        err = parseOne(it, parsed);
         if (err)
             return err;
     }
@@ -614,6 +633,188 @@ void tst_Parser::nestedArrays()
     if (compareFailed) return;
 
     compareOne("\x9f\x81" + data + "\xff", "[_ [" + expected + "]]");
+}
+
+void tst_Parser::maps_data()
+{
+    arrays_data();
+}
+
+void tst_Parser::maps()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    // integer key
+    compareOne("\xa1\1" + data, "{1: " + expected + '}');
+    if (compareFailed) return;
+
+    // string key
+    compareOne("\xa1\x65" "Hello" + data, "{\"Hello\": " + expected + '}');
+    if (compareFailed) return;
+
+    // map to self
+    compareOne("\xa1" + data + data, '{' + expected + ": " + expected + '}');
+    if (compareFailed) return;
+
+    // two integer keys
+    compareOne("\xa2\1" + data + "\2" + data, "{1: " + expected + ", 2: " + expected + '}');
+    if (compareFailed) return;
+
+    // one integer and one string key
+    compareOne("\xa2\1" + data + "\x65" "Hello" + data, "{1: " + expected + ", \"Hello\": " + expected + '}');
+    if (compareFailed) return;
+}
+
+void tst_Parser::undefLengthMaps()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    // integer key
+    compareOne("\xbf\1" + data + '\xff', "{_ 1: " + expected + '}');
+    if (compareFailed) return;
+
+    compareOne("\xbf\1" + data + '\2' + data + '\xff', "{_ 1: " + expected + ", 2: " + expected + '}');
+    if (compareFailed) return;
+
+    compareOne("\xbf\1" + data + "\x65Hello" + data + '\xff', "{_ 1: " + expected + ", \"Hello\": " + expected + '}');
+    if (compareFailed) return;
+
+    compareOne("\xbf\x65Hello" + data + '\1' + data + '\xff', "{_ \"Hello\": " + expected + ", 1: " + expected + '}');
+}
+
+void tst_Parser::nestedMaps()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    // nested maps as values
+    compareOne("\xa1\1\xa1\2" + data, "{1: {2: " + expected + "}}");
+    if (compareFailed) return;
+
+    compareOne("\xa1\x65Hello\xa1\2" + data, "{\"Hello\": {2: " + expected + "}}");
+    if (compareFailed) return;
+
+    compareOne("\xa1\1\xa2\2" + data + '\x20' + data, "{1: {2: " + expected + ", -1: " + expected + "}}");
+    if (compareFailed) return;
+
+    compareOne("\xa2\1\xa1\2" + data + "\2\xa1\x20" + data, "{1: {2: " + expected + "}, 2: {-1: " + expected + "}}");
+    if (compareFailed) return;
+
+    // nested maps as keys
+    compareOne("\xa1\xa1\xf4" + data + "\xf5", "{{false: " + expected + "}: true}");
+    if (compareFailed) return;
+
+    compareOne("\xa1\xa1" + data + data + "\xa1" + data + data,
+               "{{" + expected + ": " + expected + "}: {" + expected + ": " + expected + "}}");
+    if (compareFailed) return;
+
+    // undefined length
+    compareOne("\xbf\1\xbf\2" + data + "\xff\xff", "{_ 1: {_ 2: " + expected + "}}");
+    if (compareFailed) return;
+
+    compareOne("\xbf\1\xbf\2" + data + '\x20' + data + "\xff\xff", "{_ 1: {_ 2: " + expected + ", -1: " + expected + "}}");
+    if (compareFailed) return;
+
+    compareOne("\xbf\1\xbf\2" + data + "\xff\2\xbf\x20" + data + "\xff\xff",
+               "{_ 1: {_ 2: " + expected + "}, 2: {_ -1: " + expected + "}}");
+    if (compareFailed) return;
+
+    compareOne("\xbf\xbf" + data + data + "\xff\xbf" + data + data + "\xff\xff",
+               "{_ {_ " + expected + ": " + expected + "}: {_ " + expected + ": " + expected + "}}");
+    if (compareFailed) return;
+
+    // mix them
+    compareOne("\xa1\1\xbf\2" + data + "\xff", "{1: {_ 2: " + expected + "}}");
+    if (compareFailed) return;
+
+    compareOne("\xbf\1\xa1\2" + data + "\xff", "{_ 1: {2: " + expected + "}}");
+    if (compareFailed) return;
+}
+
+void addMapMixedData()
+{
+    // this is just the contents of the map, not including the map itself
+    // we do it like that so we can reuse the same data for multiple runs
+    QTest::newRow("map-0-24") << raw("\0\x18\x18") << "0: 24";
+    QTest::newRow("map-0*1-24") << raw("\x18\0\x18\x18") << "0: 24";
+    QTest::newRow("map-0*1-24*2") << raw("\x18\0\x19\0\x18") << "0: 24";
+    QTest::newRow("map-0*4-24*2") << raw("\x1a\0\0\0\0\x19\0\x18") << "0: 24";
+    QTest::newRow("map-24-0") << raw("\x18\x18\0") << "24: 0";
+    QTest::newRow("map-24-0*1") << raw("\x18\x18\0") << "24: 0";
+    QTest::newRow("map-255-65535") << raw("\x18\xff\x19\xff\xff") << "255: 65535";
+}
+
+void tst_Parser::mapMixed_data()
+{
+    addColumns();
+    addMapMixedData();
+}
+
+void tst_Parser::mapMixed()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    compareOne("\xa1" + data, '{' + expected + '}');
+    if (compareFailed) return;
+
+    compareOne("\xbf" + data + "\xff", "{_ " + expected + '}');
+}
+
+void tst_Parser::mapsAndArrays()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    // arrays of maps
+    compareOne("\x81\xa1\1" + data, "[{1: " + expected + "}]");
+    if (compareFailed) return;
+
+    compareOne("\x82\xa1\1" + data + "\xa1\2" + data, "[{1: " + expected + "}, {2: " + expected + "}]");
+    if (compareFailed) return;
+
+    compareOne("\x81\xa2\1" + data + "\2" + data, "[{1: " + expected + ", 2: " + expected + "}]");
+    if (compareFailed) return;
+
+    compareOne("\x9f\xa1\1" + data + "\xff", "[_ {1: " + expected + "}]");
+    if (compareFailed) return;
+
+    compareOne("\x81\xbf\1" + data + "\xff", "[{_ 1: " + expected + "}]");
+    if (compareFailed) return;
+
+    compareOne("\x9f\xbf\1" + data + "\xff\xff", "[_ {_ 1: " + expected + "}]");
+    if (compareFailed) return;
+
+    // maps of arrays
+    compareOne("\xa1\1\x81" + data, "{1: [" + expected + "]}");
+    if (compareFailed) return;
+
+    compareOne("\xa1\1\x82" + data + data, "{1: [" + expected + ", " + expected + "]}");
+    if (compareFailed) return;
+
+    compareOne("\xa2\1\x81" + data + "\x65Hello\x81" + data, "{1: [" + expected + "], \"Hello\": [" + expected + "]}");
+    if (compareFailed) return;
+
+    compareOne("\xa1\1\x9f" + data + "\xff", "{1: [_ " + expected + "]}");
+    if (compareFailed) return;
+
+    compareOne("\xa1\1\x9f" + data + data + "\xff", "{1: [_ " + expected + ", " + expected + "]}");
+    if (compareFailed) return;
+
+    compareOne("\xbf\1\x81" + data + "\xff", "{_ 1: [" + expected + "]}");
+    if (compareFailed) return;
+
+    compareOne("\xbf\1\x9f" + data + "\xff\xff", "{_ 1: [_ " + expected + "]}");
+    if (compareFailed) return;
+
+    compareOne("\xbf\1\x9f" + data + data + "\xff\xff", "{_ 1: [_ " + expected + ", " + expected + "]}");
+    if (compareFailed) return;
+
+    // mixed with indeterminate length strings
+    compareOne("\xbf\1\x9f" + data + "\xff\x65Hello\xbf" + data + "\x7f\xff\xff\xff",
+               "{_ 1: [_ " + expected + "], \"Hello\": {_ " + expected + ": \"\"}}");
 }
 
 QTEST_MAIN(tst_Parser)
