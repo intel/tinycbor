@@ -32,6 +32,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef NDEBUG
+#  undef assert
+#  define assert(cond)      do { if (!(cond)) unreachable(); } while (0)
+#endif
+
 #if defined(__GNUC__) && !defined(__INTEL_COMPILER) && !defined(__clang__) && \
     (__GNUC__ * 100 + __GNUC_MINOR__ >= 404)
 #  pragma GCC optimize("-ffunction-sections")
@@ -138,6 +143,7 @@ static CborError preparse_value(CborValue *it)
 
     uint8_t descriptor = *it->ptr;
     uint8_t type = descriptor & MajorTypeMask;
+    it->type = type;
     it->flags = 0;
     it->extra = (descriptor &= SmallValueMask);
 
@@ -157,55 +163,47 @@ static CborError preparse_value(CborValue *it)
     if (it->ptr + 1 + bytesNeeded > parser->end)
         return CborErrorUnexpectedEOF;
 
-    switch ((CborMajorTypes)(type >> MajorTypeShift)) {
-    case NegativeIntegerType:
+    uint8_t majortype = type >> MajorTypeShift;
+    if (majortype == NegativeIntegerType) {
         it->flags |= CborIteratorFlag_NegativeInteger;
-        type = CborIntegerType;
-        // fall through
-    case UnsignedIntegerType:
-    case ByteStringType:
-    case TextStringType:
-    case ArrayType:
-    case MapType:
-    case TagType:
-        break;
-
-    case SimpleTypesType:
+        it->type = CborIntegerType;
+    } else if (majortype == SimpleTypesType) {
         switch (descriptor) {
         case FalseValue:
             it->extra = false;
-            type = CborBooleanType;
+            it->type = CborBooleanType;
             break;
 
+        case SinglePrecisionFloat:
+        case DoublePrecisionFloat:
+            it->flags |= CborIteratorFlag_IntegerValueTooLarge;
+            // fall through
         case TrueValue:
         case NullValue:
         case UndefinedValue:
         case HalfPrecisionFloat:
-        case SinglePrecisionFloat:
-        case DoublePrecisionFloat:
-            type = *it->ptr;
+            it->type = *it->ptr;
             break;
 
         case SimpleTypeInNextByte:
+            it->extra = (uint8_t)it->ptr[1];
 #ifndef CBOR_PARSER_NO_STRICT_CHECKS
-            if ((unsigned char)it->ptr[1] < 32)
+            if (unlikely(it->extra < 32)) {
+                it->type = CborInvalidType;
                 return CborErrorIllegalSimpleType;
+            }
 #endif
             break;
 
         case 28:
         case 29:
         case 30:
-            return CborErrorUnknownType;
-
         case Break:
+            assert(false);  // these conditions can't be reached
             return CborErrorUnexpectedBreak;
         }
-        break;
+        return CborNoError;
     }
-
-    // no further errors possible
-    it->type = type;
 
     // try to decode up to 16 bits
     if (descriptor < Value8Bit)
@@ -244,7 +242,6 @@ static CborError advance_internal(CborValue *it)
     uint64_t length;
     CborError err = extract_number(it->parser, &it->ptr, &length);
     assert(err == CborNoError);
-//    assert(it->type != CborArrayType && it->type != CborMapType);
 
     if (it->type == CborByteStringType || it->type == CborTextStringType) {
         assert(length == (size_t)length);
@@ -269,7 +266,11 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
 {
     assert(value->flags & CborIteratorFlag_IntegerValueTooLarge ||
            value->type == CborFloatType || value->type == CborDoubleType);
-    if ((*value->ptr & SmallValueMask) == Value32Bit)
+
+    // since the additional information can only be Value32Bit or Value64Bit,
+    // we just need to test for the one bit those two options differ
+    assert((*value->ptr & SmallValueMask) == Value32Bit || (*value->ptr & SmallValueMask) == Value64Bit);
+    if ((*value->ptr & 1) == (Value32Bit & 1))
         return get32(value->ptr + 1);
 
     assert((*value->ptr & SmallValueMask) == Value64Bit);
@@ -386,7 +387,6 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
         uint64_t len;
         err = extract_number(recursed->parser, &recursed->ptr, &len);
         assert(err == CborNoError);
-        (void)err;
 
         recursed->remaining = len;
         if (recursed->remaining != len || len == UINT32_MAX)
@@ -466,7 +466,7 @@ CborError cbor_value_dup_string(const CborValue *value, char **buffer, size_t *b
 {
     assert(buffer);
     assert(buflen);
-    CborError err = cbor_value_calculate_string_length(value, buflen);
+    CborError err = cbor_value_copy_string(value, NULL, buflen, NULL);
     if (err)
         return err;
 
