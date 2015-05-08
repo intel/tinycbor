@@ -515,6 +515,8 @@ CborError cbor_value_copy_string(const CborValue *value, char *buffer,
         err = extract_length(value->parser, &ptr, &total);
         if (err)
             return err;
+        if (ptr + total > value->parser->end)
+            return CborErrorUnexpectedEOF;
         if (buffer) {
             if (*buflen < total)
                 return CborErrorOutOfMemory;
@@ -548,6 +550,9 @@ CborError cbor_value_copy_string(const CborValue *value, char *buffer,
             if (unlikely(!add_check_overflow(total, chunkLen, &newTotal)))
                 return CborErrorDataTooLarge;
 
+            if (ptr + chunkLen > value->parser->end)
+                return CborErrorUnexpectedEOF;
+
             if (buffer) {
                 if (*buflen < newTotal)
                     return CborErrorOutOfMemory;
@@ -566,9 +571,7 @@ CborError cbor_value_copy_string(const CborValue *value, char *buffer,
     if (next) {
         *next = *value;
         next->ptr = ptr;
-        err = preparse_next_value(next);
-        if (err)
-            return err;
+        return preparse_next_value(next);
     }
     return CborNoError;
 }
