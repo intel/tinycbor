@@ -33,6 +33,8 @@ class tst_Encoder : public QObject
 private slots:
     void fixed_data();
     void fixed();
+    void strings_data();
+    void strings() { fixed(); }
     void tags_data();
     void tags();
 };
@@ -77,6 +79,16 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
 
     case QMetaType::Float:
         return cbor_encode_float(encoder, (const float*)v.constData());
+
+    case QVariant::String: {
+        QByteArray string = v.toString().toUtf8();
+        return cbor_encode_text_string(encoder, string.constData(), string.length());
+    }
+
+    case QVariant::ByteArray: {
+        QByteArray string = v.toByteArray();
+        return cbor_encode_byte_string(encoder, string.constData(), string.length());
+    }
 
     default:
         if (type == qMetaTypeId<SimpleType>())
@@ -184,6 +196,29 @@ void addFixedData()
     QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << QVariant(qInf());
 }
 
+void addStringsData()
+{
+    // byte strings
+    QTest::newRow("emptybytestring") << raw("\x40") << QVariant(QByteArray(""));
+    QTest::newRow("bytestring1") << raw("\x41 ") << QVariant(QByteArray(" "));
+    QTest::newRow("bytestring1-nul") << raw("\x41\0") << QVariant(QByteArray("", 1));
+    QTest::newRow("bytestring5") << raw("\x45Hello") << QVariant(QByteArray("Hello"));
+    QTest::newRow("bytestring24") << raw("\x58\x18""123456789012345678901234")
+                                  << QVariant(QByteArray("123456789012345678901234"));
+    QTest::newRow("bytestring256") << raw("\x59\1\0") + QByteArray(256, '3')
+                                   << QVariant(QByteArray(256, '3'));
+
+    // text strings
+    QTest::newRow("emptytextstring") << raw("\x60") << QVariant("");
+    QTest::newRow("textstring1") << raw("\x61 ") << QVariant(" ");
+    QTest::newRow("textstring1-nul") << raw("\x61\0") << QVariant(QString::fromLatin1("", 1));
+    QTest::newRow("textstring5") << raw("\x65Hello") << QVariant("Hello");
+    QTest::newRow("textstring24") << raw("\x78\x18""123456789012345678901234")
+                                  << QVariant("123456789012345678901234");
+    QTest::newRow("textstring256") << raw("\x79\1\0") + QByteArray(256, '3')
+                                   << QVariant(QString(256, '3'));
+}
+
 void tst_Encoder::fixed_data()
 {
     addColumns();
@@ -197,10 +232,17 @@ void tst_Encoder::fixed()
     compare(input, output);
 }
 
+void tst_Encoder::strings_data()
+{
+    addColumns();
+    addStringsData();
+}
+
 void tst_Encoder::tags_data()
 {
     addColumns();
     addFixedData();
+    addStringsData();
 }
 
 void tst_Encoder::tags()

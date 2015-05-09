@@ -148,3 +148,21 @@ CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag)
 {
     return encode_number(encoder, tag, TagType << MajorTypeShift);
 }
+
+static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shiftedMajorType, const char *string)
+{
+    CborError err = encode_number(encoder, length, shiftedMajorType);
+    if (err)
+        return err;
+    return append_to_buffer(encoder, string, length);
+}
+
+CborError cbor_encode_byte_string(CborEncoder *encoder, const char *string, size_t length)
+{
+    return encode_string(encoder, length, ByteStringType << MajorTypeShift, string);
+}
+
+CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size_t length)
+{
+    return encode_string(encoder, length, TextStringType << MajorTypeShift, string);
+}
