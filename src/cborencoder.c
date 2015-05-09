@@ -68,35 +68,31 @@ static inline CborError append_to_buffer(CborEncoder *encoder, const char *data,
 
 static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
 {
-    size_t buflen;
-    char buf[1 + sizeof(uint64_t)];
-    buf[0] = shiftedMajorType;
+    /* Little-endian would have been so much more convenient here:
+     * We could just write at the beginning of buf but append_to_buffer
+     * only the necessary bytes.
+     * Since it has to be big endian, do it the other way around:
+     * write from the end. */
+    char buf[1 + sizeof(ui)];
+    char *const bufend = buf + sizeof(buf);
+    char *bufstart = bufend - 1;
+    put64(buf + 1, ui);     // we probably have a bunch of zeros in the beginning
 
     if (ui < Value8Bit) {
-        buf[0] += ui;
-        return append_to_buffer(encoder, buf, 1);
-    }
-
-    if (ui <= UINT8_MAX) {
-        buf[0] += Value8Bit;
-        buf[1] = (uint8_t)ui;
-        buflen = 1 + sizeof(uint8_t);
-    } else if (ui <= UINT16_MAX) {
-        buf[0] += Value16Bit;
-        put16(buf + 1, ui);
-        buflen = 1 + sizeof(uint16_t);
-    } else if (ui <= UINT32_MAX) {
-        buf[0] += Value32Bit;
-        put32(buf + 1, ui);
-        buflen = 1 + sizeof(uint32_t);
+        *bufstart += shiftedMajorType;
     } else {
-        buf[0] += Value64Bit;
-        put64(buf + 1, ui);
-        buflen = 1 + sizeof(uint64_t);
+        unsigned more = 0;
+        if (ui > UINT8_MAX)
+            ++more;
+        if (ui > UINT16_MAX)
+            ++more;
+        if (ui != (uint32_t)ui)
+            ++more;
+        bufstart -= 1 << more;
+        *bufstart = shiftedMajorType + Value8Bit + more;
     }
 
-    assert(buflen <= sizeof(buf));
-    return append_to_buffer(encoder, buf, buflen);
+    return append_to_buffer(encoder, bufstart, bufend - bufstart);
 }
 
 CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value)
