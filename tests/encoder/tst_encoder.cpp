@@ -35,8 +35,14 @@ private slots:
     void fixed();
     void strings_data();
     void strings() { fixed(); }
+    void arraysAndMaps_data();
+    void arraysAndMaps() { fixed(); }
     void tags_data();
     void tags();
+    void arrays_data() { tags_data(); }
+    void arrays();
+    void maps_data() { tags_data(); }
+    void maps();
 };
 
 template <size_t N> QByteArray raw(const char (&data)[N])
@@ -52,6 +58,13 @@ Q_DECLARE_METATYPE(Float16Standin)
 
 struct Tag { CborTag tag; QVariant tagged; };
 Q_DECLARE_METATYPE(Tag)
+
+typedef QVector<QPair<QVariant, QVariant>> Map;
+Q_DECLARE_METATYPE(Map)
+QVariant make_map(const std::initializer_list<QPair<QVariant, QVariant>> &list)
+{
+    return QVariant::fromValue(Map(list));
+}
 
 CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
 {
@@ -90,6 +103,18 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
         return cbor_encode_byte_string(encoder, string.constData(), string.length());
     }
 
+    case QVariant::List: {
+        CborEncoder sub;
+        QVariantList list = v.toList();
+        CborError err = cbor_encoder_create_array(encoder, &sub, list.length());
+        foreach (const QVariant &v2, list) {
+            err = encodeVariant(&sub, v2);
+            if (err)
+                return err;
+        }
+        return cbor_encoder_close_container(encoder, &sub);
+    }
+
     default:
         if (type == qMetaTypeId<SimpleType>())
             return cbor_encode_simple_value(encoder, v.value<SimpleType>().type);
@@ -100,6 +125,20 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
             if (err)
                 return err;
             return encodeVariant(encoder, v.value<Tag>().tagged);
+        }
+        if (type == qMetaTypeId<Map>()) {
+            CborEncoder sub;
+            Map map = v.value<Map>();
+            CborError err = cbor_encoder_create_map(encoder, &sub, map.length());
+            for (auto pair : map) {
+                err = encodeVariant(&sub, pair.first);
+                if (err)
+                    return err;
+                err = encodeVariant(&sub, pair.second);
+                if (err)
+                    return err;
+            }
+            return cbor_encoder_close_container(encoder, &sub);
         }
     }
     return CborErrorUnknownType;
@@ -219,6 +258,36 @@ void addStringsData()
                                    << QVariant(QString(256, '3'));
 }
 
+void addArraysAndMaps()
+{
+    QTest::newRow("emptyarray") << raw("\x80") << QVariant(QVariantList{});
+    QTest::newRow("emptymap") << raw("\xa0") << make_map({});
+
+    QTest::newRow("array-0") << raw("\x81\0") << QVariant(QVariantList{0});
+    QTest::newRow("array-0") << raw("\x82\0\0") << QVariant(QVariantList{0, 0});
+    QTest::newRow("array-Hello") << raw("\x81\x65Hello") << QVariant(QVariantList{"Hello"});
+    QTest::newRow("array-array-0") << raw("\x81\x81\0") << QVariant(QVariantList{QVariantList{0}});
+    QTest::newRow("array-array-{0-0}") << raw("\x81\x82\0\0") << QVariant(QVariantList{QVariantList{0, 0}});
+    QTest::newRow("array-array-0-0") << raw("\x82\x81\0\0") << QVariant(QVariantList{QVariantList{0},0});
+    QTest::newRow("array-array-Hello") << raw("\x81\x81\x65Hello") << QVariant(QVariantList{QVariantList{"Hello"}});
+
+    QTest::newRow("map-0:0") << raw("\xa1\0\0") << make_map({{0,0}});
+    QTest::newRow("map-0:0-1:1") << raw("\xa2\0\0\1\1") << make_map({{0,0}, {1,1}});
+    QTest::newRow("map-0:{map-0:0-1:1}") << raw("\xa1\0\xa2\0\0\1\1") << make_map({{0, make_map({{0,0}, {1,1}})}});
+
+    QTest::newRow("array-map1") << raw("\x81\xa1\0\0") << QVariant(QVariantList{make_map({{0,0}})});
+    QTest::newRow("array-map2") << raw("\x82\xa1\0\0\xa1\1\1") << QVariant(QVariantList{make_map({{0,0}}), make_map({{1,1}})});
+
+    QTest::newRow("map-array1") << raw("\xa1\x62oc\x81\0") << make_map({{"oc", QVariantList{0}}});
+    QTest::newRow("map-array2") << raw("\xa1\x62oc\x84\0\1\2\3") << make_map({{"oc", QVariantList{0, 1, 2, 3}}});
+    QTest::newRow("map-array3") << raw("\xa2\x62oc\x82\0\1\2\3") << make_map({{"oc", QVariantList{0, 1}}, {2, 3}});
+
+    // tagged
+    QTest::newRow("array-1(0)") << raw("\x81\xc1\0") << QVariant(QVariantList{QVariant::fromValue(Tag{1, 0})});
+    QTest::newRow("array-1(map)") << raw("\x81\xc1\xa0") << QVariant(QVariantList{QVariant::fromValue(Tag{1, make_map({})})});
+    QTest::newRow("map-1(2):3(4)") << raw("\xa1\xc1\2\xc3\4") << make_map({{QVariant::fromValue(Tag{1, 2}), QVariant::fromValue(Tag{3, 4})}});
+}
+
 void tst_Encoder::fixed_data()
 {
     addColumns();
@@ -238,11 +307,18 @@ void tst_Encoder::strings_data()
     addStringsData();
 }
 
+void tst_Encoder::arraysAndMaps_data()
+{
+    addColumns();
+    addArraysAndMaps();
+}
+
 void tst_Encoder::tags_data()
 {
     addColumns();
     addFixedData();
     addStringsData();
+    addArraysAndMaps();
 }
 
 void tst_Encoder::tags()
@@ -282,6 +358,97 @@ void tst_Encoder::tags()
 
     // nested tags
     compare(QVariant::fromValue(Tag{1, QVariant::fromValue(Tag{1, input})}), "\xc1\xc1" + output);
+}
+
+void tst_Encoder::arrays()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+
+    compare(QVariantList{input}, "\x81" + output);
+    if (compareFailed) return;
+
+    compare(QVariantList{input, input}, "\x82" + output + output);
+    if (compareFailed) return;
+
+    {
+        QVariantList list{input};
+        QByteArray longoutput = output;
+
+        // make a list with 32 elements (1 << 5)
+        for (int i = 0; i < 5; ++i) {
+            list += list;
+            longoutput += longoutput;
+        }
+        compare(list, "\x98\x20" + longoutput);
+        if (compareFailed) return;
+
+        // now 256 elements (32 << 3)
+        for (int i = 0; i < 3; ++i) {
+            list += list;
+            longoutput += longoutput;
+        }
+        compare(list, raw("\x99\1\0") + longoutput);
+        if (compareFailed) return;
+    }
+
+    // nested lists
+    compare(QVariantList{QVariantList{input}}, "\x81\x81" + output);
+    if (compareFailed) return;
+
+    compare(QVariantList{QVariantList{input, input}}, "\x81\x82" + output + output);
+    if (compareFailed) return;
+
+    compare(QVariantList{QVariantList{input}, input}, "\x82\x81" + output + output);
+    if (compareFailed) return;
+
+    compare(QVariantList{QVariantList{input}, QVariantList{input}}, "\x82\x81" + output + "\x81" + output);
+}
+
+void tst_Encoder::maps()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+
+    compare(make_map({{1, input}}), "\xa1\1" + output);
+    if (compareFailed) return;
+
+    compare(make_map({{1, input}, {input, 24}}), "\xa2\1" + output + output + "\x18\x18");
+    if (compareFailed) return;
+
+    compare(make_map({{input, input}}), "\xa1" + output + output);
+    if (compareFailed) return;
+
+    {
+        Map map{{1, input}};
+        QByteArray longoutput = "\1" + output;
+
+        // make a map with 32 elements (1 << 5)
+        for (int i = 0; i < 5; ++i) {
+            map += map;
+            longoutput += longoutput;
+        }
+        compare(QVariant::fromValue(map), "\xb8\x20" + longoutput);
+        if (compareFailed) return;
+
+        // now 256 elements (32 << 3)
+        for (int i = 0; i < 3; ++i) {
+            map += map;
+            longoutput += longoutput;
+        }
+        compare(QVariant::fromValue(map), raw("\xb9\1\0") + longoutput);
+        if (compareFailed) return;
+    }
+
+    // nested lists
+    compare(make_map({{1, make_map({{2, input}})}}), "\xa1\1\xa1\2" + output);
+    if (compareFailed) return;
+
+    compare(make_map({{1, make_map({{2, input}, {input, false}})}}), "\xa1\1\xa2\2" + output + output + "\xf4");
+    if (compareFailed) return;
+
+    compare(make_map({{1, make_map({{2, input}})}, {input, false}}), "\xa2\1\xa1\2" + output + output + "\xf4");
+    if (compareFailed) return;
 }
 
 QTEST_MAIN(tst_Encoder)

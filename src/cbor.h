@@ -150,6 +150,9 @@ CBOR_INLINE_API CborError cbor_encode_null(CborEncoder *encoder)
 CBOR_INLINE_API CborError cbor_encode_undefined(CborEncoder *encoder)
 { return cbor_encode_simple_value(encoder, CborUndefinedType & 0x1f); }
 
+CBOR_API CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEncoder, size_t length);
+CBOR_API CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder, size_t length);
+CBOR_API CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder);
 
 /* Parser API */
 

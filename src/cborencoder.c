@@ -166,3 +166,28 @@ CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size
 {
     return encode_string(encoder, length, TextStringType << MajorTypeShift, string);
 }
+
+static CborError create_container(CborEncoder *encoder, size_t length, uint8_t shiftedMajorType, CborEncoder *container)
+{
+    CborError err = encode_number(encoder, length, shiftedMajorType);
+    if (err)
+        return err;
+    *container = *encoder;
+    return CborNoError;
+}
+
+CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEncoder, size_t length)
+{
+    return create_container(encoder, length, ArrayType << MajorTypeShift, arrayEncoder);
+}
+
+CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder, size_t length)
+{
+    return create_container(encoder, length, MapType << MajorTypeShift, mapEncoder);
+}
+
+CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
+{
+    *encoder = *containerEncoder;
+    return CborNoError;
+}
