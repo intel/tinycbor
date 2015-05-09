@@ -143,3 +143,8 @@ CborError cbor_encode_double(CborEncoder *encoder, const double *value)
     put64(buf + 1, *(const uint64_t*)value);
     return append_to_buffer(encoder, buf, sizeof(buf));
 }
+
+CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag)
+{
+    return encode_number(encoder, tag, TagType << MajorTypeShift);
+}

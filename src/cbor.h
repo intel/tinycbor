@@ -139,6 +139,7 @@ CBOR_API CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value)
 CBOR_API CborError cbor_encode_half_float(CborEncoder *encoder, const void *value);
 CBOR_API CborError cbor_encode_float(CborEncoder *encoder, const float *value);
 CBOR_API CborError cbor_encode_double(CborEncoder *encoder, const double *value);
+CBOR_API CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag);
 
 CBOR_INLINE_API CborError cbor_encode_boolean(CborEncoder *encoder, bool value)
 { return cbor_encode_simple_value(encoder, (int)value - 1 + (CborBooleanType & 0x1f)); }

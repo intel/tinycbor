@@ -33,6 +33,8 @@ class tst_Encoder : public QObject
 private slots:
     void fixed_data();
     void fixed();
+    void tags_data();
+    void tags();
 };
 
 template <size_t N> QByteArray raw(const char (&data)[N])
@@ -45,6 +47,9 @@ Q_DECLARE_METATYPE(SimpleType)
 
 struct Float16Standin { uint16_t val; };
 Q_DECLARE_METATYPE(Float16Standin)
+
+struct Tag { CborTag tag; QVariant tagged; };
+Q_DECLARE_METATYPE(Tag)
 
 CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
 {
@@ -78,6 +83,12 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
             return cbor_encode_simple_value(encoder, v.value<SimpleType>().type);
         if (type == qMetaTypeId<Float16Standin>())
             return cbor_encode_half_float(encoder, v.constData());
+        if (type == qMetaTypeId<Tag>()) {
+            CborError err = cbor_encode_tag(encoder, v.value<Tag>().tag);
+            if (err)
+                return err;
+            return encodeVariant(encoder, v.value<Tag>().tagged);
+        }
     }
     return CborErrorUnknownType;
 }
@@ -184,6 +195,51 @@ void tst_Encoder::fixed()
     QFETCH(QVariant, input);
     QFETCH(QByteArray, output);
     compare(input, output);
+}
+
+void tst_Encoder::tags_data()
+{
+    addColumns();
+    addFixedData();
+}
+
+void tst_Encoder::tags()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+
+    compare(QVariant::fromValue(Tag{1, input}), "\xc1" + output);
+    if (compareFailed) return;
+
+    compare(QVariant::fromValue(Tag{24, input}), "\xd8\x18" + output);
+    if (compareFailed) return;
+
+    compare(QVariant::fromValue(Tag{255, input}), "\xd8\xff" + output);
+    if (compareFailed) return;
+
+    compare(QVariant::fromValue(Tag{256, input}), raw("\xd9\1\0") + output);
+    if (compareFailed) return;
+
+    compare(QVariant::fromValue(Tag{CborSignatureTag, input}), raw("\xd9\xd9\xf7") + output);
+    if (compareFailed) return;
+
+    compare(QVariant::fromValue(Tag{65535, input}), raw("\xd9\xff\xff") + output);
+    if (compareFailed) return;
+
+    compare(QVariant::fromValue(Tag{65536, input}), raw("\xda\0\1\0\0") + output);
+    if (compareFailed) return;
+
+    compare(QVariant::fromValue(Tag{UINT32_MAX, input}), raw("\xda\xff\xff\xff\xff") + output);
+    if (compareFailed) return;
+
+    compare(QVariant::fromValue(Tag{UINT32_MAX + Q_UINT64_C(1), input}), raw("\xdb\0\0\0\1\0\0\0\0") + output);
+    if (compareFailed) return;
+
+    compare(QVariant::fromValue(Tag{UINT64_MAX, input}), raw("\xdb\xff\xff\xff\xff\xff\xff\xff\xff") + output);
+    if (compareFailed) return;
+
+    // nested tags
+    compare(QVariant::fromValue(Tag{1, QVariant::fromValue(Tag{1, input})}), "\xc1\xc1" + output);
 }
 
 QTEST_MAIN(tst_Encoder)
