@@ -398,7 +398,7 @@ void addFixedData()
 
     QTest::newRow("qnan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
     QTest::newRow("qnan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
-    QTest::newRow("qnan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
+    QTest::newRow("snan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
     QTest::newRow("snan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
     QTest::newRow("-inf_f") << raw("\xfa\xff\x80\0\0") << "-inf";
     QTest::newRow("-inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << "-inf";
