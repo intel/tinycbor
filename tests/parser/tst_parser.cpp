@@ -32,6 +32,8 @@ class tst_Parser : public QObject
     Q_OBJECT
 private slots:
     void initParserEmpty();
+
+    // parsing API
     void fixed_data();
     void fixed();
     void strings_data();
@@ -58,6 +60,12 @@ private slots:
     void mapMixed();
     void mapsAndArrays_data() { arrays_data(); }
     void mapsAndArrays();
+
+    // convenience API
+    void stringLength_data();
+    void stringLength();
+    void stringCompare_data();
+    void stringCompare();
 };
 
 char toHexUpper(unsigned n)
@@ -815,6 +823,183 @@ void tst_Parser::mapsAndArrays()
     // mixed with indeterminate length strings
     compareOne("\xbf\1\x9f" + data + "\xff\x65Hello\xbf" + data + "\x7f\xff\xff\xff",
                "{_ 1: [_ " + expected + "], \"Hello\": {_ " + expected + ": \"\"}}");
+}
+
+void tst_Parser::stringLength_data()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<int>("expected");
+
+    QTest::newRow("emptybytestring") << raw("\x40") << 0;
+    QTest::newRow("bytestring1") << raw("\x41 ") << 1;
+    QTest::newRow("bytestring1-nul") << raw("\x41\0") << 1;
+    QTest::newRow("bytestring5") << raw("\x45Hello") << 5;
+    QTest::newRow("bytestring24") << raw("\x58\x18""123456789012345678901234") << 24;
+    QTest::newRow("bytestring256") << raw("\x59\1\0") + QByteArray(256, '3') << 256;
+
+    // text strings
+    QTest::newRow("emptytextstring") << raw("\x60") << 0;
+    QTest::newRow("textstring1") << raw("\x61 ") << 1;
+    QTest::newRow("textstring1-nul") << raw("\x61\0") << 1;
+    QTest::newRow("textstring5") << raw("\x65Hello") << 5;
+    QTest::newRow("textstring24") << raw("\x78\x18""123456789012345678901234") << 24;
+    QTest::newRow("textstring256") << raw("\x79\1\0") + QByteArray(256, '3') << 256;
+
+    // strings with overlong length
+    QTest::newRow("emptybytestring*1") << raw("\x58\x00") << 0;
+    QTest::newRow("emptytextstring*1") << raw("\x78\x00") << 0;
+    QTest::newRow("emptybytestring*2") << raw("\x59\x00\x00") << 0;
+    QTest::newRow("emptytextstring*2") << raw("\x79\x00\x00") << 0;
+    QTest::newRow("emptybytestring*4") << raw("\x5a\0\0\0\0") << 0;
+    QTest::newRow("emptytextstring*4") << raw("\x7a\0\0\0\0") << 0;
+    QTest::newRow("emptybytestring*8") << raw("\x5b\0\0\0\0\0\0\0\0") << 0;
+    QTest::newRow("emptytextstring*8") << raw("\x7b\0\0\0\0\0\0\0\0") << 0;
+    QTest::newRow("bytestring5*1") << raw("\x58\x05Hello") << 5;
+    QTest::newRow("textstring5*1") << raw("\x78\x05Hello") << 5;
+    QTest::newRow("bytestring5*2") << raw("\x59\0\5Hello") << 5;
+    QTest::newRow("textstring5*2") << raw("\x79\0\x05Hello") << 5;
+    QTest::newRow("bytestring5*4") << raw("\x5a\0\0\0\5Hello") << 5;
+    QTest::newRow("textstring5*4") << raw("\x7a\0\0\0\x05Hello") << 5;
+    QTest::newRow("bytestring5*8") << raw("\x5b\0\0\0\0\0\0\0\5Hello") << 5;
+    QTest::newRow("textstring5*8") << raw("\x7b\0\0\0\0\0\0\0\x05Hello") << 5;
+
+    // strings with undefined length
+    QTest::newRow("_emptybytestring") << raw("\x5f\xff") << 0;
+    QTest::newRow("_emptytextstring") << raw("\x7f\xff") << 0;
+    QTest::newRow("_emptybytestring2") << raw("\x5f\x40\xff") << 0;
+    QTest::newRow("_emptytextstring2") << raw("\x7f\x60\xff") << 0;
+    QTest::newRow("_emptybytestring3") << raw("\x5f\x40\x40\xff") << 0;
+    QTest::newRow("_emptytextstring3") << raw("\x7f\x60\x60\xff") << 0;
+    QTest::newRow("_bytestring5*2") << raw("\x5f\x43Hel\x42lo\xff") << 5;
+    QTest::newRow("_textstring5*2") << raw("\x7f\x63Hel\x62lo\xff") << 5;
+    QTest::newRow("_bytestring5*5") << raw("\x5f\x41H\x41""e\x41l\x41l\x41o\xff") << 5;
+    QTest::newRow("_textstring5*5") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << 5;
+    QTest::newRow("_bytestring5*6") << raw("\x5f\x41H\x41""e\x40\x41l\x41l\x41o\xff") << 5;
+    QTest::newRow("_textstring5*6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << 5;
+}
+
+void tst_Parser::stringLength()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(int, expected);
+
+    CborParser parser;
+    CborValue value;
+    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &value);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    size_t result;
+    err = cbor_value_calculate_string_length(&value, &result);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+    QCOMPARE(result, size_t(expected));
+}
+
+void tst_Parser::stringCompare_data()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<QString>("string");
+    QTest::addColumn<bool>("expected");
+
+    // compare empty to empty
+    QTest::newRow("empty-empty") << raw("\x60") << QString() << true;
+    QTest::newRow("_empty-empty") << raw("\x7f\xff") << QString() << true;
+    QTest::newRow("_empty*1-empty") << raw("\x7f\x60\xff") << QString() << true;
+    QTest::newRow("_empty*2-empty") << raw("\x7f\x60\x60\xff") << QString() << true;
+
+    // compare empty to non-empty
+    QTest::newRow("empty-nonempty") << raw("\x60") << "Hello" << false;
+    QTest::newRow("_empty-nonempty") << raw("\x7f\xff") << "Hello" << false;
+    QTest::newRow("_empty*1-nonempty") << raw("\x7f\x60\xff") << "Hello" << false;
+    QTest::newRow("_empty*2-nonempty") << raw("\x7f\x60\x60\xff") << "Hello" << false;
+
+    // compare same strings
+    QTest::newRow("same-short-short") << raw("\x65Hello") << "Hello" << true;
+    QTest::newRow("same-_short*1-short") << raw("\x7f\x65Hello\xff") << "Hello" << true;
+    QTest::newRow("same-_short*2-short") << raw("\x7f\x63Hel\x62lo\xff") << "Hello" << true;
+    QTest::newRow("same-_short*5-short") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "Hello" << true;
+    QTest::newRow("same-_short*8-short") << raw("\x7f\x61H\x60\x61""e\x60\x61l\x61l\x60\x61o\xff") << "Hello" << true;
+    QTest::newRow("same-long-long") << raw("\x78\x2aGood morning, good afternoon and goodnight")
+                                    << "Good morning, good afternoon and goodnight" << true;
+    QTest::newRow("same-_long*1-long") << raw("\x7f\x78\x2aGood morning, good afternoon and goodnight\xff")
+                                       << "Good morning, good afternoon and goodnight" << true;
+    QTest::newRow("same-_long*2-long") << raw("\x7f\x78\x1cGood morning, good afternoon\x6e and goodnight\xff")
+                                       << "Good morning, good afternoon and goodnight" << true;
+
+    // compare different strings (same length)
+    QTest::newRow("diff-same-length-short-short") << raw("\x65Hello") << "World" << false;
+    QTest::newRow("diff-same-length-_short*1-short") << raw("\x7f\x65Hello\xff") << "World" << false;
+    QTest::newRow("diff-same-length-_short*2-short") << raw("\x7f\x63Hel\x62lo\xff") << "World" << false;
+    QTest::newRow("diff-same-length-_short*5-short") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "World" << false;
+    QTest::newRow("diff-same-length-_short*8-short") << raw("\x7f\x61H\x60\x61""e\x60\x61l\x61l\x60\x61o\xff") << "World" << false;
+    QTest::newRow("diff-same-length-long-long") << raw("\x78\x2aGood morning, good afternoon and goodnight")
+                                                << "Good morning, good afternoon and goodnight, world" << false;
+    QTest::newRow("diff-same-length-_long*1-long") << raw("\x7f\x78\x2aGood morning, good afternoon and goodnight\xff")
+                                                   << "Good morning, good afternoon and goodnight, world" << false;
+    QTest::newRow("diff-same-length-_long*2-long") << raw("\x7f\x78\x1cGood morning, good afternoon\x6e and goodnight\xff")
+                                                   << "Good morning, good afternoon and goodnight, world" << false;
+
+    // compare different strings (different length)
+    QTest::newRow("diff-diff-length-short-short") << raw("\x65Hello") << "Hello World" << false;
+    QTest::newRow("diff-diff-length-_short*1-short") << raw("\x7f\x65Hello\xff") << "Hello World" << false;
+    QTest::newRow("diff-diff-length-_short*2-short") << raw("\x7f\x63Hel\x62lo\xff") << "Hello World" << false;
+    QTest::newRow("diff-diff-length-_short*5-short") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "Hello World" << false;
+    QTest::newRow("diff-diff-length-_short*8-short") << raw("\x7f\x61H\x60\x61""e\x60\x61l\x61l\x60\x61o\xff") << "Hello World" << false;
+    QTest::newRow("diff-diff-length-long-long") << raw("\x78\x2aGood morning, good afternoon and goodnight")
+                                                << "Good morning, good afternoon and goodnight World" << false;
+    QTest::newRow("diff-diff-length-_long*1-long") << raw("\x7f\x78\x2aGood morning, good afternoon and goodnight\xff")
+                                                   << "Good morning, good afternoon and goodnight World" << false;
+    QTest::newRow("diff-diff-length-_long*2-long") << raw("\x7f\x78\x1cGood morning, good afternoon\x6e and goodnight\xff")
+                                                   << "Good morning, good afternoon and goodnight World" << false;
+
+    // compare against non-strings
+    QTest::newRow("unsigned") << raw("\0") << "0" << false;
+    QTest::newRow("negative") << raw("\x20") << "-1" << false;
+    QTest::newRow("emptybytestring") << raw("\x40") << "" << false;
+    QTest::newRow("_emptybytestring") << raw("\x5f\xff") << "" << false;
+    QTest::newRow("shortbytestring") << raw("\x45Hello") << "Hello" << false;
+    QTest::newRow("longbytestring") << raw("\x58\x2aGood morning, good afternoon and goodnight")
+                                    << "Good morning, good afternoon and goodnight" << false;
+    QTest::newRow("emptyarray") << raw("\x80") << "" << false;
+    QTest::newRow("emptymap") << raw("\xa0") << "" << false;
+    QTest::newRow("array") << raw("\x81\x65Hello") << "Hello" << false;
+    QTest::newRow("map") << raw("\xa1\x65Hello\x65World") << "Hello World" << false;
+    QTest::newRow("false") << raw("\xf4") << "false" << false;
+    QTest::newRow("true") << raw("\xf5") << "true" << false;
+    QTest::newRow("null") << raw("\xf6") << "null" << false;
+}
+
+void compareOneString(const QByteArray &data, const QString &string, bool expected, int line)
+{
+    compareFailed = true;
+
+    CborParser parser;
+    CborValue value;
+    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &value);
+    QVERIFY2(!err, QByteArray::number(line) + ": Got error \"" + cbor_error_string(err) + "\"");
+
+    bool result;
+    err = cbor_value_text_string_equals(&value, string.toUtf8().constData(), &result);
+    QVERIFY2(!err, QByteArray::number(line) + ": Got error \"" + cbor_error_string(err) + "\"");
+    QCOMPARE(result, expected);
+
+    compareFailed = false;
+}
+#define compareOneString(data, string, expected) compareOneString(data, string, expected, __LINE__)
+
+void tst_Parser::stringCompare()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, string);
+    QFETCH(bool, expected);
+
+    compareOneString(data, string, expected);
+    if (compareFailed) return;
+
+    // tag it
+    compareOneString("\xc1" + data, string, expected);
+    if (compareFailed) return;
+
+    compareOneString("\xc1\xc2" + data, string, expected);
 }
 
 QTEST_MAIN(tst_Parser)

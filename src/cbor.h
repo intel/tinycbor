@@ -247,6 +247,7 @@ CBOR_INLINE_API CborError cbor_value_get_tag(const CborValue *value, CborTag *re
     *result = _cbor_value_extract_int64_helper(value);
     return CborNoError;
 }
+CBOR_API CborError cbor_value_skip_tag(CborValue *it);
 
 /* Strings */
 CBOR_INLINE_API bool cbor_value_is_byte_string(const CborValue *value)
@@ -274,9 +275,7 @@ CBOR_API CborError cbor_value_dup_string(const CborValue *value, char **buffer,
 
 /* ### TBD: partial reading API */
 
-CBOR_API int cbor_value_text_string_compare(const CborValue *value, const char *string);
-CBOR_INLINE_API bool cbor_value_text_string_equals(const CborValue *value, const char *string)
-{ return cbor_value_is_text_string(value) && cbor_value_text_string_compare(value, string) == 0; }
+CBOR_API CborError cbor_value_text_string_equals(const CborValue *value, const char *string, bool *result);
 
 /* Maps and arrays */
 CBOR_INLINE_API bool cbor_value_is_array(const CborValue *value)

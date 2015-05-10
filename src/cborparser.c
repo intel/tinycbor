@@ -356,6 +356,23 @@ CborError cbor_value_advance(CborValue *it)
 }
 
 /**
+ * Advances the CBOR value \a it until it no longer points to a tag. If \a it is
+ * already not pointing to a tag, then this function returns it unchanged.
+ *
+ * \sa cbor_value_advance_fixed(), cbor_value_advance()
+ */
+CborError cbor_value_skip_tag(CborValue *it)
+{
+    while (cbor_value_is_tag(it)) {
+        CborError err = cbor_value_advance_fixed(it);
+        if (err)
+            return err;
+    }
+    return CborNoError;
+}
+
+
+/**
  * \fn bool cbor_value_is_container(const CborValue *it)
  *
  * Returns true if the \a it value is a container and requires recursion in
@@ -501,6 +518,11 @@ static uintptr_t iterate_noop(char *dest, const char *src, size_t len)
     return true;
 }
 
+static uintptr_t iterate_memcmp(char *s1, const char *s2, size_t len)
+{
+    return memcmp(s1, s2, len) == 0;
+}
+
 static CborError iterate_string_chunks(const CborValue *value, char *buffer, size_t *buflen,
                                        bool *result, CborValue *next, IterateFunction func)
 {
@@ -564,7 +586,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
 
     // is there enough room for the ending NUL byte?
     if (*result && *buflen > total)
-        func(buffer + total, "", 1);
+        *result = func(buffer + total, "", 1);
     *buflen = total;
 
     if (next) {
@@ -609,6 +631,33 @@ CborError cbor_value_copy_string(const CborValue *value, char *buffer,
                  copied_all ? CborNoError : CborErrorOutOfMemory;
 }
 
+/**
+ * Compares the entry \a value with the string \a string and store the result
+ * in \a result. If the value is different from \a string or if it is not a
+ * text string, \a result will contain \c false.
+ *
+ * The entry at \a value may be a tagged string. If \a is not a string or a
+ * tagged string, the comparison result will be false.
+ */
+CborError cbor_value_text_string_equals(const CborValue *value, const char *string, bool *result)
+{
+    CborValue copy = *value;
+    CborError err = cbor_value_skip_tag(&copy);
+    if (err)
+        return err;
+    if (!cbor_value_is_text_string(&copy)) {
+        *result = false;
+        return CborNoError;
+    }
+
+    size_t len = strlen(string);
+    return iterate_string_chunks(&copy, CONST_CAST(char *, string), &len, result, NULL, iterate_memcmp);
+}
+
+/**
+ * Extracts a half-precision floating point from \a value and stores it in \a
+ * result.
+ */
 CborError cbor_value_get_half_float(const CborValue *value, void *result)
 {
     assert(value->type == CborHalfFloatType);

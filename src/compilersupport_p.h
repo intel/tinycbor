@@ -36,6 +36,13 @@
 #  define __has_builtin(x)  0
 #endif
 
+#ifdef __cplusplus
+#  define CONST_CAST(t, v)  const_cast<t>(v)
+#else
+// C-style const_cast without triggering a warning with -Wcast-qual
+#  define CONST_CAST(t, v)  (t)(uintptr_t)(v)
+#endif
+
 #ifdef __GNUC__
 #  define likely(x)     __builtin_expect(!!(x), 1)
 #  define unlikely(x)   __builtin_expect(!!(x), 0)
