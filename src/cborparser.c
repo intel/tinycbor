@@ -336,8 +336,10 @@ CborError cbor_value_advance(CborValue *it)
     if (is_fixed_type(it->type))
         return advance_internal(it);
 
-    if (!cbor_value_is_container(it))
-        return cbor_value_copy_string(it, NULL, 0, it);
+    if (!cbor_value_is_container(it)) {
+        size_t len = SIZE_MAX;
+        return cbor_value_copy_string(it, NULL, &len, it);
+    }
 
     // map or array
     CborError err;
@@ -439,6 +441,7 @@ CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
  */
 CborError cbor_value_calculate_string_length(const CborValue *value, size_t *len)
 {
+    *len = SIZE_MAX;
     return cbor_value_copy_string(value, NULL, len, NULL);
 }
 
@@ -484,6 +487,94 @@ CborError cbor_value_dup_string(const CborValue *value, char **buffer, size_t *b
     return CborNoError;
 }
 
+// We return uintptr_t so that we can pass memcpy directly as the iteration
+// function. The choice is to optimize for memcpy, which is used in the base
+// parser API (cbor_value_copy_string), while memcmp is used in convenience API
+// only.
+typedef uintptr_t (*IterateFunction)(char *, const char *, size_t);
+
+static uintptr_t iterate_noop(char *dest, const char *src, size_t len)
+{
+    (void)dest;
+    (void)src;
+    (void)len;
+    return true;
+}
+
+static CborError iterate_string_chunks(const CborValue *value, char *buffer, size_t *buflen,
+                                       bool *result, CborValue *next, IterateFunction func)
+{
+    assert(cbor_value_is_byte_string(value) || cbor_value_is_text_string(value));
+
+    size_t total;
+    CborError err;
+    const char *ptr = value->ptr;
+    if (cbor_value_is_length_known(value)) {
+        // easy case: fixed length
+        err = extract_length(value->parser, &ptr, &total);
+        if (err)
+            return err;
+        if (ptr + total > value->parser->end)
+            return CborErrorUnexpectedEOF;
+        if (total <= *buflen)
+            *result = func(buffer, ptr, total);
+        else
+            *result = false;
+        ptr += total;
+    } else {
+        // chunked
+        ++ptr;
+        total = 0;
+        *result = true;
+        while (true) {
+            size_t chunkLen;
+            size_t newTotal;
+
+            if (ptr == value->parser->end)
+                return CborErrorUnexpectedEOF;
+
+            if (*ptr == (char)BreakByte) {
+                ++ptr;
+                break;
+            }
+
+            // is this the right type?
+            if ((*ptr & MajorTypeMask) != value->type)
+                return CborErrorIllegalType;
+
+            err = extract_length(value->parser, &ptr, &chunkLen);
+            if (err)
+                return err;
+
+            if (unlikely(!add_check_overflow(total, chunkLen, &newTotal)))
+                return CborErrorDataTooLarge;
+
+            if (ptr + chunkLen > value->parser->end)
+                return CborErrorUnexpectedEOF;
+
+            if (*result && *buflen >= newTotal)
+                *result = func(buffer + total, ptr, chunkLen);
+            else
+                *result = false;
+
+            ptr += chunkLen;
+            total = newTotal;
+        }
+    }
+
+    // is there enough room for the ending NUL byte?
+    if (*result && *buflen > total)
+        func(buffer + total, "", 1);
+    *buflen = total;
+
+    if (next) {
+        *next = *value;
+        next->ptr = ptr;
+        return preparse_next_value(next);
+    }
+    return CborNoError;
+}
+
 /**
  * Copies the string pointed by \a value into the buffer provided at \a buffer
  * of \a buflen bytes. If \a buffer is a NULL pointer, this function will not
@@ -511,75 +602,11 @@ CborError cbor_value_dup_string(const CborValue *value, char **buffer, size_t *b
 CborError cbor_value_copy_string(const CborValue *value, char *buffer,
                                  size_t *buflen, CborValue *next)
 {
-    assert(cbor_value_is_byte_string(value) || cbor_value_is_text_string(value));
-
-    size_t total;
-    CborError err;
-    const char *ptr = value->ptr;
-    if (cbor_value_is_length_known(value)) {
-        // easy case: fixed length
-        err = extract_length(value->parser, &ptr, &total);
-        if (err)
-            return err;
-        if (ptr + total > value->parser->end)
-            return CborErrorUnexpectedEOF;
-        if (buffer) {
-            if (*buflen < total)
-                return CborErrorOutOfMemory;
-            memcpy(buffer, ptr, total);
-            ptr += total;
-        }
-    } else {
-        // chunked
-        ++ptr;
-        total = 0;
-        while (true) {
-            size_t chunkLen;
-            size_t newTotal;
-
-            if (ptr == value->parser->end)
-                return CborErrorUnexpectedEOF;
-
-            if (*ptr == (char)BreakByte) {
-                ++ptr;
-                break;
-            }
-
-            // is this the right type?
-            if ((*ptr & MajorTypeMask) != value->type)
-                return CborErrorIllegalType;
-
-            err = extract_length(value->parser, &ptr, &chunkLen);
-            if (err)
-                return err;
-
-            if (unlikely(!add_check_overflow(total, chunkLen, &newTotal)))
-                return CborErrorDataTooLarge;
-
-            if (ptr + chunkLen > value->parser->end)
-                return CborErrorUnexpectedEOF;
-
-            if (buffer) {
-                if (*buflen < newTotal)
-                    return CborErrorOutOfMemory;
-                memcpy(buffer + total, ptr, chunkLen);
-            }
-            ptr += chunkLen;
-            total = newTotal;
-        }
-    }
-
-    // is there enough room for the ending NUL byte?
-    if (buffer && *buflen > total)
-        buffer[total] = '\0';
-    *buflen = total;
-
-    if (next) {
-        *next = *value;
-        next->ptr = ptr;
-        return preparse_next_value(next);
-    }
-    return CborNoError;
+    bool copied_all;
+    CborError err = iterate_string_chunks(value, buffer, buflen, &copied_all, next,
+                                          buffer ? (IterateFunction)memcpy : iterate_noop);
+    return err ? err :
+                 copied_all ? CborNoError : CborErrorOutOfMemory;
 }
 
 CborError cbor_value_get_half_float(const CborValue *value, void *result)
