@@ -19,8 +19,8 @@
 === Decoder ===
 * Write functions not yet implemented
 * Add API for stream-decoding strings
-* Add API for random-accessing elements of a map
 * Add API for checking known tags and simple types
 * (unlikely) Add API for checking the pairing of a tag and the tagged type
 * Write tests for error conditions
 * Fuzzy-test the decoder
+* Add recursion limit to recursive functions (advance, map_find)

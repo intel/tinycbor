@@ -655,6 +655,61 @@ CborError cbor_value_text_string_equals(const CborValue *value, const char *stri
 }
 
 /**
+ * Attempts to find the value in map \a map that corresponds to the text string
+ * entry \a string. If the item is found, it is stored in \a result. If no item
+ * is found matching the key, then \a result will contain an element of type
+ * \ref CborInvalidType.
+ *
+ * \note This function may be expensive to execute.
+ */
+CborError cbor_value_map_find_value(const CborValue *map, const char *string, CborValue *element)
+{
+    assert(cbor_value_is_map(map));
+    size_t len = strlen(string);
+    CborError err = cbor_value_enter_container(map, element);
+    if (err)
+        goto error;
+
+    while (!cbor_value_at_end(element)) {
+        // find the non-tag so we can compare
+        err = cbor_value_skip_tag(element);
+        if (err)
+            goto error;
+        if (cbor_value_is_text_string(element)) {
+            bool equals;
+            size_t dummyLen = len;
+            err = iterate_string_chunks(element, CONST_CAST(char *, string), &dummyLen,
+                                        &equals, element, iterate_memcmp);
+            if (err)
+                goto error;
+            if (equals)
+                return preparse_value(element);
+        } else {
+            // skip this key
+            err = cbor_value_advance(element);
+            if (err)
+                goto error;
+        }
+
+        // skip this value
+        err = cbor_value_skip_tag(element);
+        if (err)
+            goto error;
+        err = cbor_value_advance(element);
+        if (err)
+            goto error;
+    }
+
+    // not found
+    element->type = CborInvalidType;
+    return CborNoError;
+
+error:
+    element->type = CborInvalidType;
+    return err;
+}
+
+/**
  * Extracts a half-precision floating point from \a value and stores it in \a
  * result.
  */

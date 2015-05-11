@@ -66,6 +66,8 @@ private slots:
     void stringLength();
     void stringCompare_data();
     void stringCompare();
+    void mapFind_data();
+    void mapFind();
 };
 
 char toHexUpper(unsigned n)
@@ -1000,6 +1002,97 @@ void tst_Parser::stringCompare()
     if (compareFailed) return;
 
     compareOneString("\xc1\xc2" + data, string, expected);
+}
+
+void tst_Parser::mapFind_data()
+{
+    // Rules:
+    //  we are searching for string "needle"
+    //  if present, the value should be the string "haystack" (with tag 42)
+
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<bool>("expected");
+
+    QTest::newRow("emptymap") << raw("\xa0") << false;
+    QTest::newRow("_emptymap") << raw("\xbf\xff") << false;
+
+    // maps not containing our items
+    QTest::newRow("absent-unsigned-unsigned") << raw("\xa1\0\0") << false;
+    QTest::newRow("absent-taggedunsigned-unsigned") << raw("\xa1\xc0\0\0") << false;
+    QTest::newRow("absent-unsigned-taggedunsigned") << raw("\xa1\0\xc0\0") << false;
+    QTest::newRow("absent-taggedunsigned-taggedunsigned") << raw("\xa1\xc0\0\xc0\0") << false;
+    QTest::newRow("absent-string-unsigned") << raw("\xa1\x68haystack\0") << false;
+    QTest::newRow("absent-taggedstring-unsigned") << raw("\xa1\xc0\x68haystack\0") << false;
+    QTest::newRow("absent-string-taggedunsigned") << raw("\xa1\x68haystack\xc0\0") << false;
+    QTest::newRow("absent-taggedstring-taggedunsigned") << raw("\xa1\xc0\x68haystack\xc0\0") << false;
+    QTest::newRow("absent-string-string") << raw("\xa1\x68haystack\x66needle") << false;
+    QTest::newRow("absent-string-taggedstring") << raw("\xa1\x68haystack\xc0\x66needle") << false;
+    QTest::newRow("absent-taggedstring-string") << raw("\xa1\xc0\x68haystack\x66needle") << false;
+    QTest::newRow("absent-string-taggedstring") << raw("\xa1\xc0\x68haystack\xc0\x66needle") << false;
+
+    QTest::newRow("absent-string-emptyarray") << raw("\xa1\x68haystack\x80") << false;
+    QTest::newRow("absent-string-_emptyarray") << raw("\xa1\x68haystack\x9f\xff") << false;
+    QTest::newRow("absent-string-array1") << raw("\xa1\x68haystack\x81\0") << false;
+    QTest::newRow("absent-string-array2") << raw("\xa1\x68haystack\x85\0\1\2\3\4") << false;
+    QTest::newRow("absent-string-array3") << raw("\xa1\x68haystack\x85\x63one\x63two\x65three\x64""four\x64""five") << false;
+
+    QTest::newRow("absent-string-emptymap") << raw("\xa1\x68haystack\xa0") << false;
+    QTest::newRow("absent-string-_emptymap") << raw("\xa1\x68haystack\xbf\xff") << false;
+    QTest::newRow("absent-string-map") << raw("\xa1\x68haystack\xa1\x68haystack\x66needle") << false;
+    QTest::newRow("absent-string-map2") << raw("\xa1\x68haystack\xa1\x68haystack\x66needle\61z\62yx") << false;
+
+    // maps containing our items
+    QTest::newRow("alone") << raw("\xa1\x66needle\xd8\x2a\x68haystack") << true;
+    QTest::newRow("tagged") << raw("\xa1\xc1\x66needle\xd8\x2a\x68haystack") << true;
+    QTest::newRow("doubletagged") << raw("\xa1\xc1\xc2\x66needle\xd8\x2a\x68haystack") << true;
+    QTest::newRow("chunked") << raw("\xa1\x7f\x66needle\xff\xd8\x2a\x68haystack") << true;
+    QTest::newRow("chunked*2") << raw("\xa1\x7f\x60\x66needle\xff\xd8\x2a\x68haystack") << true;
+    QTest::newRow("chunked*2bis") << raw("\xa1\x7f\x66needle\x60\xff\xd8\x2a\x68haystack") << true;
+    QTest::newRow("chunked*3") << raw("\xa1\x7f\x62ne\x62""ed\x62le\xff\xd8\x2a\x68haystack") << true;
+    QTest::newRow("chunked*8") << raw("\xa1\x7f\x61n\x61""e\x60\x61""e\x61""d\x60\x62le\x60\xff\xd8\x2a\x68haystack") << true;
+
+    QTest::newRow("1before") << raw("\xa2\x68haystack\x66needle\x66needle\xd8\x2a\x68haystack") << true;
+    QTest::newRow("tagged-1before") << raw("\xa2\xc1\x68haystack\x66needle\xc1\x66needle\xd8\x2a\x68haystack") << true;
+    QTest::newRow("doubletagged-1before2") << raw("\xa2\xc1\xc2\x68haystack\x66needle\xc1\xc2\x66needle\xd8\x2a\x68haystack") << true;
+
+    QTest::newRow("arraybefore") << raw("\xa2\x61z\x80\x66needle\xd8\x2a\x68haystack") << true;
+    QTest::newRow("nestedarraybefore") << raw("\xa2\x61z\x81\x81\0\x66needle\xd8\x2a\x68haystack") << true;
+    QTest::newRow("arrayarraybefore") << raw("\xa2\x82\1\2\x80\x66needle\xd8\x2a\x68haystack") << true;
+
+    QTest::newRow("mapbefore") << raw("\xa2\x61z\xa0\x66needle\xd8\x2a\x68haystack") << true;
+    QTest::newRow("nestedmapbefore") << raw("\xa2\x61z\xa1\0\x81\0\x66needle\xd8\x2a\x68haystack") << true;
+    QTest::newRow("mapmapbefore") << raw("\xa2\xa1\1\2\xa0\x66needle\xd8\x2a\x68haystack") << true;
+}
+
+void tst_Parser::mapFind()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(bool, expected);
+
+    CborParser parser;
+    CborValue value;
+    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &value);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    CborValue element;
+    err = cbor_value_map_find_value(&value, "needle", &element);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    if (expected) {
+        QCOMPARE(int(element.type), int(CborTagType));
+
+        CborTag tag;
+        err = cbor_value_get_tag(&element, &tag);
+        QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+        QCOMPARE(int(tag), 42);
+
+        bool equals;
+        err = cbor_value_text_string_equals(&element, "haystack", &equals);
+        QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+        QVERIFY(equals);
+    } else {
+        QCOMPARE(int(element.type), int(CborInvalidType));
+    }
 }
 
 QTEST_MAIN(tst_Parser)

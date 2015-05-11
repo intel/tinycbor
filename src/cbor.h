@@ -307,6 +307,8 @@ CBOR_INLINE_API CborError cbor_value_get_map_length(const CborValue *value, size
     return CborNoError;
 }
 
+CBOR_API CborError cbor_value_map_find_value(const CborValue *map, const char *string, CborValue *element);
+
 /* Floating point */
 CBOR_API CborError cbor_value_get_half_float(const CborValue *value, void *result);
 CBOR_INLINE_API CborError cbor_value_get_float(const CborValue *value, float *result)
