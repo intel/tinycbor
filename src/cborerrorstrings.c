@@ -85,6 +85,9 @@ const char *cbor_error_string(CborError error)
     case CborErrorDataTooLarge:
         return _("internal error: data too large");
 
+    case CborErrorNestingTooDeep:
+        return _("internal error: too many nested containers found in recursive function");
+
     case CborErrorInternalError:
         return _("internal error");
     }

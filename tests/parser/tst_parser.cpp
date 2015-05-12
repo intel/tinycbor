@@ -76,6 +76,8 @@ private slots:
     void resumeParsing();
     void endPointer_data();
     void endPointer();
+    void recursionLimit_data();
+    void recursionLimit();
 };
 
 char toHexUpper(unsigned n)
@@ -1314,6 +1316,76 @@ void tst_Parser::endPointer()
     err = parseOne(&first, &decoded);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
     QCOMPARE(int(first.ptr - data.constBegin()), offset);
+}
+
+void tst_Parser::recursionLimit_data()
+{
+    static const int recursions = CBOR_PARSER_MAX_RECURSIONS + 2;
+    QTest::addColumn<QByteArray>("data");
+
+    QTest::newRow("array") << QByteArray(recursions, '\x81') + '\x20';
+    QTest::newRow("_array") << QByteArray(recursions, '\x9f') + '\x20' + QByteArray(recursions, '\xff');
+
+    QByteArray data;
+    for (int i = 0; i < recursions; ++i)
+        data += "\xa1\x65Hello";
+    data += '\2';
+    QTest::newRow("map-recursive-values") << data;
+
+    data.clear();
+    for (int i = 0; i < recursions; ++i)
+        data += "\xbf\x65World";
+    data += '\2';
+    for (int i = 0; i < recursions; ++i)
+        data += "\xff";
+    QTest::newRow("_map-recursive-values") << data;
+
+    data = QByteArray(recursions, '\xa1');
+    data += '\2';
+    for (int i = 0; i < recursions; ++i)
+        data += "\x7f\x64quux\xff";
+    QTest::newRow("map-recursive-keys") << data;
+
+    data = QByteArray(recursions, '\xbf');
+    data += '\2';
+    for (int i = 0; i < recursions; ++i)
+        data += "\1\xff";
+    QTest::newRow("_map-recursive-keys") << data;
+
+    data.clear();
+    for (int i = 0; i < recursions / 2; ++i)
+        data += "\x81\xa1\1";
+    data += '\2';
+    QTest::newRow("mixed") << data;
+}
+
+void tst_Parser::recursionLimit()
+{
+    QFETCH(QByteArray, data);
+
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    // check that it is valid:
+    CborValue it = first;
+    {
+        QString dummy;
+        err = parseOne(&it, &dummy);
+        QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+    }
+
+    it = first;
+    err = cbor_value_advance(&it);
+    QCOMPARE(int(err), int(CborErrorNestingTooDeep));
+
+    it = first;
+    if (cbor_value_is_map(&it)) {
+        CborValue dummy;
+        err = cbor_value_map_find_value(&it, "foo", &dummy);
+        QCOMPARE(int(err), int(CborErrorNestingTooDeep));
+    }
 }
 
 QTEST_MAIN(tst_Parser)

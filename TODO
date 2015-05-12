@@ -23,4 +23,3 @@
 * (unlikely) Add API for checking the pairing of a tag and the tagged type
 * Write tests for error conditions
 * Fuzzy-test the decoder
-* Add recursion limit to recursive functions (advance, map_find)

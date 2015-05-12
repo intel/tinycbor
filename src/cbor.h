@@ -117,6 +117,7 @@ typedef enum CborError {
 
     /* internal implementation errors */
     CborErrorDataTooLarge = 1024,
+    CborErrorNestingTooDeep,
     CborErrorInternalError = ~0U
 } CborError;
 

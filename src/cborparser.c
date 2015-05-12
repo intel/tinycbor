@@ -32,6 +32,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef CBOR_PARSER_MAX_RECURSIONS
+#  define CBOR_PARSER_MAX_RECURSIONS 1024
+#endif
+
 /**
  * \typedef CborValue
  * This type contains one value parsed from the CBOR stream.
@@ -307,6 +311,34 @@ CborError cbor_value_advance_fixed(CborValue *it)
     return advance_internal(it);
 }
 
+static CborError advance_recursive(CborValue *it, int nestingLevel)
+{
+    if (is_fixed_type(it->type))
+        return advance_internal(it);
+
+    if (!cbor_value_is_container(it)) {
+        size_t len = SIZE_MAX;
+        return cbor_value_copy_string(it, NULL, &len, it);
+    }
+
+    // map or array
+    if (nestingLevel == CBOR_PARSER_MAX_RECURSIONS)
+        return CborErrorNestingTooDeep;
+
+    CborError err;
+    CborValue recursed;
+    err = cbor_value_enter_container(it, &recursed);
+    if (err)
+        return err;
+    while (!cbor_value_at_end(&recursed)) {
+        err = advance_recursive(&recursed, nestingLevel + 1);
+        if (err)
+            return err;
+    }
+    return cbor_value_leave_container(it, &recursed);
+}
+
+
 /**
  * Advances the CBOR value \a it by one element, skipping over containers.
  * Unlike cbor_value_advance_fixed(), this function can be called on a CBOR
@@ -323,26 +355,7 @@ CborError cbor_value_advance(CborValue *it)
     assert(it->type != CborInvalidType);
     if (!it->remaining)
         return CborErrorAdvancePastEOF;
-    if (is_fixed_type(it->type))
-        return advance_internal(it);
-
-    if (!cbor_value_is_container(it)) {
-        size_t len = SIZE_MAX;
-        return cbor_value_copy_string(it, NULL, &len, it);
-    }
-
-    // map or array
-    CborError err;
-    CborValue recursed;
-    err = cbor_value_enter_container(it, &recursed);
-    if (err)
-        return err;
-    while (!cbor_value_at_end(&recursed)) {
-        err = cbor_value_advance(&recursed);
-        if (err)
-            return err;
-    }
-    return cbor_value_leave_container(it, &recursed);
+    return advance_recursive(it, 0);
 }
 
 /**
@@ -360,7 +373,6 @@ CborError cbor_value_skip_tag(CborValue *it)
     }
     return CborNoError;
 }
-
 
 /**
  * \fn bool cbor_value_is_container(const CborValue *it)
