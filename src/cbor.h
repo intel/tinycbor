@@ -102,7 +102,6 @@ typedef enum CborError {
     /* parser errors streaming errors */
     CborErrorGarbageAtEnd = 256,
     CborErrorUnexpectedEOF,
-    CborErrorBreakMissingAtEOF,     /* special case of UnexpectedEOF */
     CborErrorUnexpectedBreak,
     CborErrorUnknownType,           /* can only heppen in major type 7 */
     CborErrorIllegalType,           /* type not allowed here */

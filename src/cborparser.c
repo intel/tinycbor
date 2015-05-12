@@ -139,7 +139,7 @@ static CborError preparse_value(CborValue *it)
 
     if (descriptor > Value64Bit) {
         if (unlikely(descriptor != IndefiniteLength))
-            return CborErrorIllegalNumber;
+            return type == CborSimpleType ? CborErrorUnknownType : CborErrorIllegalNumber;
         if (likely(!is_fixed_type(type))) {
             // special case
             it->flags |= CborIteratorFlag_UnknownLength;
@@ -398,12 +398,18 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
         assert(err == CborNoError);
 
         recursed->remaining = len;
-        if (recursed->remaining != len || len == UINT32_MAX)
+        if (recursed->remaining != len || len == UINT32_MAX) {
+            // back track the pointer to indicate where the error occurred
+            recursed->ptr = it->ptr;
             return CborErrorDataTooLarge;
+        }
         if (recursed->type == CborMapType) {
             // maps have keys and values, so we need to multiply by 2
-            if (recursed->remaining > UINT32_MAX / 2)
+            if (recursed->remaining > UINT32_MAX / 2) {
+                // back track the pointer to indicate where the error occurred
+                recursed->ptr = it->ptr;
                 return CborErrorDataTooLarge;
+            }
             recursed->remaining *= 2;
         }
         if (len != 0)

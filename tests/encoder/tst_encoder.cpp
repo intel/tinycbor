@@ -43,6 +43,11 @@ private slots:
     void arrays();
     void maps_data() { tags_data(); }
     void maps();
+
+    void shortBuffer_data() { tags_data(); }
+    void shortBuffer();
+    void illegalSimpleType_data();
+    void illegalSimpleType();
 };
 
 template <size_t N> QByteArray raw(const char (&data)[N])
@@ -449,6 +454,41 @@ void tst_Encoder::maps()
 
     compare(make_map({{1, make_map({{2, input}})}, {input, false}}), "\xa2\1\xa1\2" + output + output + "\xf4");
     if (compareFailed) return;
+}
+
+void tst_Encoder::shortBuffer()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+    QByteArray buffer(output.length(), Qt::Uninitialized);
+
+    for (int len = 0; len < output.length() - 1; ++len) {
+        CborEncoder encoder;
+        cbor_encoder_init(&encoder, buffer.data(), len, 0);
+        QCOMPARE(int(encodeVariant(&encoder, input)), int(CborErrorOutOfMemory));
+    }
+}
+
+void tst_Encoder::illegalSimpleType_data()
+{
+    QTest::addColumn<int>("type");
+    QTest::newRow("half-float") << 25;
+    QTest::newRow("float") << 26;
+    QTest::newRow("double") << 27;
+    QTest::newRow("28") << 28;
+    QTest::newRow("29") << 29;
+    QTest::newRow("30") << 30;
+    QTest::newRow("31") << 31;
+}
+
+void tst_Encoder::illegalSimpleType()
+{
+    QFETCH(int, type);
+
+    char buf[2];
+    CborEncoder encoder;
+    cbor_encoder_init(&encoder, buf, sizeof(buf), 0);
+    QCOMPARE(int(cbor_encode_simple_value(&encoder, type)), int(CborErrorIllegalSimpleType));
 }
 
 QTEST_MAIN(tst_Encoder)

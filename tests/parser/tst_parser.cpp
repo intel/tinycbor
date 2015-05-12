@@ -57,7 +57,7 @@ private slots:
     void nestedMaps_data() { maps_data(); }
     void nestedMaps();
     void mapMixed_data();
-    void mapMixed();
+    void mapMixed() { fixed(); }
     void mapsAndArrays_data() { arrays_data(); }
     void mapsAndArrays();
 
@@ -68,6 +68,14 @@ private slots:
     void stringCompare();
     void mapFind_data();
     void mapFind();
+
+    // validation & errors
+    void validation_data();
+    void validation();
+    void resumeParsing_data();
+    void resumeParsing();
+    void endPointer_data();
+    void endPointer();
 };
 
 char toHexUpper(unsigned n)
@@ -140,11 +148,15 @@ CborError parseOne(CborValue *it, QString *parsed)
             *parsed += "_ ";
 
         err = cbor_value_enter_container(it, &recursed);
-        if (err)
+        if (err) {
+            it->ptr = recursed.ptr;
             return err;       // parse error
+        }
         err = parseContainer(&recursed, parsed, type);
-        if (err)
+        if (err) {
+            it->ptr = recursed.ptr;
             return err;       // parse error
+        }
         err = cbor_value_leave_container(it, &recursed);
         if (err)
             return err;       // parse error
@@ -745,32 +757,27 @@ void tst_Parser::nestedMaps()
 
 void addMapMixedData()
 {
-    // this is just the contents of the map, not including the map itself
-    // we do it like that so we can reuse the same data for multiple runs
-    QTest::newRow("map-0-24") << raw("\0\x18\x18") << "0: 24";
-    QTest::newRow("map-0*1-24") << raw("\x18\0\x18\x18") << "0: 24";
-    QTest::newRow("map-0*1-24*2") << raw("\x18\0\x19\0\x18") << "0: 24";
-    QTest::newRow("map-0*4-24*2") << raw("\x1a\0\0\0\0\x19\0\x18") << "0: 24";
-    QTest::newRow("map-24-0") << raw("\x18\x18\0") << "24: 0";
-    QTest::newRow("map-24-0*1") << raw("\x18\x18\0") << "24: 0";
-    QTest::newRow("map-255-65535") << raw("\x18\xff\x19\xff\xff") << "255: 65535";
+    QTest::newRow("map-0-24") << raw("\xa1\0\x18\x18") << "{0: 24}";
+    QTest::newRow("map-0*1-24") << raw("\xa1\x18\0\x18\x18") << "{0: 24}";
+    QTest::newRow("map-0*1-24*2") << raw("\xa1\x18\0\x19\0\x18") << "{0: 24}";
+    QTest::newRow("map-0*4-24*2") << raw("\xa1\x1a\0\0\0\0\x19\0\x18") << "{0: 24}";
+    QTest::newRow("map-24-0") << raw("\xa1\x18\x18\0") << "{24: 0}";
+    QTest::newRow("map-24-0*1") << raw("\xa1\x18\x18\0") << "{24: 0}";
+    QTest::newRow("map-255-65535") << raw("\xa1\x18\xff\x19\xff\xff") << "{255: 65535}";
+
+    QTest::newRow("_map-0-24") << raw("\xbf\0\x18\x18\xff") << "{_ 0: 24}";
+    QTest::newRow("_map-0*1-24") << raw("\xbf\x18\0\x18\x18\xff") << "{_ 0: 24}";
+    QTest::newRow("_map-0*1-24*2") << raw("\xbf\x18\0\x19\0\x18\xff") << "{_ 0: 24}";
+    QTest::newRow("_map-0*4-24*2") << raw("\xbf\x1a\0\0\0\0\x19\0\x18\xff") << "{_ 0: 24}";
+    QTest::newRow("_map-24-0") << raw("\xbf\x18\x18\0\xff") << "{_ 24: 0}";
+    QTest::newRow("_map-24-0*1") << raw("\xbf\x18\x18\0\xff") << "{_ 24: 0}";
+    QTest::newRow("_map-255-65535") << raw("\xbf\x18\xff\x19\xff\xff\xff") << "{_ 255: 65535}";
 }
 
 void tst_Parser::mapMixed_data()
 {
     addColumns();
     addMapMixedData();
-}
-
-void tst_Parser::mapMixed()
-{
-    QFETCH(QByteArray, data);
-    QFETCH(QString, expected);
-
-    compareOne("\xa1" + data, '{' + expected + '}');
-    if (compareFailed) return;
-
-    compareOne("\xbf" + data + "\xff", "{_ " + expected + '}');
 }
 
 void tst_Parser::mapsAndArrays()
@@ -1093,6 +1100,220 @@ void tst_Parser::mapFind()
     } else {
         QCOMPARE(int(element.type), int(CborInvalidType));
     }
+}
+
+void tst_Parser::validation_data()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<int>("flags");     // future
+    QTest::addColumn<CborError>("expectedError");
+    QTest::addColumn<int>("offset");
+
+    // illegal numbers are future extension points
+    QTest::newRow("illegal-number-in-unsigned-1") << raw("\x81\x1c") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-unsigned-2") << raw("\x81\x1d") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-unsigned-3") << raw("\x81\x1e") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-unsigned-4") << raw("\x81\x1f") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-negative-1") << raw("\x81\x3c") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-negative-2") << raw("\x81\x3d") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-negative-3") << raw("\x81\x3e") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-negative-4") << raw("\x81\x3f") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-bytearray-length-1") << raw("\x81\x5c") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-bytearray-length-2") << raw("\x81\x5d") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-bytearray-length-3") << raw("\x81\x5e") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-string-length-1") << raw("\x81\x7c") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-string-length-2") << raw("\x81\x7d") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-string-length-3") << raw("\x81\x7e") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-array-length-1") << raw("\x81\x9c") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-array-length-2") << raw("\x81\x9d") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-array-length-3") << raw("\x81\x9e") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-map-length-1") << raw("\x81\xbc") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-map-length-2") << raw("\x81\xbd") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("illegal-number-in-map-length-3") << raw("\x81\xbe") << 0 << CborErrorIllegalNumber << 1;
+
+    QTest::newRow("number-too-short-1-0") << raw("\x81\x18") << 0 << CborErrorUnexpectedEOF << 1;   // requires 1 byte, 0 given
+    QTest::newRow("number-too-short-2-0") << raw("\x81\x19") << 0 << CborErrorUnexpectedEOF << 1;   // requires 2 bytes, 0 given
+    QTest::newRow("number-too-short-2-1") << raw("\x81\x19\x01") << 0 << CborErrorUnexpectedEOF << 1; // etc
+    QTest::newRow("number-too-short-4-0") << raw("\x81\x1a") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("number-too-short-4-3") << raw("\x81\x1a\x01\x02\x03") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("number-too-short-8-0") << raw("\x81\x1b") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("number-too-short-8-7") << raw("\x81\x1b\1\2\3\4\5\6\7") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-length-too-short-1-0") << raw("\x81\x38") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-length-too-short-2-0") << raw("\x81\x39") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-length-too-short-2-1") << raw("\x81\x39\x01") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-length-too-short-4-0") << raw("\x81\x3a") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-length-too-short-4-3") << raw("\x81\x3a\x01\x02\x03") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-length-too-short-8-0") << raw("\x81\x3b") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-length-too-short-8-7") << raw("\x81\x3b\1\2\3\4\5\6\7") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-length-too-short-1-0") << raw("\x81\x58") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-length-too-short-2-0") << raw("\x81\x59") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-length-too-short-2-1") << raw("\x81\x59\x01") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-length-too-short-4-0") << raw("\x81\x5a") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-length-too-short-4-3") << raw("\x81\x5a\x01\x02\x03") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-length-too-short-8-0") << raw("\x81\x5b") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-length-too-short-8-7") << raw("\x81\x5b\1\2\3\4\5\6\7") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("array-length-too-short-1-0") << raw("\x81\x98") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("array-length-too-short-2-0") << raw("\x81\x99") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("array-length-too-short-2-1") << raw("\x81\x99\x01") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("array-length-too-short-4-0") << raw("\x81\x9a") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("array-length-too-short-4-3") << raw("\x81\x9a\x01\x02\x03") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("array-length-too-short-8-0") << raw("\x81\x9b") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("array-length-too-short-8-7") << raw("\x81\x9b\1\2\3\4\5\6\7") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("map-length-too-short-1-0") << raw("\x81\xb8") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("map-length-too-short-2-0") << raw("\x81\xb9") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("map-length-too-short-2-1") << raw("\x81\xb9\x01") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("map-length-too-short-4-0") << raw("\x81\xba") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("map-length-too-short-4-3") << raw("\x81\xba\x01\x02\x03") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("map-length-too-short-8-0") << raw("\x81\xbb") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("map-length-too-short-8-7") << raw("\x81\xbb\1\2\3\4\5\6\7") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("tag-too-short-1-0") << raw("\x81\xd8") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("tag-too-short-2-0") << raw("\x81\xd9") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("tag-too-short-2-1") << raw("\x81\xd9\x01") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("tag-too-short-4-0") << raw("\x81\xda") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("tag-too-short-4-3") << raw("\x81\xda\x01\x02\x03") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("tag-too-short-8-0") << raw("\x81\xdb") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("tag-too-short-8-7") << raw("\x81\xdb\1\2\3\4\5\6\7") << 0 << CborErrorUnexpectedEOF << 1;
+
+    QTest::newRow("bytearray-too-short1") << raw("\x81\x41") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short2") << raw("\x81\x58") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short3") << raw("\x81\x58\x01") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short4") << raw("\x81\x59") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short5") << raw("\x81\x5a\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short6") << raw("\x81\x5a\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short7") << raw("\x81\x5b\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short1") << raw("\x81\x61") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short2") << raw("\x81\x78") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short3") << raw("\x81\x78\x01") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short4") << raw("\x81\x79") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short5") << raw("\x81\x7a\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short6") << raw("\x81\x7a\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short7") << raw("\x81\x7b\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("fp16-too-short1") << raw("\x81\xf9") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("fp16-too-short2") << raw("\x81\xf9\x00") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("float-too-short1") << raw("\x81\xfa") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("float-too-short2") << raw("\x81\xfa\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("double-too-short1") << raw("\x81\xfb") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("double-too-short2") << raw("\x81\xfb\0\0\0\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
+
+    QTest::newRow("eof-after-array") << raw("\x81") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("eof-after-array2") << raw("\x81\x78\x20") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("eof-after-array-element") << raw("\x81\x82\x01") << 0 << CborErrorUnexpectedEOF << 3;
+    QTest::newRow("eof-after-object") << raw("\x81\xa1") << 0 << CborErrorUnexpectedEOF << 2;
+    QTest::newRow("eof-after-object2") << raw("\x81\xb8\x20") << 0 << CborErrorUnexpectedEOF << 3;
+    QTest::newRow("eof-after-object-key") << raw("\x81\xa1\x01") << 0 << CborErrorUnexpectedEOF << 3;
+    QTest::newRow("eof-after-object-value") << raw("\x81\xa2\x01\x01") << 0 << CborErrorUnexpectedEOF << 4;
+    QTest::newRow("eof-after-tag") << raw("\x81\xc0") << 0 << CborErrorUnexpectedEOF << 2;
+    QTest::newRow("eof-after-tag2") << raw("\x81\xd8\x20") << 0 << CborErrorUnexpectedEOF << 3;
+
+    // major type 7 has future types
+    QTest::newRow("future-type-28") << raw("\x81\xfc") << 0 << CborErrorUnknownType << 1;
+    QTest::newRow("future-type-29") << raw("\x81\xfd") << 0 << CborErrorUnknownType << 1;
+    QTest::newRow("future-type-30") << raw("\x81\xfe") << 0 << CborErrorUnknownType << 1;
+    QTest::newRow("unexpected-break") << raw("\x81\xff") << 0 << CborErrorUnexpectedBreak << 1;
+    QTest::newRow("illegal-simple-0") << raw("\x81\xf8\0") << 0 << CborErrorIllegalSimpleType << 1;
+    QTest::newRow("illegal-simple-31") << raw("\x81\xf8\x1f") << 0 << CborErrorIllegalSimpleType << 1;
+
+    // not only too big (UINT_MAX or UINT_MAX+1 in size), but also incomplete
+    if (sizeof(size_t) < sizeof(uint64_t)) {
+        QTest::newRow("bytearray-too-big1") << raw("\x81\x5b\0\0\0\1\0\0\0\0") << 0 << CborErrorDataTooLarge << 1;
+        QTest::newRow("string-too-big1") << raw("\x81\x7b\0\0\0\1\0\0\0\0") << 0 << CborErrorDataTooLarge << 1;
+    }
+    QTest::newRow("array-too-big1") << raw("\x81\x9a\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorDataTooLarge << 1;
+    QTest::newRow("array-too-big2") << raw("\x81\x9b\0\0\0\1\0\0\0\0") << 0 << CborErrorDataTooLarge << 1;
+    QTest::newRow("object-too-big1") << raw("\x81\xba\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorDataTooLarge << 1;
+    QTest::newRow("object-too-big2") << raw("\x81\xbb\0\0\0\1\0\0\0\0") << 0 << CborErrorDataTooLarge << 1;
+
+    QTest::newRow("no-break-for-array0") << raw("\x81\x9f") << 0 << CborErrorUnexpectedEOF << 2;
+    QTest::newRow("no-break-for-array1") << raw("\x81\x9f\x01") << 0 << CborErrorUnexpectedEOF << 3;
+    QTest::newRow("no-break-string0") << raw("\x81\x7f") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("no-break-string1") << raw("\x81\x7f\x61Z") << 0 << CborErrorUnexpectedEOF << 1;
+
+    QTest::newRow("nested-indefinite-length-bytearrays") << raw("\x81\x5f\x5f\xff\xff") << 0 << CborErrorIllegalNumber << 1;
+    QTest::newRow("nested-indefinite-length-strings") << raw("\x81\x5f\x5f\xff\xff") << 0 << CborErrorIllegalNumber << 1;
+
+    QTest::newRow("string-chunk-unsigned") << raw("\x81\x7f\0\xff") << 0 << CborErrorIllegalType << 1;
+    QTest::newRow("string-chunk-bytearray") << raw("\x81\x7f\x40\xff") << 0 << CborErrorIllegalType << 1;
+    QTest::newRow("string-chunk-array") << raw("\x81\x7f\x80\xff") << 0 << CborErrorIllegalType << 1;
+    QTest::newRow("bytearray-chunk-unsigned") << raw("\x81\x5f\0\xff") << 0 << CborErrorIllegalType << 1;
+    QTest::newRow("bytearray-chunk-string") << raw("\x81\x5f\x60\xff") << 0 << CborErrorIllegalType << 1;
+    QTest::newRow("bytearray-chunk-array") << raw("\x81\x5f\x80\xff") << 0 << CborErrorIllegalType << 1;
+}
+
+void tst_Parser::validation()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(int, flags);
+    QFETCH(CborError, expectedError);
+    QFETCH(int, offset);
+
+    QString decoded;
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(data.constData(), data.length(), flags, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    err = parseOne(&first, &decoded);
+    QCOMPARE(int(err), int(expectedError));
+    QCOMPARE(int(first.ptr - data.constBegin()), offset);
+}
+
+void tst_Parser::resumeParsing_data()
+{
+    addColumns();
+    addFixedData();
+    addStringsData();
+    addTagsData();
+    addMapMixedData();
+}
+
+void tst_Parser::resumeParsing()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    for (int len = 0; len < data.length() - 1; ++len) {
+        CborParser parser;
+        CborValue first;
+        CborError err = cbor_parser_init(data.constData(), len, 0, &parser, &first);
+        if (!err) {
+            QString decoded;
+            err = parseOne(&first, &decoded);
+        }
+        if (err != CborErrorUnexpectedEOF)
+            qDebug() << "Length is" << len;
+        QCOMPARE(int(err), int(CborErrorUnexpectedEOF));
+    }
+}
+
+void tst_Parser::endPointer_data()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<int>("offset");
+
+    QTest::newRow("number1") << raw("\x81\x01\x01") << 2;
+    QTest::newRow("number24") << raw("\x81\x18\x18\x01") << 3;
+    QTest::newRow("string") << raw("\x81\x61Z\x01") << 3;
+    QTest::newRow("indefinite-string") << raw("\x81\x7f\x61Z\xff\x01") << 5;
+    QTest::newRow("array") << raw("\x81\x02\x01") << 2;
+    QTest::newRow("indefinite-array") << raw("\x81\x9f\x02\xff\x01") << 4;
+    QTest::newRow("object") << raw("\x81\xa1\x03\x02\x01") << 4;
+    QTest::newRow("indefinite-object") << raw("\x81\xbf\x03\x02\xff\x01") << 5;
+}
+
+void tst_Parser::endPointer()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(int, offset);
+
+    QString decoded;
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    err = parseOne(&first, &decoded);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+    QCOMPARE(int(first.ptr - data.constBegin()), offset);
 }
 
 QTEST_MAIN(tst_Parser)

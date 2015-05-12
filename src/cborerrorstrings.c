@@ -52,9 +52,6 @@ const char *cbor_error_string(CborError error)
     case CborErrorUnexpectedEOF:
         return _("unexpected end of data");
 
-    case CborErrorBreakMissingAtEOF:
-        return _("'break' byte missing before end of document");
-
     case CborErrorUnexpectedBreak:
         return _("unexpected 'break' byte");
 
