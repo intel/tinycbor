@@ -66,6 +66,14 @@ static inline CborError append_to_buffer(CborEncoder *encoder, const char *data,
     return CborNoError;
 }
 
+static inline CborError append_byte_to_buffer(CborEncoder *encoder, char byte)
+{
+    if (encoder->ptr == encoder->end)
+        return CborErrorOutOfMemory;
+    *encoder->ptr++ = byte;
+    return CborNoError;
+}
+
 static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
 {
     /* Little-endian would have been so much more convenient here:
@@ -165,10 +173,16 @@ CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size
 
 static CborError create_container(CborEncoder *encoder, size_t length, uint8_t shiftedMajorType, CborEncoder *container)
 {
-    CborError err = encode_number(encoder, length, shiftedMajorType);
+    CborError err;
+    if (length == CborIndefiniteLength)
+        err = append_byte_to_buffer(encoder, shiftedMajorType + IndefiniteLength);
+    else
+        err = encode_number(encoder, length, shiftedMajorType);
     if (err)
         return err;
+
     *container = *encoder;
+    container->flags = length == CborIndefiniteLength ? CborIteratorFlag_UnknownLength : 0;
     return CborNoError;
 }
 
@@ -184,6 +198,8 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
 
 CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
-    *encoder = *containerEncoder;
+    encoder->ptr = containerEncoder->ptr;
+    if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
+        return append_byte_to_buffer(encoder, BreakByte);
     return CborNoError;
 }

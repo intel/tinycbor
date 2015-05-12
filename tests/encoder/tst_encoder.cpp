@@ -71,6 +71,21 @@ QVariant make_map(const std::initializer_list<QPair<QVariant, QVariant>> &list)
     return QVariant::fromValue(Map(list));
 }
 
+struct IndeterminateLengthArray : QVariantList { using QVariantList::QVariantList; };
+struct IndeterminateLengthMap : Map { using Map::Map; };
+Q_DECLARE_METATYPE(IndeterminateLengthArray)
+Q_DECLARE_METATYPE(IndeterminateLengthMap)
+
+QVariant make_ilarray(const std::initializer_list<QVariant> &list)
+{
+    return QVariant::fromValue(IndeterminateLengthArray(list));
+}
+
+QVariant make_ilmap(const std::initializer_list<QPair<QVariant, QVariant>> &list)
+{
+    return QVariant::fromValue(IndeterminateLengthMap(list));
+}
+
 CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
 {
     int type = v.userType();
@@ -108,18 +123,6 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
         return cbor_encode_byte_string(encoder, string.constData(), string.length());
     }
 
-    case QVariant::List: {
-        CborEncoder sub;
-        QVariantList list = v.toList();
-        CborError err = cbor_encoder_create_array(encoder, &sub, list.length());
-        foreach (const QVariant &v2, list) {
-            err = encodeVariant(&sub, v2);
-            if (err)
-                return err;
-        }
-        return cbor_encoder_close_container(encoder, &sub);
-    }
-
     default:
         if (type == qMetaTypeId<SimpleType>())
             return cbor_encode_simple_value(encoder, v.value<SimpleType>().type);
@@ -131,10 +134,31 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 return err;
             return encodeVariant(encoder, v.value<Tag>().tagged);
         }
-        if (type == qMetaTypeId<Map>()) {
+        if (type == QVariant::List || type == qMetaTypeId<IndeterminateLengthArray>()) {
+            CborEncoder sub;
+            QVariantList list = v.toList();
+            size_t len = list.length();
+            if (type == qMetaTypeId<IndeterminateLengthArray>()) {
+                len = CborIndefiniteLength;
+                list = v.value<IndeterminateLengthArray>();
+            }
+            CborError err = cbor_encoder_create_array(encoder, &sub, len);
+            foreach (const QVariant &v2, list) {
+                err = encodeVariant(&sub, v2);
+                if (err)
+                    return err;
+            }
+            return cbor_encoder_close_container(encoder, &sub);
+        }
+        if (type == qMetaTypeId<Map>() || type == qMetaTypeId<IndeterminateLengthMap>()) {
             CborEncoder sub;
             Map map = v.value<Map>();
-            CborError err = cbor_encoder_create_map(encoder, &sub, map.length());
+            size_t len = map.length();
+            if (type == qMetaTypeId<IndeterminateLengthMap>()) {
+                len = CborIndefiniteLength;
+                map = v.value<IndeterminateLengthMap>();
+            }
+            CborError err = cbor_encoder_create_map(encoder, &sub, len);
             for (auto pair : map) {
                 err = encodeVariant(&sub, pair.first);
                 if (err)
@@ -156,6 +180,7 @@ void compare(const QVariant &input, const QByteArray &output)
     CborEncoder encoder;
     cbor_encoder_init(&encoder, buffer.data(), buffer.length(), 0);
     QCOMPARE(int(encodeVariant(&encoder, input)), int(CborNoError));
+    buffer.resize(encoder.ptr - buffer.constData());
     QCOMPARE(buffer, output);
 }
 
@@ -286,6 +311,36 @@ void addArraysAndMaps()
     QTest::newRow("map-array1") << raw("\xa1\x62oc\x81\0") << make_map({{"oc", QVariantList{0}}});
     QTest::newRow("map-array2") << raw("\xa1\x62oc\x84\0\1\2\3") << make_map({{"oc", QVariantList{0, 1, 2, 3}}});
     QTest::newRow("map-array3") << raw("\xa2\x62oc\x82\0\1\2\3") << make_map({{"oc", QVariantList{0, 1}}, {2, 3}});
+
+    // indeterminate length
+    QTest::newRow("_emptyarray") << raw("\x9f\xff") << QVariant::fromValue(IndeterminateLengthArray{});
+    QTest::newRow("_emptymap") << raw("\xbf\xff") << make_ilmap({});
+
+    QTest::newRow("_array-0") << raw("\x9f\0\xff") << make_ilarray({0});
+    QTest::newRow("_array-0") << raw("\x9f\0\0\xff") << make_ilarray({0, 0});
+    QTest::newRow("_array-Hello") << raw("\x9f\x65Hello\xff") << make_ilarray({"Hello"});
+    QTest::newRow("_array-array-0") << raw("\x9f\x81\0\xff") << make_ilarray({QVariantList{0}});
+    QTest::newRow("_array-_array-0") << raw("\x9f\x9f\0\xff\xff") << make_ilarray({make_ilarray({0})});
+    QTest::newRow("_array-_array-{0-0}") << raw("\x9f\x9f\0\0\xff\xff") << make_ilarray({make_ilarray({0, 0})});
+    QTest::newRow("_array-_array-0-0") << raw("\x9f\x9f\0\xff\0\xff") << make_ilarray({make_ilarray({0}),0});
+    QTest::newRow("_array-_array-Hello") << raw("\x9f\x9f\x65Hello\xff\xff") << make_ilarray({make_ilarray({"Hello"})});
+
+    QTest::newRow("_map-0:0") << raw("\xbf\0\0\xff") << make_ilmap({{0,0}});
+    QTest::newRow("_map-0:0-1:1") << raw("\xbf\0\0\1\1\xff") << make_ilmap({{0,0}, {1,1}});
+    QTest::newRow("_map-0:{map-0:0-1:1}") << raw("\xbf\0\xa2\0\0\1\1\xff") << make_ilmap({{0, make_map({{0,0}, {1,1}})}});
+    QTest::newRow("_map-0:{_map-0:0-1:1}") << raw("\xbf\0\xbf\0\0\1\1\xff\xff") << make_ilmap({{0, make_ilmap({{0,0}, {1,1}})}});
+
+    QTest::newRow("_array-map1") << raw("\x9f\xa1\0\0\xff") << make_ilarray({make_map({{0,0}})});
+    QTest::newRow("_array-_map1") << raw("\x9f\xbf\0\0\xff\xff") << make_ilarray({make_ilmap({{0,0}})});
+    QTest::newRow("_array-map2") << raw("\x9f\xa1\0\0\xa1\1\1\xff") << make_ilarray({make_map({{0,0}}), make_map({{1,1}})});
+    QTest::newRow("_array-_map2") << raw("\x9f\xbf\0\0\xff\xbf\1\1\xff\xff") << make_ilarray({make_ilmap({{0,0}}), make_ilmap({{1,1}})});
+
+    QTest::newRow("_map-array1") << raw("\xbf\x62oc\x81\0\xff") << make_ilmap({{"oc", QVariantList{0}}});
+    QTest::newRow("_map-_array1") << raw("\xbf\x62oc\x9f\0\xff\xff") << make_ilmap({{"oc", make_ilarray({0})}});
+    QTest::newRow("_map-array2") << raw("\xbf\x62oc\x84\0\1\2\3\xff") << make_ilmap({{"oc", QVariantList{0, 1, 2, 3}}});
+    QTest::newRow("_map-_array2") << raw("\xbf\x62oc\x9f\0\1\2\3\xff\xff") << make_ilmap({{"oc", make_ilarray({0, 1, 2, 3})}});
+    QTest::newRow("_map-array3") << raw("\xbf\x62oc\x82\0\1\2\3\xff") << make_ilmap({{"oc", QVariantList{0, 1}}, {2, 3}});
+    QTest::newRow("_map-_array3") << raw("\xbf\x62oc\x9f\0\1\xff\2\3\xff") << make_ilmap({{"oc", make_ilarray({0, 1})}, {2, 3}});
 
     // tagged
     QTest::newRow("array-1(0)") << raw("\x81\xc1\0") << QVariant(QVariantList{QVariant::fromValue(Tag{1, 0})});
