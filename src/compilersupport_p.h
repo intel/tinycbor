@@ -28,9 +28,37 @@
 #ifndef _BSD_SOURCE
 #  define _BSD_SOURCE
 #endif
+#include <arpa/inet.h>
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#if defined(__GNUC__)
+#  if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#    define ntohll  __builtin_bswap64
+#    define htonll  __builtin_bswap64
+#  else
+#    define ntohll
+#    define htonll
+#  endif
+#elif defined(__sun)
+#  include <sys/byteorder.h>
+#elif defined(_MSC_VER)
+/* MSVC, which implies Windows, which implies little-endian */
+#  define ntohll    _byteswap_uint64
+#  define htonll    _byteswap_uint64
+#endif
+#ifndef ntohll
+#  if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#    define ntohll
+#    define htonll
+#  elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#    define ntohll(x)       ((ntohl((uint32_t)(x)) * UINT64_C(0x100000000)) + (ntohl((x) >> 32)))
+#    define htonll          ntohll
+#  else
+#    error "Unable to determine byte order!"
+#  endif
+#endif
 
 #ifndef __has_builtin
 #  define __has_builtin(x)  0

@@ -28,7 +28,6 @@
 #include "compilersupport_p.h"
 
 #include <assert.h>
-#include <endian.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,19 +40,19 @@ void cbor_encoder_init(CborEncoder *encoder, char *buffer, size_t size, int flag
 
 static inline void put16(char *where, uint16_t v)
 {
-    v = htobe16(v);
+    v = htons(v);
     memcpy(where, &v, sizeof(v));
 }
 
 static inline void put32(char *where, uint32_t v)
 {
-    v = htobe32(v);
+    v = htonl(v);
     memcpy(where, &v, sizeof(v));
 }
 
 static inline void put64(char *where, uint64_t v)
 {
-    v = htobe64(v);
+    v = htonll(v);
     memcpy(where, &v, sizeof(v));
 }
 

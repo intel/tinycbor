@@ -28,7 +28,6 @@
 #include "compilersupport_p.h"
 
 #include <assert.h>
-#include <endian.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -63,21 +62,21 @@ static inline uint16_t get16(const char *ptr)
 {
     uint16_t result;
     memcpy(&result, ptr, sizeof(result));
-    return be16toh(result);
+    return ntohs(result);
 }
 
 static inline uint32_t get32(const char *ptr)
 {
     uint32_t result;
     memcpy(&result, ptr, sizeof(result));
-    return be32toh(result);
+    return ntohl(result);
 }
 
 static inline uint64_t get64(const char *ptr)
 {
     uint64_t result;
     memcpy(&result, ptr, sizeof(result));
-    return be64toh(result);
+    return ntohll(result);
 }
 
 static inline CborError extract_number(const CborParser *parser, const char **ptr, uint64_t *len)
