@@ -50,6 +50,8 @@ private slots:
     void illegalSimpleType();
 };
 
+#include "tst_encoder.moc"
+
 template <size_t N> QByteArray raw(const char (&data)[N])
 {
     return QByteArray::fromRawData(data, N - 1);
@@ -547,4 +549,3 @@ void tst_Encoder::illegalSimpleType()
 }
 
 QTEST_MAIN(tst_Encoder)
-#include "tst_encoder.moc"
