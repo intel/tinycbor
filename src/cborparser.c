@@ -575,7 +575,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
             if (err)
                 return err;
 
-            if (unlikely(!add_check_overflow(total, chunkLen, &newTotal)))
+            if (unlikely(add_check_overflow(total, chunkLen, &newTotal)))
                 return CborErrorDataTooLarge;
 
             if (ptr + chunkLen > value->parser->end)
