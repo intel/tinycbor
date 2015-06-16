@@ -82,7 +82,7 @@
 #  define cbor_ntohll       ntohll
 #  define cbor_htonll       htonll
 /* ntohll isn't usually defined */
-#  ifdef ntohll
+#  ifndef ntohll
 #    if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #      define ntohll
 #      define htonll
