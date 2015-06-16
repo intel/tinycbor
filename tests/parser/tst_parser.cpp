@@ -316,7 +316,7 @@ void tst_Parser::initParserEmpty()
 {
     CborParser parser;
     CborValue first;
-    CborError err = cbor_parser_init("", 0, 0, &parser, &first);
+    CborError err = cbor_parser_init((const quint8 *)"", 0, 0, &parser, &first);
     QCOMPARE(err, CborErrorUnexpectedEOF);
 }
 
@@ -332,7 +332,7 @@ void compareOne_real(const QByteArray &data, const QString &expected, int line)
     compareFailed = true;
     CborParser parser;
     CborValue first;
-    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
     QVERIFY2(!err, QByteArray::number(line) + ": Got error \"" + cbor_error_string(err) + "\"");
 
     QString decoded;
@@ -896,7 +896,7 @@ void tst_Parser::stringLength()
 
     CborParser parser;
     CborValue value;
-    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &value);
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &value);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
     size_t result;
@@ -985,7 +985,7 @@ void compareOneString(const QByteArray &data, const QString &string, bool expect
 
     CborParser parser;
     CborValue value;
-    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &value);
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &value);
     QVERIFY2(!err, QByteArray::number(line) + ": Got error \"" + cbor_error_string(err) + "\"");
 
     bool result;
@@ -1080,7 +1080,7 @@ void tst_Parser::mapFind()
 
     CborParser parser;
     CborValue value;
-    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &value);
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &value);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
     CborValue element;
@@ -1251,12 +1251,12 @@ void tst_Parser::validation()
     QString decoded;
     CborParser parser;
     CborValue first;
-    CborError err = cbor_parser_init(data.constData(), data.length(), flags, &parser, &first);
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), flags, &parser, &first);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
     err = parseOne(&first, &decoded);
     QCOMPARE(int(err), int(expectedError));
-    QCOMPARE(int(first.ptr - data.constBegin()), offset);
+    QCOMPARE(int(first.ptr - reinterpret_cast<const quint8 *>(data.constBegin())), offset);
 }
 
 void tst_Parser::resumeParsing_data()
@@ -1276,7 +1276,7 @@ void tst_Parser::resumeParsing()
     for (int len = 0; len < data.length() - 1; ++len) {
         CborParser parser;
         CborValue first;
-        CborError err = cbor_parser_init(data.constData(), len, 0, &parser, &first);
+        CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), len, 0, &parser, &first);
         if (!err) {
             QString decoded;
             err = parseOne(&first, &decoded);
@@ -1310,12 +1310,12 @@ void tst_Parser::endPointer()
     QString decoded;
     CborParser parser;
     CborValue first;
-    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
     err = parseOne(&first, &decoded);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
-    QCOMPARE(int(first.ptr - data.constBegin()), offset);
+    QCOMPARE(int(first.ptr - reinterpret_cast<const quint8 *>(data.constBegin())), offset);
 }
 
 void tst_Parser::recursionLimit_data()
@@ -1365,7 +1365,7 @@ void tst_Parser::recursionLimit()
 
     CborParser parser;
     CborValue first;
-    CborError err = cbor_parser_init(data.constData(), data.length(), 0, &parser, &first);
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
     // check that it is valid:

@@ -58,28 +58,28 @@
  * \endomit
  */
 
-static inline uint16_t get16(const char *ptr)
+static inline uint16_t get16(const uint8_t *ptr)
 {
     uint16_t result;
     memcpy(&result, ptr, sizeof(result));
     return cbor_ntohs(result);
 }
 
-static inline uint32_t get32(const char *ptr)
+static inline uint32_t get32(const uint8_t *ptr)
 {
     uint32_t result;
     memcpy(&result, ptr, sizeof(result));
     return cbor_ntohl(result);
 }
 
-static inline uint64_t get64(const char *ptr)
+static inline uint64_t get64(const uint8_t *ptr)
 {
     uint64_t result;
     memcpy(&result, ptr, sizeof(result));
     return cbor_ntohll(result);
 }
 
-static inline CborError extract_number(const CborParser *parser, const char **ptr, uint64_t *len)
+static inline CborError extract_number(const CborParser *parser, const uint8_t **ptr, uint64_t *len)
 {
     uint8_t additional_information = **ptr & SmallValueMask;
     ++*ptr;
@@ -106,7 +106,7 @@ static inline CborError extract_number(const CborParser *parser, const char **pt
     return CborNoError;
 }
 
-static inline CborError extract_length(const CborParser *parser, const char **ptr, size_t *len)
+static inline CborError extract_length(const CborParser *parser, const uint8_t **ptr, size_t *len)
 {
     uint64_t v;
     CborError err = extract_number(parser, ptr, &v);
@@ -219,7 +219,7 @@ static CborError preparse_next_value(CborValue *it)
             it->type = CborInvalidType;
             return CborNoError;
         }
-    } else if (it->remaining == UINT32_MAX && it->ptr != it->parser->end && *it->ptr == (char)BreakByte) {
+    } else if (it->remaining == UINT32_MAX && it->ptr != it->parser->end && *it->ptr == (uint8_t)BreakByte) {
         // end of map or array
         ++it->ptr;
         it->type = CborInvalidType;
@@ -283,7 +283,7 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
  * ### Write how to determine the end pointer
  * ### Write how to do limited-buffer windowed decoding
  */
-CborError cbor_parser_init(const char *buffer, size_t size, int flags, CborParser *parser, CborValue *it)
+CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborParser *parser, CborValue *it)
 {
     memset(parser, 0, sizeof(*parser));
     parser->end = buffer + size;
@@ -515,9 +515,9 @@ CborError cbor_value_dup_string(const CborValue *value, char **buffer, size_t *b
 // function. The choice is to optimize for memcpy, which is used in the base
 // parser API (cbor_value_copy_string), while memcmp is used in convenience API
 // only.
-typedef uintptr_t (*IterateFunction)(char *, const char *, size_t);
+typedef uintptr_t (*IterateFunction)(char *, const uint8_t *, size_t);
 
-static uintptr_t iterate_noop(char *dest, const char *src, size_t len)
+static uintptr_t iterate_noop(char *dest, const uint8_t *src, size_t len)
 {
     (void)dest;
     (void)src;
@@ -525,9 +525,9 @@ static uintptr_t iterate_noop(char *dest, const char *src, size_t len)
     return true;
 }
 
-static uintptr_t iterate_memcmp(char *s1, const char *s2, size_t len)
+static uintptr_t iterate_memcmp(char *s1, const uint8_t *s2, size_t len)
 {
-    return memcmp(s1, s2, len) == 0;
+    return memcmp(s1, (const char *)s2, len) == 0;
 }
 
 static CborError iterate_string_chunks(const CborValue *value, char *buffer, size_t *buflen,
@@ -537,7 +537,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
 
     size_t total;
     CborError err;
-    const char *ptr = value->ptr;
+    const uint8_t *ptr = value->ptr;
     if (cbor_value_is_length_known(value)) {
         // easy case: fixed length
         err = extract_length(value->parser, &ptr, &total);
@@ -562,7 +562,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
             if (ptr == value->parser->end)
                 return CborErrorUnexpectedEOF;
 
-            if (*ptr == (char)BreakByte) {
+            if (*ptr == (uint8_t)BreakByte) {
                 ++ptr;
                 break;
             }
@@ -593,7 +593,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
 
     // is there enough room for the ending NUL byte?
     if (*result && *buflen > total)
-        *result = func(buffer + total, "", 1);
+        *result = func(buffer + total, (const uint8_t *)"", 1);
     *buflen = total;
 
     if (next) {

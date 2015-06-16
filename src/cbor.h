@@ -126,15 +126,15 @@ CBOR_API const char *cbor_error_string(CborError error);
 /* Encoder API */
 struct CborEncoder
 {
-    char *ptr;
-    const char *end;
+    uint8_t *ptr;
+    const uint8_t *end;
     int flags;
 };
 typedef struct CborEncoder CborEncoder;
 
 static const size_t CborIndefiniteLength = SIZE_MAX;
 
-CBOR_API void cbor_encoder_init(CborEncoder *encoder, char *buffer, size_t size, int flags);
+CBOR_API void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags);
 CBOR_API CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value);
 CBOR_API CborError cbor_encode_int(CborEncoder *encoder, int64_t value);
 CBOR_API CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value);
@@ -143,7 +143,7 @@ CBOR_API CborError cbor_encode_float(CborEncoder *encoder, const float *value);
 CBOR_API CborError cbor_encode_double(CborEncoder *encoder, const double *value);
 CBOR_API CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag);
 CBOR_API CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size_t length);
-CBOR_API CborError cbor_encode_byte_string(CborEncoder *encoder, const char *string, size_t length);
+CBOR_API CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length);
 
 CBOR_INLINE_API CborError cbor_encode_boolean(CborEncoder *encoder, bool value)
 { return cbor_encode_simple_value(encoder, (int)value - 1 + (CborBooleanType & 0x1f)); }
@@ -167,7 +167,7 @@ enum CborParserIteratorFlags
 
 struct CborParser
 {
-    const char *end;
+    const uint8_t *end;
     int flags;
 };
 typedef struct CborParser CborParser;
@@ -175,7 +175,7 @@ typedef struct CborParser CborParser;
 struct CborValue
 {
     const CborParser *parser;
-    const char *ptr;
+    const uint8_t *ptr;
     uint32_t remaining;
     uint16_t extra;
     uint8_t type;
@@ -183,7 +183,7 @@ struct CborValue
 };
 typedef struct CborValue CborValue;
 
-CBOR_API CborError cbor_parser_init(const char *buffer, size_t size, int flags, CborParser *parser, CborValue *it);
+CBOR_API CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborParser *parser, CborValue *it);
 
 CBOR_INLINE_API bool cbor_value_at_end(const CborValue *it)
 { return it->remaining == 0; }

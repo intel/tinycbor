@@ -31,32 +31,32 @@
 #include <stdlib.h>
 #include <string.h>
 
-void cbor_encoder_init(CborEncoder *encoder, char *buffer, size_t size, int flags)
+void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags)
 {
     encoder->ptr = buffer;
     encoder->end = buffer + size;
     encoder->flags = flags;
 }
 
-static inline void put16(char *where, uint16_t v)
+static inline void put16(void *where, uint16_t v)
 {
     v = cbor_htons(v);
     memcpy(where, &v, sizeof(v));
 }
 
-static inline void put32(char *where, uint32_t v)
+static inline void put32(void *where, uint32_t v)
 {
     v = cbor_htonl(v);
     memcpy(where, &v, sizeof(v));
 }
 
-static inline void put64(char *where, uint64_t v)
+static inline void put64(void *where, uint64_t v)
 {
     v = cbor_htonll(v);
     memcpy(where, &v, sizeof(v));
 }
 
-static inline CborError append_to_buffer(CborEncoder *encoder, const char *data, size_t len)
+static inline CborError append_to_buffer(CborEncoder *encoder, const void *data, size_t len)
 {
     if (encoder->ptr + len > encoder->end)
         return CborErrorOutOfMemory;
@@ -65,7 +65,7 @@ static inline CborError append_to_buffer(CborEncoder *encoder, const char *data,
     return CborNoError;
 }
 
-static inline CborError append_byte_to_buffer(CborEncoder *encoder, char byte)
+static inline CborError append_byte_to_buffer(CborEncoder *encoder, uint8_t byte)
 {
     if (encoder->ptr == encoder->end)
         return CborErrorOutOfMemory;
@@ -80,9 +80,9 @@ static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t
      * only the necessary bytes.
      * Since it has to be big endian, do it the other way around:
      * write from the end. */
-    char buf[1 + sizeof(ui)];
-    char *const bufend = buf + sizeof(buf);
-    char *bufstart = bufend - 1;
+    uint8_t buf[1 + sizeof(ui)];
+    uint8_t *const bufend = buf + sizeof(buf);
+    uint8_t *bufstart = bufend - 1;
     put64(buf + 1, ui);     // we probably have a bunch of zeros in the beginning
 
     if (ui < Value8Bit) {
@@ -128,21 +128,21 @@ CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value)
 
 CborError cbor_encode_half_float(CborEncoder *encoder, const void *value)
 {
-    char buf[1 + sizeof(uint16_t)] = { CborHalfFloatType };
+    uint8_t buf[1 + sizeof(uint16_t)] = { CborHalfFloatType };
     put16(buf + 1, *(const uint16_t*)value);
     return append_to_buffer(encoder, buf, sizeof(buf));
 }
 
 CborError cbor_encode_float(CborEncoder *encoder, const float *value)
 {
-    char buf[1 + sizeof(uint32_t)] = { CborFloatType };
+    uint8_t buf[1 + sizeof(uint32_t)] = { CborFloatType };
     put32(buf + 1, *(const uint32_t*)value);
     return append_to_buffer(encoder, buf, sizeof(buf));
 }
 
 CborError cbor_encode_double(CborEncoder *encoder, const double *value)
 {
-    char buf[1 + sizeof(uint64_t)] = { CborDoubleType };
+    uint8_t buf[1 + sizeof(uint64_t)] = { CborDoubleType };
     put64(buf + 1, *(const uint64_t*)value);
     return append_to_buffer(encoder, buf, sizeof(buf));
 }
@@ -152,7 +152,7 @@ CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag)
     return encode_number(encoder, tag, TagType << MajorTypeShift);
 }
 
-static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shiftedMajorType, const char *string)
+static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shiftedMajorType, const void *string)
 {
     CborError err = encode_number(encoder, length, shiftedMajorType);
     if (err)
@@ -160,7 +160,7 @@ static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shif
     return append_to_buffer(encoder, string, length);
 }
 
-CborError cbor_encode_byte_string(CborEncoder *encoder, const char *string, size_t length)
+CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length)
 {
     return encode_string(encoder, length, ByteStringType << MajorTypeShift, string);
 }

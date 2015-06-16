@@ -122,7 +122,7 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
 
     case QVariant::ByteArray: {
         QByteArray string = v.toByteArray();
-        return cbor_encode_byte_string(encoder, string.constData(), string.length());
+        return cbor_encode_byte_string(encoder, reinterpret_cast<const quint8 *>(string.constData()), string.length());
     }
 
     default:
@@ -184,9 +184,9 @@ void compare(const QVariant &input, const QByteArray &output)
 {
     QByteArray buffer(output.length(), Qt::Uninitialized);
     CborEncoder encoder;
-    cbor_encoder_init(&encoder, buffer.data(), buffer.length(), 0);
+    cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), buffer.length(), 0);
     QCOMPARE(int(encodeVariant(&encoder, input)), int(CborNoError));
-    buffer.resize(encoder.ptr - buffer.constData());
+    buffer.resize(encoder.ptr - reinterpret_cast<const quint8 *>(buffer.constData()));
     QCOMPARE(buffer, output);
 }
 
@@ -525,7 +525,7 @@ void tst_Encoder::shortBuffer()
 
     for (int len = 0; len < output.length() - 1; ++len) {
         CborEncoder encoder;
-        cbor_encoder_init(&encoder, buffer.data(), len, 0);
+        cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), len, 0);
         QCOMPARE(int(encodeVariant(&encoder, input)), int(CborErrorOutOfMemory));
     }
 }
@@ -546,7 +546,7 @@ void tst_Encoder::illegalSimpleType()
 {
     QFETCH(int, type);
 
-    char buf[2];
+    quint8 buf[2];
     CborEncoder encoder;
     cbor_encoder_init(&encoder, buf, sizeof(buf), 0);
     QCOMPARE(int(cbor_encode_simple_value(&encoder, type)), int(CborErrorIllegalSimpleType));
