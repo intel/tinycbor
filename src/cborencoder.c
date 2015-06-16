@@ -40,19 +40,19 @@ void cbor_encoder_init(CborEncoder *encoder, char *buffer, size_t size, int flag
 
 static inline void put16(char *where, uint16_t v)
 {
-    v = htons(v);
+    v = cbor_htons(v);
     memcpy(where, &v, sizeof(v));
 }
 
 static inline void put32(char *where, uint32_t v)
 {
-    v = htonl(v);
+    v = cbor_htonl(v);
     memcpy(where, &v, sizeof(v));
 }
 
 static inline void put64(char *where, uint64_t v)
 {
-    v = htonll(v);
+    v = cbor_htonll(v);
     memcpy(where, &v, sizeof(v));
 }
 

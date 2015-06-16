@@ -33,36 +33,65 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if defined(__GNUC__)
+#ifndef __has_builtin
+#  define __has_builtin(x)  0
+#endif
+
+#if (defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 403)) || \
+    (defined(__clang__) && (__clang__ >= 3))
 #  if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#    define ntohll  __builtin_bswap64
-#    define htonll  __builtin_bswap64
+#    define cbor_ntohll     __builtin_bswap64
+#    define cbor_htonll     __builtin_bswap64
+#    define cbor_ntohl      __builtin_bswap32
+#    define cbor_htonl      __builtin_bswap32
+#    if !defined(__clang__) || __has_builtin(__builtin_bswap16)
+#      define cbor_ntohs    __builtin_bswap16
+#      define cbor_htons    __builtin_bswap16
+#    endif
 #  else
-#    define ntohll
-#    define htonll
+#    define cbor_ntohll
+#    define cbor_htonll
+#    define cbor_ntohl
+#    define cbor_htonl
+#    define cbor_ntohs
+#    define cbor_htons
 #  endif
 #elif defined(__sun)
 #  include <sys/byteorder.h>
 #elif defined(_MSC_VER)
-/* MSVC, which implies Windows, which implies little-endian */
-#  define ntohll    _byteswap_uint64
-#  define htonll    _byteswap_uint64
+/* MSVC, which implies Windows, which implies little-endian and sizeof(long) == 4 */
+#  define cbor_ntohll       _byteswap_uint64
+#  define cbor_htonll       _byteswap_uint64
+#  define cbor_ntohl        _byteswap_ulong
+#  define cbor_htonl        _byteswap_ulong
+#  define cbor_ntohs        _byteswap_ushort
+#  define cbor_htons        _byteswap_ushort
 #endif
-#ifndef ntohll
-#  if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#    define ntohll
-#    define htonll
-#  elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#    define ntohll(x)       ((ntohl((uint32_t)(x)) * UINT64_C(0x100000000)) + (ntohl((x) >> 32)))
-#    define htonll          ntohll
-#  else
-#    error "Unable to determine byte order!"
+#ifndef cbor_ntohs
+#  define cbor_ntohs        ntohs
+#  define cbor_htons        htons
+#endif
+#ifndef cbor_ntohl
+#  define cbor_ntohl        ntohl
+#  define cbor_htonl        htonl
+#endif
+#ifndef cbor_ntohll
+#  define cbor_ntohll       ntohll
+#  define cbor_htonll       htonll
+/* ntohll isn't usually defined */
+#  ifdef ntohll
+#    if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#      define ntohll
+#      define htonll
+#    elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#      define ntohll(x)       ((ntohl((uint32_t)(x)) * UINT64_C(0x100000000)) + (ntohl((x) >> 32)))
+#      define htonll          ntohll
+#    else
+#      error "Unable to determine byte order!"
+#    endif
 #  endif
 #endif
 
-#ifndef __has_builtin
-#  define __has_builtin(x)  0
-#endif
 
 #ifdef __cplusplus
 #  define CONST_CAST(t, v)  const_cast<t>(v)

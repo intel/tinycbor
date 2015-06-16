@@ -62,21 +62,21 @@ static inline uint16_t get16(const char *ptr)
 {
     uint16_t result;
     memcpy(&result, ptr, sizeof(result));
-    return ntohs(result);
+    return cbor_ntohs(result);
 }
 
 static inline uint32_t get32(const char *ptr)
 {
     uint32_t result;
     memcpy(&result, ptr, sizeof(result));
-    return ntohl(result);
+    return cbor_ntohl(result);
 }
 
 static inline uint64_t get64(const char *ptr)
 {
     uint64_t result;
     memcpy(&result, ptr, sizeof(result));
-    return ntohll(result);
+    return cbor_ntohll(result);
 }
 
 static inline CborError extract_number(const CborParser *parser, const char **ptr, uint64_t *len)
