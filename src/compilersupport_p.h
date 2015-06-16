@@ -44,7 +44,10 @@
 #    define cbor_htonll     __builtin_bswap64
 #    define cbor_ntohl      __builtin_bswap32
 #    define cbor_htonl      __builtin_bswap32
-#    if !defined(__clang__) || __has_builtin(__builtin_bswap16)
+#    ifdef __INTEL_COMPILER
+#      define cbor_ntohs    _bswap16
+#      define cbor_htons    _bswap16
+#    elif (__GNUC__ * 100 + __GNUC_MINOR__ >= 408) || __has_builtin(__builtin_bswap16)
 #      define cbor_ntohs    __builtin_bswap16
 #      define cbor_htons    __builtin_bswap16
 #    endif
