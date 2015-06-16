@@ -104,9 +104,13 @@
 #  define likely(x)     __builtin_expect(!!(x), 1)
 #  define unlikely(x)   __builtin_expect(!!(x), 0)
 #  define unreachable() __builtin_unreachable()
+#elif defined(_MSC_VER)
+#  define likely(x)     (x)
+#  define unlikely(x)   (x)
+#  define unreachable() __assume(0)
 #else
-#  define likely(x)     x
-#  define unlikely(x)   x
+#  define likely(x)     (x)
+#  define unlikely(x)   (x)
 #  define unreachable() do {} while (0)
 #endif
 
