@@ -145,6 +145,8 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 list = v.value<IndeterminateLengthArray>();
             }
             CborError err = cbor_encoder_create_array(encoder, &sub, len);
+            if (err)
+                return err;
             foreach (const QVariant &v2, list) {
                 err = encodeVariant(&sub, v2);
                 if (err)
@@ -161,6 +163,8 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 map = v.value<IndeterminateLengthMap>();
             }
             CborError err = cbor_encoder_create_map(encoder, &sub, len);
+            if (err)
+                return err;
             for (auto pair : map) {
                 err = encodeVariant(&sub, pair.first);
                 if (err)
