@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "assert_p.h"       /* Always include last */
+
 void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags)
 {
     encoder->ptr = buffer;

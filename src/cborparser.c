@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "assert_p.h"       /* Always include last */
+
 #ifndef CBOR_PARSER_MAX_RECURSIONS
 #  define CBOR_PARSER_MAX_RECURSIONS 1024
 #endif
