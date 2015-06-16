@@ -79,7 +79,7 @@ static inline uint64_t get64(const uint8_t *ptr)
     return cbor_ntohll(result);
 }
 
-static inline CborError extract_number(const CborParser *parser, const uint8_t **ptr, uint64_t *len)
+static CborError extract_number(const CborParser *parser, const uint8_t **ptr, uint64_t *len)
 {
     uint8_t additional_information = **ptr & SmallValueMask;
     ++*ptr;
@@ -106,7 +106,7 @@ static inline CborError extract_number(const CborParser *parser, const uint8_t *
     return CborNoError;
 }
 
-static inline CborError extract_length(const CborParser *parser, const uint8_t **ptr, size_t *len)
+static CborError extract_length(const CborParser *parser, const uint8_t **ptr, size_t *len)
 {
     uint64_t v;
     CborError err = extract_number(parser, ptr, &v);
