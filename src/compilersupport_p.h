@@ -38,7 +38,7 @@
 #endif
 
 #if (defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 403)) || \
-    (defined(__clang__) && (__clang__ >= 3))
+    (__has_builtin(__builtin_bswap64) && __has_builtin(__builtin_bswap32))
 #  if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #    define cbor_ntohll     __builtin_bswap64
 #    define cbor_htonll     __builtin_bswap64
