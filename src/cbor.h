@@ -44,7 +44,7 @@ extern "C" {
 #  define CBOR_PRIVATE_API
 #endif
 #ifndef CBOR_INLINE_API
-#  if defined(__cplusplus) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+#  if defined(__cplusplus)
 #    define CBOR_INLINE_API inline
 #  else
 #    define CBOR_INLINE_API static inline
