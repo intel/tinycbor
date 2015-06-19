@@ -188,24 +188,45 @@ CborError parseOne(CborValue *it, QString *parsed)
     case CborByteStringType:
     case CborTextStringType: {
         size_t n;
-        err = cbor_value_calculate_string_length(it, &n);
-        if (err)
-            return err;
+        CborValue copy = *it;
+        QByteArray data;
 
-        QByteArray data(n, Qt::Uninitialized);
-        err = cbor_value_copy_string(it, data.data(), &n, it);
-        if (err)
-            return err;     // parse error
+        {
+            n = 0;
+            err = cbor_value_calculate_string_length(it, &n);
+            if (err)
+                return err;
 
-        if (type == CborByteStringType) {
-            *parsed += "h'";
-            *parsed += data.toHex();
-            *parsed += "'";
-        } else {
-            *parsed += '"';
-            *parsed += escaped(QString::fromUtf8(data, data.length()));
-            *parsed += '"';
+            data = QByteArray(n, Qt::Uninitialized);
+            err = cbor_value_copy_string(it, data.data(), &n, it);
+            if (err)
+                return err;     // parse error
+
+            if (type == CborByteStringType) {
+                *parsed += "h'";
+                *parsed += data.toHex();
+                *parsed += "'";
+            } else {
+                *parsed += '"';
+                *parsed += escaped(QString::fromUtf8(data, data.length()));
+                *parsed += '"';
+            }
         }
+
+        {
+            // do a consistency check
+            char *buffer;
+            n = 0;
+            err = cbor_value_dup_string(&copy, &buffer, &n, NULL);
+            if (err)
+                return err;
+
+            bool ok = n == size_t(data.length()) && memcmp(data.constData(), buffer, n) == 0;
+            free(buffer);
+            if (!ok)
+                return CborErrorInternalError;
+        }
+
         return CborNoError;
     }
 

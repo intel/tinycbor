@@ -495,6 +495,7 @@ CborError cbor_value_dup_string(const CborValue *value, char **buffer, size_t *b
 {
     assert(buffer);
     assert(buflen);
+    *buflen = SIZE_MAX;
     CborError err = cbor_value_copy_string(value, NULL, buflen, NULL);
     if (err)
         return err;
