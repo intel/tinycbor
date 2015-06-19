@@ -319,7 +319,7 @@ static CborError advance_recursive(CborValue *it, int nestingLevel)
 
     if (!cbor_value_is_container(it)) {
         size_t len = SIZE_MAX;
-        return cbor_value_copy_string(it, NULL, &len, it);
+        return _cbor_value_copy_string(it, NULL, &len, it);
     }
 
     // map or array
@@ -468,10 +468,12 @@ CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
 CborError cbor_value_calculate_string_length(const CborValue *value, size_t *len)
 {
     *len = SIZE_MAX;
-    return cbor_value_copy_string(value, NULL, len, NULL);
+    return _cbor_value_copy_string(value, NULL, len, NULL);
 }
 
 /**
+ * \fn CborError cbor_value_dup_text_string(const CborValue *value, char **buffer, size_t *buflen, CborValue *next)
+ *
  * Allocates memory for the string pointed by \a value and copies it into this
  * buffer. The pointer to the buffer is stored in \a buffer and the number of
  * bytes copied is stored in \a len (those variables must not be NULL).
@@ -489,14 +491,34 @@ CborError cbor_value_calculate_string_length(const CborValue *value, size_t *len
  * \note This function does not perform UTF-8 validation on the incoming text
  * string.
  *
- * \sa cbor_value_copy_string()
+ * \sa cbor_value_copy_text_string(), cbor_value_dup_byte_string()
  */
-CborError cbor_value_dup_string(const CborValue *value, char **buffer, size_t *buflen, CborValue *next)
+
+/**
+ * \fn CborError cbor_value_dup_byte_string(const CborValue *value, uint8_t **buffer, size_t *buflen, CborValue *next)
+ *
+ * Allocates memory for the string pointed by \a value and copies it into this
+ * buffer. The pointer to the buffer is stored in \a buffer and the number of
+ * bytes copied is stored in \a len (those variables must not be NULL).
+ *
+ * If \c malloc returns a NULL pointer, this function will return error
+ * condition \ref CborErrorOutOfMemory.
+ *
+ * On success, \c{*buffer} will contain a valid pointer that must be freed by
+ * calling \c{free()}. This is the case even for zero-length strings.
+ *
+ * The \a next pointer, if not null, will be updated to point to the next item
+ * after this string. If \a value points to the last item, then \a next will be
+ * invalid.
+ *
+ * \sa cbor_value_copy_byte_string(), cbor_value_dup_text_string()
+ */
+CborError _cbor_value_dup_string(const CborValue *value, void **buffer, size_t *buflen, CborValue *next)
 {
     assert(buffer);
     assert(buflen);
     *buflen = SIZE_MAX;
-    CborError err = cbor_value_copy_string(value, NULL, buflen, NULL);
+    CborError err = _cbor_value_copy_string(value, NULL, buflen, NULL);
     if (err)
         return err;
 
@@ -506,7 +528,7 @@ CborError cbor_value_dup_string(const CborValue *value, char **buffer, size_t *b
         // out of memory
         return CborErrorOutOfMemory;
     }
-    err = cbor_value_copy_string(value, *buffer, buflen, next);
+    err = _cbor_value_copy_string(value, *buffer, buflen, next);
     if (err) {
         free(*buffer);
         return err;
@@ -608,6 +630,8 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
 }
 
 /**
+ * \fn CborError cbor_value_copy_text_string(const CborValue *value, char *buffer, size_t *buflen, CborValue *next)
+ *
  * Copies the string pointed by \a value into the buffer provided at \a buffer
  * of \a buflen bytes. If \a buffer is a NULL pointer, this function will not
  * copy anything and will only update the \a next value.
@@ -629,9 +653,34 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
  * \note This function does not perform UTF-8 validation on the incoming text
  * string.
  *
- * \sa cbor_value_dup_string(), cbor_value_get_string_length(), cbor_value_calculate_string_length()
+ * \sa cbor_value_dup_text_string(), cbor_value_copy_byte_string(), cbor_value_get_string_length(), cbor_value_calculate_string_length()
  */
-CborError cbor_value_copy_string(const CborValue *value, char *buffer,
+
+/**
+ * \fn CborError cbor_value_copy_byte_string(const CborValue *value, uint8_t *buffer, size_t *buflen, CborValue *next)
+ *
+ * Copies the string pointed by \a value into the buffer provided at \a buffer
+ * of \a buflen bytes. If \a buffer is a NULL pointer, this function will not
+ * copy anything and will only update the \a next value.
+ *
+ * If the provided buffer length was too small, this function returns an error
+ * condition of \ref CborErrorOutOfMemory. If you need to calculate the length
+ * of the string in order to preallocate a buffer, use
+ * cbor_value_calculate_string_length().
+ *
+ * On success, this function sets the number of bytes copied to \c{*buflen}. If
+ * the buffer is large enough, this function will insert a null byte after the
+ * last copied byte, to facilitate manipulation of null-terminated strings.
+ * That byte is not included in the returned value of \c{*buflen}.
+ *
+ * The \a next pointer, if not null, will be updated to point to the next item
+ * after this string. If \a value points to the last item, then \a next will be
+ * invalid.
+ *
+ * \sa cbor_value_dup_text_string(), cbor_value_copy_text_string(), cbor_value_get_string_length(), cbor_value_calculate_string_length()
+ */
+
+CborError _cbor_value_copy_string(const CborValue *value, void *buffer,
                                  size_t *buflen, CborValue *next)
 {
     bool copied_all;

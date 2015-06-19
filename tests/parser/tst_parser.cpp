@@ -185,7 +185,43 @@ CborError parseOne(CborValue *it, QString *parsed)
         }
         break;
 
-    case CborByteStringType:
+    case CborByteStringType:{
+        size_t n;
+        CborValue copy = *it;
+        QByteArray data;
+
+        {
+            n = 0;
+            err = cbor_value_calculate_string_length(it, &n);
+            if (err)
+                return err;
+
+            data = QByteArray(n, Qt::Uninitialized);
+            err = cbor_value_copy_byte_string(it, reinterpret_cast<quint8*>(data.data()), &n, it);
+            if (err)
+                return err;     // parse error
+            *parsed += "h'";
+            *parsed += data.toHex();
+            *parsed += "'";
+        }
+
+        {
+            // do a consistency check
+            uint8_t *buffer;
+            n = 0;
+            err = cbor_value_dup_byte_string(&copy, &buffer, &n, NULL);
+            if (err)
+                return err;
+
+            bool ok = n == size_t(data.length()) && memcmp(data.constData(), buffer, n) == 0;
+            free(buffer);
+            if (!ok)
+                return CborErrorInternalError;
+        }
+
+        return CborNoError;
+    }
+
     case CborTextStringType: {
         size_t n;
         CborValue copy = *it;
@@ -198,26 +234,20 @@ CborError parseOne(CborValue *it, QString *parsed)
                 return err;
 
             data = QByteArray(n, Qt::Uninitialized);
-            err = cbor_value_copy_string(it, data.data(), &n, it);
+            err = cbor_value_copy_text_string(it, data.data(), &n, it);
             if (err)
                 return err;     // parse error
 
-            if (type == CborByteStringType) {
-                *parsed += "h'";
-                *parsed += data.toHex();
-                *parsed += "'";
-            } else {
-                *parsed += '"';
-                *parsed += escaped(QString::fromUtf8(data, data.length()));
-                *parsed += '"';
-            }
+            *parsed += '"';
+            *parsed += escaped(QString::fromUtf8(data, data.length()));
+            *parsed += '"';
         }
 
         {
             // do a consistency check
             char *buffer;
             n = 0;
-            err = cbor_value_dup_string(&copy, &buffer, &n, NULL);
+            err = cbor_value_dup_text_string(&copy, &buffer, &n, NULL);
             if (err)
                 return err;
 
