@@ -138,12 +138,10 @@ CBOR_API void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t si
 CBOR_API CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value);
 CBOR_API CborError cbor_encode_int(CborEncoder *encoder, int64_t value);
 CBOR_API CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value);
-CBOR_API CborError cbor_encode_half_float(CborEncoder *encoder, const void *value);
-CBOR_API CborError cbor_encode_float(CborEncoder *encoder, const float *value);
-CBOR_API CborError cbor_encode_double(CborEncoder *encoder, const double *value);
 CBOR_API CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag);
 CBOR_API CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size_t length);
 CBOR_API CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length);
+CBOR_API CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value);
 
 CBOR_INLINE_API CborError cbor_encode_boolean(CborEncoder *encoder, bool value)
 { return cbor_encode_simple_value(encoder, (int)value - 1 + (CborBooleanType & 0x1f)); }
@@ -151,6 +149,13 @@ CBOR_INLINE_API CborError cbor_encode_null(CborEncoder *encoder)
 { return cbor_encode_simple_value(encoder, CborNullType & 0x1f); }
 CBOR_INLINE_API CborError cbor_encode_undefined(CborEncoder *encoder)
 { return cbor_encode_simple_value(encoder, CborUndefinedType & 0x1f); }
+
+CBOR_INLINE_API CborError cbor_encode_half_float(CborEncoder *encoder, const void *value)
+{ return cbor_encode_floating_point(encoder, CborHalfFloatType, value); }
+CBOR_INLINE_API CborError cbor_encode_float(CborEncoder *encoder, float value)
+{ return cbor_encode_floating_point(encoder, CborFloatType, &value); }
+CBOR_INLINE_API CborError cbor_encode_double(CborEncoder *encoder, double value)
+{ return cbor_encode_floating_point(encoder, CborDoubleType, &value); }
 
 CBOR_API CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEncoder, size_t length);
 CBOR_API CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder, size_t length);

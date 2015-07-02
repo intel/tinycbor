@@ -110,10 +110,10 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
         return cbor_encode_null(encoder);
 
     case QVariant::Double:
-        return cbor_encode_double(encoder, (const double*)v.constData());
+        return cbor_encode_double(encoder, v.toDouble());
 
     case QMetaType::Float:
-        return cbor_encode_float(encoder, (const float*)v.constData());
+        return cbor_encode_float(encoder, v.toFloat());
 
     case QVariant::String: {
         QByteArray string = v.toString().toUtf8();

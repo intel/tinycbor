@@ -128,25 +128,20 @@ CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value)
     return encode_number(encoder, value, SimpleTypesType << MajorTypeShift);
 }
 
-CborError cbor_encode_half_float(CborEncoder *encoder, const void *value)
+CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value)
 {
-    uint8_t buf[1 + sizeof(uint16_t)] = { CborHalfFloatType };
-    put16(buf + 1, *(const uint16_t*)value);
-    return append_to_buffer(encoder, buf, sizeof(buf));
-}
+    uint8_t buf[1 + sizeof(uint64_t)];
+    assert(fpType == CborHalfFloatType || fpType == CborFloatType || fpType == CborDoubleType);
+    buf[0] = fpType;
 
-CborError cbor_encode_float(CborEncoder *encoder, const float *value)
-{
-    uint8_t buf[1 + sizeof(uint32_t)] = { CborFloatType };
-    put32(buf + 1, *(const uint32_t*)value);
-    return append_to_buffer(encoder, buf, sizeof(buf));
-}
-
-CborError cbor_encode_double(CborEncoder *encoder, const double *value)
-{
-    uint8_t buf[1 + sizeof(uint64_t)] = { CborDoubleType };
-    put64(buf + 1, *(const uint64_t*)value);
-    return append_to_buffer(encoder, buf, sizeof(buf));
+    unsigned size = 2U << (fpType - CborHalfFloatType);
+    if (size == 8)
+        put64(buf + 1, *(const uint64_t*)value);
+    else if (size == 4)
+        put32(buf + 1, *(const uint32_t*)value);
+    else
+        put16(buf + 1, *(const uint16_t*)value);
+    return append_to_buffer(encoder, buf, size + 1);
 }
 
 CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag)
