@@ -28,7 +28,6 @@
 #ifndef _BSD_SOURCE
 #  define _BSD_SOURCE
 #endif
-#include <arpa/inet.h>
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -52,9 +51,12 @@
 #    ifdef __INTEL_COMPILER
 #      define cbor_ntohs    _bswap16
 #      define cbor_htons    _bswap16
-#    elif (__GNUC__ * 100 + __GNUC_MINOR__ >= 408) || __has_builtin(__builtin_bswap16)
+#    elif (__GNUC__ * 100 + __GNUC_MINOR__ >= 608) || __has_builtin(__builtin_bswap16)
 #      define cbor_ntohs    __builtin_bswap16
 #      define cbor_htons    __builtin_bswap16
+#    else
+#      define cbor_ntohs(x) (((uint16_t)x >> 8) | ((uint16_t)x << 8))
+#      define cbor_htons    cbor_ntohs
 #    endif
 #  else
 #    define cbor_ntohll
@@ -76,10 +78,12 @@
 #  define cbor_htons        _byteswap_ushort
 #endif
 #ifndef cbor_ntohs
+#  include <arpa/inet.h>
 #  define cbor_ntohs        ntohs
 #  define cbor_htons        htons
 #endif
 #ifndef cbor_ntohl
+#  include <arpa/inet.h>
 #  define cbor_ntohl        ntohl
 #  define cbor_htonl        htonl
 #endif
