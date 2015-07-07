@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = parser encoder
+SUBDIRS = parser encoder cpp
