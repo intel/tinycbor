@@ -91,11 +91,11 @@ static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t
         *bufstart += shiftedMajorType;
     } else {
         unsigned more = 0;
-        if (ui > UINT8_MAX)
+        if (ui > 0xffU)
             ++more;
-        if (ui > UINT16_MAX)
+        if (ui > 0xffffU)
             ++more;
-        if (ui != (uint32_t)ui)
+        if (ui > 0xffffffffU)
             ++more;
         bufstart -= 1 << more;
         *bufstart = shiftedMajorType + Value8Bit + more;

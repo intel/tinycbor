@@ -33,6 +33,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifndef UINT32_MAX
+/* C99 requires it in stdint.h, but some systems lack it */
+#  define UINT32_MAX    (0xffffffffU)
+#endif
+
 #ifndef __has_builtin
 #  define __has_builtin(x)  0
 #endif
