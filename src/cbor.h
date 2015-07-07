@@ -37,6 +37,17 @@ extern "C" {
 #include <stdbool.h>
 #endif
 
+#ifndef SIZE_MAX
+/* Some systems fail to define SIZE_MAX in <stdint.h>, even though C99 requires it...
+ * Conversion from signed to unsigned is defined in 6.3.1.3 (Signed and unsigned integers) p2,
+ * which says: "the value is converted by repeatedly adding or subtracting one more than the
+ * maximum value that can be represented in the new type until the value is in the range of the
+ * new type."
+ * So -1 gets converted to size_t by adding SIZE_MAX + 1, which results in SIZE_MAX.
+ */
+#  define SIZE_MAX ((size_t)-1)
+#endif
+
 #ifndef CBOR_API
 #  define CBOR_API
 #endif
