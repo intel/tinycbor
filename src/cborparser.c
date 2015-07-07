@@ -22,7 +22,7 @@
 **
 ****************************************************************************/
 
-#define _BSD_SOURCE
+#define _BSD_SOURCE 1
 #include "cbor.h"
 #include "cborconstants_p.h"
 #include "compilersupport_p.h"
@@ -684,7 +684,7 @@ CborError _cbor_value_copy_string(const CborValue *value, void *buffer,
                                  size_t *buflen, CborValue *next)
 {
     bool copied_all;
-    CborError err = iterate_string_chunks(value, buffer, buflen, &copied_all, next,
+    CborError err = iterate_string_chunks(value, (char*)buffer, buflen, &copied_all, next,
                                           buffer ? (IterateFunction)memcpy : iterate_noop);
     return err ? err :
                  copied_all ? CborNoError : CborErrorOutOfMemory;
