@@ -70,3 +70,4 @@ Makefile*
 *.dep
 *.map
 
+bin
