@@ -46,6 +46,9 @@ const char *cbor_error_string(CborError error)
     case CborErrorAdvancePastEOF:
         return _("attempted to advance past EOF");
 
+    case CborErrorIO:
+        return _("I/O error");
+
     case CborErrorGarbageAtEnd:
         return _("garbage after the end of the content");
 

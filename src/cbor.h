@@ -30,6 +30,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -109,6 +110,7 @@ typedef enum CborError {
     CborErrorOutOfMemory,
     CborErrorUnknownLength,         /* request for length in array, map, or string with indeterminate length */
     CborErrorAdvancePastEOF,
+    CborErrorIO,
 
     /* parser errors streaming errors */
     CborErrorGarbageAtEnd = 256,
@@ -401,6 +403,14 @@ CBOR_INLINE_API CborError cbor_value_get_double(const CborValue *value, double *
     uint64_t data = _cbor_value_extract_int64_helper(value);
     memcpy(result, &data, sizeof(*result));
     return CborNoError;
+}
+
+/* Human-readable (dump) API */
+CBOR_API CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value);
+CBOR_INLINE_API CborError cbor_value_to_pretty(FILE *out, const CborValue *value)
+{
+    CborValue copy = *value;
+    return cbor_value_to_pretty_advance(out, &copy);
 }
 
 #ifdef __cplusplus

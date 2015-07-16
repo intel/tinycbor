@@ -22,8 +22,10 @@
 **
 ****************************************************************************/
 
+#define _XOPEN_SOURCE 700
 #include <QtTest>
 #include "cbor.h"
+#include <stdio.h>
 
 Q_DECLARE_METATYPE(CborError)
 
@@ -80,282 +82,20 @@ private slots:
     void recursionLimit();
 };
 
-char toHexUpper(unsigned n)
-{
-    return n > 10 ? n + 'A' : n + '0';
-}
-
-QString escaped(const QString &raw)
-{
-    QString result;
-    result.reserve(raw.size() + raw.size() / 3);
-
-    auto begin = reinterpret_cast<const ushort *>(raw.constData());
-    auto end = begin + raw.length();
-    for (const ushort *p = begin; p != end; ++p) {
-        if (*p < 0x7f && *p >= 0x20 && *p != '\\' && *p != '"') {
-            result += *p;
-            continue;
-        }
-
-        // print as an escape sequence
-        result += '\\';
-
-        switch (*p) {
-        case '"':
-        case '\\':
-            result += *p;
-            break;
-        case '\b':
-            result += 'b';
-            break;
-        case '\f':
-            result += 'f';
-            break;
-        case '\n':
-            result += 'n';
-            break;
-        case '\r':
-            result += 'r';
-            break;
-        case '\t':
-            result += 't';
-            break;
-        default:
-            result += 'u';
-            result += toHexUpper(ushort(*p) >> 12);
-            result += toHexUpper(ushort(*p) >> 8);
-            result += toHexUpper(*p >> 4);
-            result += toHexUpper(*p);
-        }
-    }
-
-    return result;
-}
-
-CborError parseContainer(CborValue *it, QString *parsed, CborType containerType);
 CborError parseOne(CborValue *it, QString *parsed)
 {
     CborError err;
-    CborType type = cbor_value_get_type(it);
-    switch (type) {
-    case CborArrayType:
-    case CborMapType: {
-        // recursive type
-        CborValue recursed;
-        Q_ASSERT(cbor_value_is_container(it));
+    char *buffer;
+    size_t size;
 
-        *parsed += type == CborArrayType ? '[' : '{';
-        if (!cbor_value_is_length_known(it))
-            *parsed += "_ ";
+    setlocale(LC_ALL, "C");
+    FILE *f = open_memstream(&buffer, &size);
+    err = cbor_value_to_pretty_advance(f, it);
+    fclose(f);
 
-        err = cbor_value_enter_container(it, &recursed);
-        if (err) {
-            it->ptr = recursed.ptr;
-            return err;       // parse error
-        }
-        err = parseContainer(&recursed, parsed, type);
-        if (err) {
-            it->ptr = recursed.ptr;
-            return err;       // parse error
-        }
-        err = cbor_value_leave_container(it, &recursed);
-        if (err)
-            return err;       // parse error
-
-        *parsed += type == CborArrayType ? ']' : '}';
-        return CborNoError;
-    }
-
-    case CborIntegerType:
-        if (cbor_value_is_unsigned_integer(it)) {
-            uint64_t val;
-            cbor_value_get_uint64(it, &val);
-            *parsed += QString::number(val);
-        } else {
-            int64_t val;
-            cbor_value_get_int64(it, &val);     // can't fail
-            if (val < 0) {
-                *parsed += QString::number(val);
-            } else {
-                // 65-bit negative
-                *parsed += '-';
-                *parsed += QString::number(uint64_t(-val) - 1);
-            }
-        }
-        break;
-
-    case CborByteStringType:{
-        size_t n;
-        CborValue copy = *it;
-        QByteArray data;
-
-        {
-            n = 0;
-            err = cbor_value_calculate_string_length(it, &n);
-            if (err)
-                return err;
-
-            data = QByteArray(n, Qt::Uninitialized);
-            err = cbor_value_copy_byte_string(it, reinterpret_cast<quint8*>(data.data()), &n, it);
-            if (err)
-                return err;     // parse error
-            *parsed += "h'";
-            *parsed += data.toHex();
-            *parsed += "'";
-        }
-
-        {
-            // do a consistency check
-            uint8_t *buffer;
-            n = 0;
-            err = cbor_value_dup_byte_string(&copy, &buffer, &n, NULL);
-            if (err)
-                return err;
-
-            bool ok = n == size_t(data.length()) && memcmp(data.constData(), buffer, n) == 0;
-            free(buffer);
-            if (!ok)
-                return CborErrorInternalError;
-        }
-
-        return CborNoError;
-    }
-
-    case CborTextStringType: {
-        size_t n;
-        CborValue copy = *it;
-        QByteArray data;
-
-        {
-            n = 0;
-            err = cbor_value_calculate_string_length(it, &n);
-            if (err)
-                return err;
-
-            data = QByteArray(n, Qt::Uninitialized);
-            err = cbor_value_copy_text_string(it, data.data(), &n, it);
-            if (err)
-                return err;     // parse error
-
-            *parsed += '"';
-            *parsed += escaped(QString::fromUtf8(data, data.length()));
-            *parsed += '"';
-        }
-
-        {
-            // do a consistency check
-            char *buffer;
-            n = 0;
-            err = cbor_value_dup_text_string(&copy, &buffer, &n, NULL);
-            if (err)
-                return err;
-
-            bool ok = n == size_t(data.length()) && memcmp(data.constData(), buffer, n) == 0;
-            free(buffer);
-            if (!ok)
-                return CborErrorInternalError;
-        }
-
-        return CborNoError;
-    }
-
-    case CborTagType: {
-        CborTag tag;
-        cbor_value_get_tag(it, &tag);       // can't fail
-        *parsed += QString::number(tag);
-        *parsed += '(';
-        err = cbor_value_advance_fixed(it);
-        if (err)
-            return err;
-        err = parseOne(it, parsed);
-        if (err)
-            return err;
-        *parsed += ')';
-        return CborNoError;
-    }
-
-    case CborSimpleType: {
-        uint8_t type;
-        cbor_value_get_simple_type(it, &type);  // can't fail
-        *parsed += QString("simple(%0)").arg(type);
-        break;
-    }
-
-    case CborNullType:
-        *parsed += "null";
-        break;
-
-    case CborUndefinedType:
-        *parsed += "undefined";
-        break;
-
-    case CborBooleanType: {
-        bool val;
-        cbor_value_get_boolean(it, &val);       // can't fail
-        *parsed += val ? "true" : "false";
-        break;
-    }
-
-    case CborDoubleType: {
-        double val;
-        if (false) {
-    case CborFloatType:
-                float f;
-                cbor_value_get_float(it, &f);
-                val = f;
-        } else {
-            cbor_value_get_double(it, &val);
-        }
-        QString number = QString::number(val, 'g', std::numeric_limits<double>::max_digits10 + 2);
-        *parsed += number;
-        if (number != "inf" && number != "-inf" && number != "nan") {
-            if (!number.contains('.'))
-                *parsed += '.';
-            if (type == CborFloatType)
-                *parsed += 'f';
-        }
-        break;
-    }
-    case CborHalfFloatType: {
-        uint16_t val;
-        cbor_value_get_half_float(it, &val);
-        *parsed += QString("__f16(0x%0)").arg(val, 4, 16, QLatin1Char('0'));
-        break;
-    }
-
-    case CborInvalidType:
-        *parsed += "invalid";
-        return CborErrorUnknownType;
-    }
-
-    err = cbor_value_advance_fixed(it);
-    if (err)
-        return err;
-    return CborNoError;
-}
-
-CborError parseContainer(CborValue *it, QString *parsed, CborType containerType)
-{
-    const char *comma = nullptr;
-    while (!cbor_value_at_end(it)) {
-        *parsed += comma;
-        comma = ", ";
-
-        CborError err = parseOne(it, parsed);
-        if (err)
-            return err;
-
-        if (containerType == CborArrayType)
-            continue;
-
-        // map: that was the key, so get the value
-        *parsed += ": ";
-        err = parseOne(it, parsed);
-        if (err)
-            return err;
-    }
-    return CborNoError;
+    *parsed = QString::fromLatin1(buffer, size);
+    free(buffer);
+    return err;
 }
 
 template <size_t N> QByteArray raw(const char (&data)[N])
