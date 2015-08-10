@@ -46,6 +46,17 @@ static inline void put16(void *where, uint16_t v)
     memcpy(where, &v, sizeof(v));
 }
 
+// Note: Since this is currently only used in situations where OOM is the only
+// valid error, we KNOW this to be true.  Thus, this function now returns just 'true',
+// but if in the future, any function starts returning a non-OOM error, this will need
+// to be changed to the test.  At the moment, this is done to prevent more branches
+// being created in the tinycbor output
+static inline bool isOomError(CborError err)
+{
+    (void) err;
+    return true;
+}
+
 static inline void put32(void *where, uint32_t v)
 {
     v = cbor_htonl(v);
@@ -60,8 +71,16 @@ static inline void put64(void *where, uint64_t v)
 
 static inline CborError append_to_buffer(CborEncoder *encoder, const void *data, size_t len)
 {
-    if (encoder->ptr + len > encoder->end)
+    if (encoder->end - encoder->ptr - (ptrdiff_t)len < 0) {
+        if (encoder->end != NULL) {
+            len -= encoder->end - encoder->ptr;
+            encoder->end = encoder->ptr = NULL;
+        }
+
+        encoder->ptr += len;
         return CborErrorOutOfMemory;
+    }
+
     memcpy(encoder->ptr, data, len);
     encoder->ptr += len;
     return CborNoError;
@@ -69,8 +88,15 @@ static inline CborError append_to_buffer(CborEncoder *encoder, const void *data,
 
 static inline CborError append_byte_to_buffer(CborEncoder *encoder, uint8_t byte)
 {
-    if (encoder->ptr == encoder->end)
+    if (encoder->end <= encoder->ptr) {
+        if (encoder->end != NULL) {
+            encoder->end = encoder->ptr = NULL;
+        }
+
+        ++encoder->ptr;
         return CborErrorOutOfMemory;
+    }
+
     *encoder->ptr++ = byte;
     return CborNoError;
 }
@@ -152,7 +178,7 @@ CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag)
 static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shiftedMajorType, const void *string)
 {
     CborError err = encode_number(encoder, length, shiftedMajorType);
-    if (err)
+    if (err && !isOomError(err))
         return err;
     return append_to_buffer(encoder, string, length);
 }
@@ -174,7 +200,7 @@ static CborError create_container(CborEncoder *encoder, size_t length, uint8_t s
         err = append_byte_to_buffer(encoder, shiftedMajorType + IndefiniteLength);
     else
         err = encode_number(encoder, length, shiftedMajorType);
-    if (err)
+    if (err && !isOomError(err))
         return err;
 
     *container = *encoder;
@@ -195,6 +221,7 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
 CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
     encoder->ptr = containerEncoder->ptr;
+    encoder->end = containerEncoder->end;
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
         return append_byte_to_buffer(encoder, BreakByte);
     return CborNoError;

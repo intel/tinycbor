@@ -88,6 +88,11 @@ QVariant make_ilmap(const std::initializer_list<QPair<QVariant, QVariant>> &list
     return QVariant::fromValue(IndeterminateLengthMap(list));
 }
 
+static inline bool isOomError(CborError err)
+{
+    return err == CborErrorOutOfMemory;
+}
+
 CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
 {
     int type = v.userType();
@@ -132,9 +137,9 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
             return cbor_encode_half_float(encoder, v.constData());
         if (type == qMetaTypeId<Tag>()) {
             CborError err = cbor_encode_tag(encoder, v.value<Tag>().tag);
-            if (err)
+            if (err && !isOomError(err))
                 return err;
-            return encodeVariant(encoder, v.value<Tag>().tagged);
+            return static_cast<CborError>(err | encodeVariant(encoder, v.value<Tag>().tagged));
         }
         if (type == QVariant::List || type == qMetaTypeId<IndeterminateLengthArray>()) {
             CborEncoder sub;
@@ -145,14 +150,14 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 list = v.value<IndeterminateLengthArray>();
             }
             CborError err = cbor_encoder_create_array(encoder, &sub, len);
-            if (err)
+            if (err && !isOomError(err))
                 return err;
             foreach (const QVariant &v2, list) {
-                err = encodeVariant(&sub, v2);
-                if (err)
+                err = static_cast<CborError>(err | encodeVariant(&sub, v2));
+                if (err && !isOomError(err))
                     return err;
             }
-            return cbor_encoder_close_container(encoder, &sub);
+            return static_cast<CborError>(err | cbor_encoder_close_container(encoder, &sub));
         }
         if (type == qMetaTypeId<Map>() || type == qMetaTypeId<IndeterminateLengthMap>()) {
             CborEncoder sub;
@@ -163,17 +168,17 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 map = v.value<IndeterminateLengthMap>();
             }
             CborError err = cbor_encoder_create_map(encoder, &sub, len);
-            if (err)
+            if (err && !isOomError(err))
                 return err;
             for (auto pair : map) {
-                err = encodeVariant(&sub, pair.first);
-                if (err)
+                err = static_cast<CborError>(err | encodeVariant(&sub, pair.first));
+                if (err && !isOomError(err))
                     return err;
-                err = encodeVariant(&sub, pair.second);
-                if (err)
+                err = static_cast<CborError>(err | encodeVariant(&sub, pair.second));
+                if (err && !isOomError(err))
                     return err;
             }
-            return cbor_encoder_close_container(encoder, &sub);
+            return (CborError)(err | cbor_encoder_close_container(encoder, &sub));
         }
     }
     return CborErrorUnknownType;
@@ -527,6 +532,7 @@ void tst_Encoder::shortBuffer()
         CborEncoder encoder;
         cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), len, 0);
         QCOMPARE(int(encodeVariant(&encoder, input)), int(CborErrorOutOfMemory));
+        QCOMPARE(len + int(encoder.ptr - encoder.end), output.length());
     }
 }
 
