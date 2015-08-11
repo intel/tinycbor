@@ -107,7 +107,6 @@ typedef enum CborError {
 
     /* errors in all modes */
     CborUnknownError,
-    CborErrorOutOfMemory,
     CborErrorUnknownLength,         /* request for length in array, map, or string with indeterminate length */
     CborErrorAdvancePastEOF,
     CborErrorIO,
@@ -131,7 +130,9 @@ typedef enum CborError {
     /* internal implementation errors */
     CborErrorDataTooLarge = 1024,
     CborErrorNestingTooDeep,
-    CborErrorInternalError = ~0U
+    CborErrorInternalError = ~0U,
+
+    CborErrorOutOfMemory = ~0U / 2 + 1
 } CborError;
 
 CBOR_API const char *cbor_error_string(CborError error);
