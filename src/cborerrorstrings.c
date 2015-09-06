@@ -97,6 +97,16 @@ const char *cbor_error_string(CborError error)
     case CborErrorNestingTooDeep:
         return _("internal error: too many nested containers found in recursive function");
 
+    case CborErrorUnsupportedType:
+        return _("unsupported type");
+
+    case CborErrorJsonObjectKeyIsAggregate:
+        return _("conversion to JSON failed: key in object is an array or map");
+
+    case CborErrorJsonObjectKeyNotString:
+        return _("conversion to JSON failed: key in object is not a string");
+
+
     case CborErrorInternalError:
         return _("internal error");
     }

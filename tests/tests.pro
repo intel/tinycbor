@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = parser encoder cpp
+SUBDIRS = parser encoder cpp tojson

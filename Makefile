@@ -26,6 +26,7 @@ TINYCBOR_SOURCES = \
 	src/cborencoder_close_container_checked.c \
 	src/cborparser.c \
 	src/cborpretty.c \
+	src/cbortojson.c \
 #
 CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 

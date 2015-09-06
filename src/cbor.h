@@ -134,6 +134,12 @@ typedef enum CborError {
     /* internal implementation errors */
     CborErrorDataTooLarge = 1024,
     CborErrorNestingTooDeep,
+    CborErrorUnsupportedType,
+
+    /* errors in converting to JSON */
+    CborErrorJsonObjectKeyIsAggregate,
+    CborErrorJsonObjectKeyNotString,
+
     CborErrorOutOfMemory = ~0U / 2 + 1,
     CborErrorInternalError = ~0U
 } CborError;

@@ -36,7 +36,7 @@
 static int hexDump(FILE *out, const uint8_t *buffer, size_t n)
 {
     while (n--) {
-        int r = fprintf(out, "%02" PRIx8, *buffer++) < 0;
+        int r = fprintf(out, "%02" PRIx8, *buffer++);
         if (r < 0)
             return r;
     }
