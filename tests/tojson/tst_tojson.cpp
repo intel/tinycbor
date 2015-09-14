@@ -52,6 +52,17 @@ private slots:
     void nestedMaps();
     void nonStringKeyMaps_data();
     void nonStringKeyMaps();
+
+    void tagsToObjects_data();
+    void tagsToObjects();
+    void taggedByteStringsToBase16_data();
+    void taggedByteStringsToBase16();
+    void taggedByteStringsToBase64_data() { taggedByteStringsToBase16_data(); }
+    void taggedByteStringsToBase64();
+    void taggedByteStringsToBigNum_data()  { taggedByteStringsToBase16_data(); }
+    void taggedByteStringsToBigNum();
+    void otherTags_data();
+    void otherTags();
 };
 
 template <size_t N> QByteArray raw(const char (&data)[N])
@@ -323,6 +334,119 @@ void tst_ToJson::nonStringKeyMaps()
     cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
     CborError err = parseOne(&first, &decoded, CborConvertRequireMapStringKeys);
     QCOMPARE(err, CborErrorJsonObjectKeyNotString);
+}
+
+void tst_ToJson::tagsToObjects_data()
+{
+    addColumns();
+    QTest::newRow("0(0)") << raw("\xc0\0") << "{\"tag0\":0}";
+    QTest::newRow("0(-1)") << raw("\xc0\x20") << "{\"tag0\":-1}";
+    QTest::newRow("0(\"hello\")") << raw("\xc0\x65hello") << "{\"tag0\":\"hello\"}";
+    QTest::newRow("22(h'48656c6c6f')") << raw("\xd6\x45Hello") << "{\"tag22\":\"SGVsbG8\"}";
+    QTest::newRow("0([1,2,3])") << raw("\xc0\x83\1\2\3") << "{\"tag0\":[1,2,3]}";
+    QTest::newRow("0({\"z\":true})") << raw("\xc0\xa1\x61z\xf5") << "{\"tag0\":{\"z\":true}}";
+
+    // large tags
+    QTest::newRow("55799(0)") << raw("\xd9\xd9\xf7\0") << "{\"tag55799\":0}";
+    QTest::newRow("4294967295") << raw("\xda\xff\xff\xff\xff\0") << "{\"tag4294967295\":0}";
+    QTest::newRow("18446744073709551615(0)") << raw("\xdb\xff\xff\xff\xff""\xff\xff\xff\xff\0")
+                                             << "{\"tag18446744073709551615\":0}";
+
+    // nested tags
+    QTest::newRow("0(1(2))") << raw("\xc0\xc1\2") << "{\"tag0\":{\"tag1\":2}}";
+    QTest::newRow("0({\"z\":1(2)})") << raw("\xc0\xa1\x61z\xc1\2") << "{\"tag0\":{\"z\":{\"tag1\":2}}}";
+}
+
+void tst_ToJson::tagsToObjects()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    compareOne(data, expected, CborConvertTagsToObjects);
+}
+
+void tst_ToJson::taggedByteStringsToBase16_data()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<QString>("base64url");
+    QTest::addColumn<QString>("base64");
+    QTest::addColumn<QString>("base16");
+
+    QTest::newRow("emptybytestring") << raw("\x40") << "" << "" << "";
+    QTest::newRow("bytestring1") << raw("\x41 ") << "IA" << "IA==" << "20";
+    QTest::newRow("bytestring1-nul") << raw("\x41\0") << "AA" << "AA==" << "00";
+    QTest::newRow("bytestring1-ff") << raw("\x41\xff") << "_w" << "/w==" << "ff";
+    QTest::newRow("bytestring2") << raw("\x42Hi") << "SGk" << "SGk=" << "4869";
+    QTest::newRow("bytestring3") << raw("\x43Hey") << "SGV5" << "SGV5" << "486579";
+    QTest::newRow("bytestring4") << raw("\x44Hola") << "SG9sYQ" << "SG9sYQ==" << "486f6c61";
+    QTest::newRow("bytestring5") << raw("\x45Hello") << "SGVsbG8" << "SGVsbG8=" << "48656c6c6f";
+    QTest::newRow("bytestring24") << raw("\x58\x18""123456789012345678901234")
+                                  << "MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0"
+                                  << "MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0"
+                                  << "313233343536373839303132333435363738393031323334";
+
+    // strings with undefined length
+    QTest::newRow("_emptybytestring") << raw("\x5f\xff") << "" << "" << "";
+    QTest::newRow("_emptybytestring2") << raw("\x5f\x40\xff") << "" << "" << "";
+    QTest::newRow("_emptybytestring3") << raw("\x5f\x40\x40\xff") << "" << "" << "";
+    QTest::newRow("_bytestring5*2") << raw("\x5f\x43Hel\x42lo\xff") << "SGVsbG8" << "SGVsbG8=" << "48656c6c6f";
+    QTest::newRow("_bytestring5*5") << raw("\x5f\x41H\x41""e\x41l\x41l\x41o\xff")
+                                    << "SGVsbG8" << "SGVsbG8=" << "48656c6c6f";
+    QTest::newRow("_bytestring5*6") << raw("\x5f\x41H\x41""e\x40\x41l\x41l\x41o\xff")
+                                    << "SGVsbG8" << "SGVsbG8=" << "48656c6c6f";
+}
+
+void tst_ToJson::taggedByteStringsToBase16()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, base16);
+
+    compareOne('\xd7' + data, '"' + base16 + '"', 0);
+}
+
+void tst_ToJson::taggedByteStringsToBase64()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, base64);
+
+    compareOne('\xd6' + data, '"' + base64 + '"', 0);
+}
+
+void tst_ToJson::taggedByteStringsToBigNum()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, base64url);
+
+    compareOne('\xc3' + data, "\"~" + base64url + '"', 0);
+}
+
+void tst_ToJson::otherTags_data()
+{
+    addColumns();
+    addFixedData();
+    addTextStringsData();
+    addNonJsonData();
+    addByteStringsData();
+    addEmptyContainersData();
+}
+
+void tst_ToJson::otherTags()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    // other tags produce no change in output
+    compareOne("\xc0" + data, expected, 0);
+    compareOne("\xc1" + data, expected, 0);
+    compareOne("\xc2" + data, expected, 0);
+    compareOne("\xc4" + data, expected, 0);
+    compareOne("\xc5" + data, expected, 0);
+    compareOne("\xd8\x20" + data, expected, 0);
+    compareOne("\xd8\x21" + data, expected, 0);
+    compareOne("\xd8\x22" + data, expected, 0);
+    compareOne("\xd8\x23" + data, expected, 0);
+    compareOne("\xd8\x24" + data, expected, 0);
+    compareOne("\xd9\xd9\xf7" + data, expected, 0);
 }
 
 QTEST_MAIN(tst_ToJson)

@@ -37,6 +37,32 @@
 
 static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType type);
 
+static CborError dump_bytestring_base16(char **result, CborValue *it)
+{
+    static const char characters[] = "0123456789abcdef";
+    size_t n = 0;
+    uint8_t *buffer;
+    CborError err = cbor_value_calculate_string_length(it, &n);
+    if (err)
+        return err;
+
+    // a Base16 (hex) output is twice as big as our buffer
+    buffer = (uint8_t *)malloc(n * 2 + 1);
+    *result = (char *)buffer;
+
+    // let cbor_value_copy_byte_string know we have an extra byte for the terminating NUL
+    ++n;
+    err = cbor_value_copy_byte_string(it, buffer + n - 1, &n, it);
+    assert(err == CborNoError);
+
+    for (size_t i = 0; i < n; ++i) {
+        uint8_t byte = buffer[n + i];
+        buffer[2*i]     = characters[byte >> 4];
+        buffer[2*i + 1] = characters[byte & 0xf];
+    }
+    return CborNoError;
+}
+
 static CborError generic_dump_base64(char **result, CborValue *it, const char alphabet[65])
 {
     size_t n = 0;
@@ -96,11 +122,83 @@ static CborError generic_dump_base64(char **result, CborValue *it, const char al
     return CborNoError;
 }
 
+static CborError dump_bytestring_base64(char **result, CborValue *it)
+{
+    static const char alphabet[] = "ABCDEFGH" "IJKLMNOP" "QRSTUVWX" "YZabcdef"
+                                   "ghijklmn" "opqrstuv" "wxyz0123" "456789+/" "=";
+    return generic_dump_base64(result, it, alphabet);
+}
+
 static CborError dump_bytestring_base64url(char **result, CborValue *it)
 {
     static const char alphabet[] = "ABCDEFGH" "IJKLMNOP" "QRSTUVWX" "YZabcdef"
                                    "ghijklmn" "opqrstuv" "wxyz0123" "456789-_";
     return generic_dump_base64(result, it, alphabet);
+}
+
+static CborError find_tagged_type(CborValue *it, CborTag *tag, CborType *type)
+{
+    CborError err = CborNoError;
+    *type = cbor_value_get_type(it);
+    while (*type == CborTagType) {
+        cbor_value_get_tag(it, tag);    // can't fail
+        err = cbor_value_advance_fixed(it);
+        if (err)
+            return err;
+
+        *type = cbor_value_get_type(it);
+    }
+    return err;
+}
+
+static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags)
+{
+    CborTag tag;
+    cbor_value_get_tag(it, &tag);       // can't fail
+    CborError err = cbor_value_advance_fixed(it);
+    if (err)
+        return err;
+
+    if (flags & CborConvertTagsToObjects) {
+        if (fprintf(out, "{\"tag%" PRIu64 "\":", tag) < 0)
+            return CborErrorIO;
+
+        err = value_to_json(out, it, flags, cbor_value_get_type(it));
+        if (err)
+            return err;
+        if (fputc('}', out) < 0)
+            return CborErrorIO;
+        return CborNoError;
+    }
+
+    CborType type;
+    err = find_tagged_type(it, &tag, &type);
+    if (err)
+        return err;
+
+    // special handling of byte strings?
+    if (type == CborByteStringType && (flags & CborConvertByteStringsToBase64Url) == 0 &&
+            (tag == CborNegativeBignumTag || tag == CborExpectedBase16Tag || tag == CborExpectedBase64Tag)) {
+        char *str;
+        char *pre = "";
+
+        if (tag == CborNegativeBignumTag) {
+            pre = "~";
+            err = dump_bytestring_base64url(&str, it);
+        } else if (tag == CborExpectedBase64Tag) {
+            err = dump_bytestring_base64(&str, it);
+        } else { // tag == CborExpectedBase16Tag
+            err = dump_bytestring_base16(&str, it);
+        }
+        if (err)
+            return err;
+        err = fprintf(out, "\"%s%s\"", pre, str) < 0 ? CborErrorIO : CborNoError;
+        free(str);
+        return err;
+    }
+
+    // no special handling
+    return value_to_json(out, it, flags, type);
 }
 
 static CborError stringify_map_key(char **key, CborValue *it, int flags, CborType type)
@@ -306,11 +404,8 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         return err;
     }
 
-    case CborTagType: {
-        CborTag tag;
-        cbor_value_get_tag(it, &tag);       // can't fail
-        return CborErrorUnsupportedType;
-    }
+    case CborTagType:
+        return tagged_value_to_json(out, it, flags);
 
     case CborSimpleType: {
         uint8_t simple_type;
