@@ -312,9 +312,84 @@ void tst_ToJson::nestedMaps()
 void tst_ToJson::nonStringKeyMaps_data()
 {
     addColumns();
-    addFixedData();
-    addNonJsonData();
-    addByteStringsData();
+
+    QTest::newRow("0") << raw("\x00") << "0";
+    QTest::newRow("1") << raw("\x01") << "1";
+    QTest::newRow("UINT32_MAX") << raw("\x1a\xff\xff\xff\xff") << "4294967295";
+    QTest::newRow("UINT32_MAX+1") << raw("\x1b\0\0\0\1\0\0\0\0") << "4294967296";
+    QTest::newRow("UINT64_MAX") << raw("\x1b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
+                                << QString::number(std::numeric_limits<uint64_t>::max());
+
+    QTest::newRow("-1") << raw("\x20") << "-1";
+    QTest::newRow("-UINT32_MAX") << raw("\x3a\xff\xff\xff\xff") << "-4294967296";
+    QTest::newRow("-UINT32_MAX-1") << raw("\x3b\0\0\0\1\0\0\0\0") << "-4294967297";
+    QTest::newRow("-UINT64_MAX") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xfe")
+                                 << '-' + QString::number(std::numeric_limits<uint64_t>::max());
+    QTest::newRow("-UINT64_MAX-1") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
+                                 << "-18446744073709551616";
+
+    QTest::newRow("simple0") << raw("\xe0") << "simple(0)";
+    QTest::newRow("simple19") << raw("\xf3") << "simple(19)";
+    QTest::newRow("false") << raw("\xf4") << "false";
+    QTest::newRow("true") << raw("\xf5") << "true";
+    QTest::newRow("null") << raw("\xf6") << "null";
+    QTest::newRow("undefined") << raw("\xf7") << "undefined";
+    QTest::newRow("simple32") << raw("\xf8\x20") << "simple(32)";
+    QTest::newRow("simple255") << raw("\xf8\xff") << "simple(255)";
+
+    QTest::newRow("0f16") << raw("\xf9\0\0") << "__f16(0x0000)";
+
+    QTest::newRow("0.f") << raw("\xfa\0\0\0\0") << "0.f";
+    QTest::newRow("0.")  << raw("\xfb\0\0\0\0\0\0\0\0") << "0.";
+    QTest::newRow("-1.f") << raw("\xfa\xbf\x80\0\0") << "-1.f";
+    QTest::newRow("-1.") << raw("\xfb\xbf\xf0\0\0\0\0\0\0") << "-1.";
+    QTest::newRow("16777215.f") << raw("\xfa\x4b\x7f\xff\xff") << "16777215.f";
+    QTest::newRow("16777215.") << raw("\xfb\x41\x6f\xff\xff\xe0\0\0\0") << "16777215.";
+    QTest::newRow("-16777215.f") << raw("\xfa\xcb\x7f\xff\xff") << "-16777215.f";
+    QTest::newRow("-16777215.") << raw("\xfb\xc1\x6f\xff\xff\xe0\0\0\0") << "-16777215.";
+
+    QTest::newRow("0.5f16") << raw("\xf9\x38\0") << "0.5f16";
+    QTest::newRow("0.5f") << raw("\xfa\x3f\0\0\0") << "0.5f";
+    QTest::newRow("0.5") << raw("\xfb\x3f\xe0\0\0\0\0\0\0") << "0.5";
+    QTest::newRow("2.f16^11-1") << raw("\xf9\x67\xff") << "2047.f16";
+    QTest::newRow("2.f^24-1") << raw("\xfa\x4b\x7f\xff\xff") << "16777215.f";
+    QTest::newRow("2.^53-1") << raw("\xfb\x43\x3f\xff\xff""\xff\xff\xff\xff") << "9007199254740991.";
+    QTest::newRow("2.f^64-epsilon") << raw("\xfa\x5f\x7f\xff\xff") << "18446742974197923840.f";
+    QTest::newRow("2.^64-epsilon") << raw("\xfb\x43\xef\xff\xff""\xff\xff\xff\xff") << "18446744073709549568.";
+    QTest::newRow("2.f^64") << raw("\xfa\x5f\x80\0\0") << "1.8446744073709552e+19f";
+    QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << "1.8446744073709552e+19";
+
+    QTest::newRow("nan_f16") << raw("\xf9\x7e\x00") << "nan";
+    QTest::newRow("nan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
+    QTest::newRow("nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
+    QTest::newRow("-inf_f16") << raw("\xf9\xfc\x00") << "-inf";
+    QTest::newRow("-inf_f") << raw("\xfa\xff\x80\0\0") << "-inf";
+    QTest::newRow("-inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << "-inf";
+    QTest::newRow("+inf_f") << raw("\xfa\x7f\x80\0\0") << "inf";
+    QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << "inf";
+
+    QTest::newRow("emptybytestring") << raw("\x40") << "h''";
+    QTest::newRow("bytestring1") << raw("\x41 ") << "h'20'";
+    QTest::newRow("bytestring1-nul") << raw("\x41\0") << "h'00'";
+    QTest::newRow("bytestring5") << raw("\x45Hello") << "h'48656c6c6f'";
+    QTest::newRow("bytestring24") << raw("\x58\x18""123456789012345678901234")
+                                  << "h'313233343536373839303132333435363738393031323334'";
+
+    QTest::newRow("tag0") << raw("\xc0\x00") << "0(0)";
+    QTest::newRow("tag1") << raw("\xc1\x00") << "1(0)";
+    QTest::newRow("tag24") << raw("\xd8\x18\x00") << "24(0)";
+    QTest::newRow("tagUINT64_MAX") << raw("\xdb" "\xff\xff\xff\xff" "\xff\xff\xff\xff" "\x00")
+                                << QString::number(std::numeric_limits<uint64_t>::max()) + "(0)";
+
+    QTest::newRow("emptyarray") << raw("\x80") << "[]";
+    QTest::newRow("emptymap") << raw("\xa0") << "{}";
+    QTest::newRow("_emptyarray") << raw("\x9f\xff") << "[_ ]";
+    QTest::newRow("_emptymap") << raw("\xbf\xff") << "{_ }";
+
+    QTest::newRow("map-0-24") << raw("\xa1\0\x18\x18") << "{0: 24}";
+    QTest::newRow("map-24-0") << raw("\xa1\x18\x18\0") << "{24: 0}";
+    QTest::newRow("_map-0-24") << raw("\xbf\0\x18\x18\xff") << "{_ 0: 24}";
+    QTest::newRow("_map-24-0") << raw("\xbf\x18\x18\0\xff") << "{_ 24: 0}";
 }
 
 void tst_ToJson::nonStringKeyMaps()
@@ -322,10 +397,8 @@ void tst_ToJson::nonStringKeyMaps()
     QFETCH(QByteArray, data);
     QFETCH(QString, expected);
 
-    if (!expected.startsWith('"'))
-        expected = '"' + expected + '"';
     data = "\xa1" + data + "\1";
-    compareOne(data, "{" + expected + ":1}", CborConvertStringifyMapKeys);
+    compareOne(data, "{\"" + expected + "\":1}", CborConvertStringifyMapKeys);
 
     // and verify that they fail if we use CborConvertRequireMapStringKeys
     CborParser parser;

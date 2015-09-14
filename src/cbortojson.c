@@ -24,6 +24,7 @@
 
 #define _BSD_SOURCE 1
 #define _GNU_SOURCE 1
+#define _POSIX_C_SOURCE 200809L
 #include "cbor.h"
 #include "cborjson.h"
 #include "compilersupport_p.h"
@@ -203,91 +204,18 @@ static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags)
 
 static CborError stringify_map_key(char **key, CborValue *it, int flags, CborType type)
 {
-    (void)flags;
-    switch (type) {
-    case CborArrayType:
-    case CborMapType:
-        // can't convert these
-        return CborErrorJsonObjectKeyIsAggregate;
+    (void)flags;    // unused
+    (void)type;     // unused
+    size_t size;
 
-    case CborIntegerType:
-        if (cbor_value_is_unsigned_integer(it)) {
-            uint64_t val;
-            cbor_value_get_uint64(it, &val);
-            asprintf(key, "%" PRIu64, val);
-        } else {
-            int64_t val;
-            cbor_value_get_int64(it, &val);     // can't fail
-            if (val < 0)
-                asprintf(key, "%" PRIi64, val);
-            else
-                asprintf(key, "-%" PRIu64, (uint64_t)(-val - 1));
-        }
-        break;
+    FILE *memstream = open_memstream(key, &size);
+    if (memstream == NULL)
+        return CborErrorOutOfMemory;        // could also be EMFILE, but it's unlikely
+    CborError err = cbor_value_to_pretty_advance(memstream, it);
 
-    case CborByteStringType:
-        return dump_bytestring_base64url(key, it);
-
-    case CborTextStringType:
-        unreachable();
+    if (unlikely(fclose(memstream) < 0 || *key == NULL))
         return CborErrorInternalError;
-
-    case CborTagType: {
-        CborTag tag;
-        cbor_value_get_tag(it, &tag);       // can't fail
-        return CborErrorUnsupportedType;
-    }
-
-    case CborSimpleType: {
-        uint8_t type;
-        cbor_value_get_simple_type(it, &type);  // can't fail
-        asprintf(key, "simple(%" PRIu8 ")", type) ? CborErrorOutOfMemory : CborNoError;
-        break;
-    }
-
-    case CborNullType:
-        *key = strdup("null");
-        break;
-
-    case CborUndefinedType:
-        *key = strdup("undefined");
-        break;
-
-    case CborBooleanType: {
-        bool val;
-        cbor_value_get_boolean(it, &val);       // can't fail
-        *key = strdup(val ? "true" : "false");
-        break;
-    }
-
-    case CborDoubleType: {
-        double val;
-        if (false) {
-            float f;
-    case CborFloatType:
-            cbor_value_get_float(it, &f);
-            val = f;
-        } else {
-            cbor_value_get_double(it, &val);
-        }
-
-        if (isnan(val) || isinf(val))
-            *key = strdup("null");
-        else
-            asprintf(key, "%.19g", val);
-        break;
-    }
-
-    case CborHalfFloatType:
-        return CborErrorUnsupportedType;
-
-    case CborInvalidType:
-        return CborErrorUnknownType;
-    }
-
-    if (*key == NULL)
-        return CborErrorOutOfMemory;
-    return cbor_value_advance_fixed(it);
+    return err;
 }
 
 static CborError array_to_json(FILE *out, CborValue *it, int flags)
