@@ -6,8 +6,5 @@ DESTDIR = ../../bin
 
 CBORDIR = $$PWD/../../src
 INCLUDEPATH += $$CBORDIR
-SOURCES += \
-    cbordump.c \
-    $$CBORDIR/cborerrorstrings.c \
-    $$CBORDIR/cborparser.c \
-    $$CBORDIR/cborpretty.c \
+SOURCES += cbordump.c
+LIBS += ../../lib/libtinycbor.a

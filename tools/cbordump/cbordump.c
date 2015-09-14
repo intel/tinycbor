@@ -22,11 +22,19 @@
 **
 ****************************************************************************/
 
+#define _POSIX_C_SOURCE 200809L
 #include "cbor.h"
+#include "cborjson.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+enum Mode {
+    PrintCborDump = 0,
+    PrintJson = 0x80000000
+};
 
 void *xrealloc(void *old, size_t size, const char *fname)
 {
@@ -44,7 +52,7 @@ void printerror(CborError err, const char *fname)
     exit(EXIT_FAILURE);
 }
 
-void dumpFile(FILE *in, const char *fname)
+void dumpFile(FILE *in, const char *fname, int mode)
 {
     static const size_t chunklen = 16 * 1024;
     static size_t bufsize = 0;
@@ -69,7 +77,10 @@ void dumpFile(FILE *in, const char *fname)
     CborValue value;
     CborError err = cbor_parser_init(buffer, buflen, 0, &parser, &value);
     if (!err) {
-        err = cbor_value_to_pretty_advance(stdout, &value);
+        if (mode)
+            err = cbor_value_to_json_advance(stdout, &value, mode & ~PrintJson);
+        else
+            err = cbor_value_to_pretty_advance(stdout, &value);
         if (!err)
             puts("");
     }
@@ -81,9 +92,55 @@ void dumpFile(FILE *in, const char *fname)
 
 int main(int argc, char **argv)
 {
-    char **fname = argv + 1;
+    int mode = PrintCborDump;
+    int c;
+    while ((c = getopt(argc, argv, "MOSUcjh")) != -1) {
+        switch (c) {
+        case 'c':
+            mode = PrintCborDump;
+            break;
+        case 'j':
+            mode &= ~PrintCborDump;
+            mode |= PrintJson;
+            break;
+
+        case 'M':
+            mode |= CborConvertAddMetadata;
+            break;
+        case 'O':
+            mode |= CborConvertTagsToObjects;
+            break;
+        case 'S':
+            mode |= CborConvertStringifyMapKeys;
+            break;
+        case 'U':
+            mode |= CborConvertByteStringsToBase64Url;
+            break;
+
+        case '?':
+            fprintf(stderr, "Unknown option -%c.\n", optopt);
+            // fall through
+        case 'h':
+            puts("Usage: cbordump [OPTION]... [FILE]...\n"
+                 "Interprets FILEs as CBOR binary data and dumps the content to stdout.\n"
+                 "\n"
+                 "Options:\n"
+                 " -c       Print a CBOR dump (see RFC 7049) (default)\n"
+                 " -j       Print a JSON equivalent version\n"
+                 " -h       Print this help output and exit\n"
+                 "When JSON output is active, the following options are recognized:\n"
+                 " -M       Add metadata so converting back to CBOR is possible\n"
+                 " -O       Convert CBOR tags to JSON objects\n"
+                 " -S       Stringify non-text string map keys\n"
+                 " -U       Convert all CBOR byte strings to Base64url regardless of tags"
+                 "");
+            return c == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
+        }
+    }
+
+    char **fname = argv + optind;
     if (!*fname) {
-        dumpFile(stdin, "-");
+        dumpFile(stdin, "-", mode);
     } else {
         for ( ; *fname; ++fname) {
             FILE *in = fopen(*fname, "rb");
@@ -92,7 +149,7 @@ int main(int argc, char **argv)
                 return EXIT_FAILURE;
             }
 
-            dumpFile(in, *fname);
+            dumpFile(in, *fname, mode);
             fclose(in);
         }
     }
