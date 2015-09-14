@@ -85,7 +85,7 @@ static CborError dump_bytestring_base16(char **result, CborValue *it)
 
 static CborError generic_dump_base64(char **result, CborValue *it, const char alphabet[65])
 {
-    size_t n = 0;
+    size_t n = 0, i;
     uint8_t *buffer, *out, *in;
     CborError err = cbor_value_calculate_string_length(it, &n);
     if (err)
@@ -105,10 +105,18 @@ static CborError generic_dump_base64(char **result, CborValue *it, const char al
     err = cbor_value_copy_byte_string(it, in, &n, it);
     assert(err == CborNoError);
 
-    uint_least32_t val;
-    for ( ; n >= 3; n -= 3, in += 3) {
+    uint_least32_t val = 0;
+    for (i = 0; n - i >= 3; i += 3) {
         // read 3 bytes x 8 bits = 24 bits
-        val = (in[0] << 16) | (in[1] << 8) | in[2];
+        if (false) {
+#ifdef __GNUC__
+        } else if (i) {
+            __builtin_memcpy(&val, in + i - 1, sizeof(val));
+            val = cbor_ntohl(val);
+#endif
+        } else {
+            val = (in[i] << 16) | (in[i + 1] << 8) | in[i + 2];
+        }
 
         // write 4 chars x 6 bits = 24 bits
         *out++ = alphabet[(val >> 18) & 0x3f];
@@ -118,16 +126,22 @@ static CborError generic_dump_base64(char **result, CborValue *it, const char al
     }
 
     // maybe 1 or 2 bytes left
-    if (n) {
-        val = in[0] << 16;
+    if (n - i) {
+        // we can read in[i + 1] even if it's past the end of the string because
+        // we know (by construction) that it's a NUL byte
+#ifdef __GNUC__
+        uint16_t val16;
+        __builtin_memcpy(&val16, in + i, sizeof(val16));
+        val = cbor_ntohs(val16);
+#else
+        val = (in[i] << 8) | in[i + 1];
+#endif
+        val <<= 8;
 
         // the 65th character in the alphabet is our filler: either '=' or '\0'
         out[4] = '\0';
         out[3] = alphabet[64];
-        if (n == 2) {
-            // read 2 bytes x 8 bits = 16 bits
-            val |= (in[1] << 8);
-
+        if (n - i == 2) {
             // write the third char in 3 chars x 6 bits = 18 bits
             out[2] = alphabet[(val >> 6) & 0x3f];
         } else {
