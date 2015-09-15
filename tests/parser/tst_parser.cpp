@@ -167,8 +167,15 @@ void addFixedData()
     QTest::newRow("-UINT16_MAX-1") << raw("\x3a\0\1\x00\x00") << "-65537";
     QTest::newRow("-UINT32_MAX") << raw("\x3a\xff\xff\xff\xff") << "-4294967296";
     QTest::newRow("-UINT32_MAX-1") << raw("\x3b\0\0\0\1\0\0\0\0") << "-4294967297";
-    QTest::newRow("-UINT64_MAX") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
-                                 << '-' + QString::number(std::numeric_limits<uint64_t>::max());
+    QTest::newRow("INT64_MIN+1") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xfe")
+                               << QString::number(std::numeric_limits<int64_t>::min() + 1);
+    QTest::newRow("INT64_MIN") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xff")
+                               << QString::number(std::numeric_limits<int64_t>::min());
+    QTest::newRow("INT64_MIN-1") << raw("\x3b\x80\0\0\0""\0\0\0\0") << "-9223372036854775809";
+    QTest::newRow("-UINT64_MAX") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xfe")
+                                   << '-' + QString::number(std::numeric_limits<uint64_t>::max());
+    QTest::newRow("-UINT64_MAX+1") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
+                                   << "-18446744073709551616";
 
     // overlongs
     QTest::newRow("0*1") << raw("\x18\x00") << "0";

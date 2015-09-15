@@ -221,25 +221,29 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
         return CborNoError;
     }
 
-    case CborIntegerType:
+    case CborIntegerType: {
+        uint64_t val;
+        cbor_value_get_raw_integer(it, &val);    // can't fail
+
         if (cbor_value_is_unsigned_integer(it)) {
-            uint64_t val;
-            cbor_value_get_uint64(it, &val);
             if (fprintf(out, "%" PRIu64, val) < 0)
                 return CborErrorIO;
         } else {
-            int64_t val;
-            cbor_value_get_int64(it, &val);     // can't fail
-            if (val < 0) {
-                if (fprintf(out, "%" PRIi64, val) < 0)
+            // CBOR stores the negative number X as -1 - X
+            // (that is, -1 is stored as 0, -2 as 1 and so forth)
+            if (++val) {                // unsigned overflow may happen
+                if (fprintf(out, "-%" PRIu64, val) < 0)
                     return CborErrorIO;
             } else {
-                // 65-bit negative
-                if (fprintf(out, "-%" PRIu64, (uint64_t)(-val) - 1) < 0)
+                // overflown
+                //   0xffff`ffff`ffff`ffff + 1 =
+                // 0x1`0000`0000`0000`0000 = 18446744073709551616 (2^64)
+                if (fprintf(out, "-18446744073709551616") < 0)
                     return CborErrorIO;
             }
         }
         break;
+    }
 
     case CborByteStringType:{
         size_t n = 0;
