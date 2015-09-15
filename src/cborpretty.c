@@ -290,9 +290,9 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
     }
 
     case CborSimpleType: {
-        uint8_t type;
-        cbor_value_get_simple_type(it, &type);  // can't fail
-        if (fprintf(out, "simple(%" PRIu8 ")", type) < 0)
+        uint8_t simple_type;
+        cbor_value_get_simple_type(it, &simple_type);  // can't fail
+        if (fprintf(out, "simple(%" PRIu8 ")", simple_type) < 0)
             return CborErrorIO;
         break;
     }
