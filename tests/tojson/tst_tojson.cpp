@@ -63,7 +63,15 @@ private slots:
     void taggedByteStringsToBigNum();
     void otherTags_data();
     void otherTags();
+
+    void metaData_data();
+    void metaData();
+    void metaDataAndTagsToObjects_data() { tagsToObjects_data(); }
+    void metaDataAndTagsToObjects();
+    void metaDataForKeys_data();
+    void metaDataForKeys();
 };
+#include "tst_tojson.moc"
 
 template <size_t N> QByteArray raw(const char (&data)[N])
 {
@@ -417,7 +425,7 @@ void tst_ToJson::tagsToObjects_data()
     QTest::newRow("0(\"hello\")") << raw("\xc0\x65hello") << "{\"tag0\":\"hello\"}";
     QTest::newRow("22(h'48656c6c6f')") << raw("\xd6\x45Hello") << "{\"tag22\":\"SGVsbG8\"}";
     QTest::newRow("0([1,2,3])") << raw("\xc0\x83\1\2\3") << "{\"tag0\":[1,2,3]}";
-    QTest::newRow("0({\"z\":true})") << raw("\xc0\xa1\x61z\xf5") << "{\"tag0\":{\"z\":true}}";
+    QTest::newRow("0({\"z\":true,\"y\":1})") << raw("\xc0\xa2\x61z\xf5\x61y\1") << "{\"tag0\":{\"z\":true,\"y\":1}}";
 
     // large tags
     QTest::newRow("55799(0)") << raw("\xd9\xd9\xf7\0") << "{\"tag55799\":0}";
@@ -522,5 +530,180 @@ void tst_ToJson::otherTags()
     compareOne("\xd9\xd9\xf7" + data, expected, 0);
 }
 
+void tst_ToJson::metaData_data()
+{
+    addColumns();
+
+    // booleans, null, strings, double precision numbers, regular maps, arrays and integers that
+    // didn't get rounded don't have metadata
+    QTest::newRow("0") << raw("\x00") << QString();
+    QTest::newRow("1") << raw("\x01") << QString();
+    QTest::newRow("2^53-1") << raw("\x1b\0\x1f\xff\xff""\xff\xff\xff\xff") << QString();
+    QTest::newRow("2^64-epsilon") << raw("\x1b\xff\xff\xff\xff""\xff\xff\xf8\x00") << QString();
+    QTest::newRow("-1") << raw("\x20") << QString();
+    QTest::newRow("-2") << raw("\x21") << QString();
+    QTest::newRow("-2^53+1") << raw("\x3b\0\x1f\xff\xff""\xff\xff\xff\xfe") << QString();
+    QTest::newRow("-2^64+epsilon") << raw("\x3b\xff\xff\xff\xff""\xff\xff\xf8\x00") << QString();
+    QTest::newRow("emptytextstring") << raw("\x60") << QString();
+    QTest::newRow("textstring1") << raw("\x61 ") << QString();
+    QTest::newRow("0.5") << raw("\xfb\x3f\xe0\0\0\0\0\0\0") << QString();
+    QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << QString();
+    QTest::newRow("false") << raw("\xf4") << QString();
+    QTest::newRow("true") << raw("\xf5") << QString();
+    QTest::newRow("null") << raw("\xf6") << QString();
+    QTest::newRow("emptyarray") << raw("\x80") << QString();
+    QTest::newRow("emptymap") << raw("\xa0") << QString();
+    QTest::newRow("array*1") << raw("\x81\xf6") << QString();
+    QTest::newRow("map*1") << raw("\xa1\x61z\xf4") << QString();
+
+    // ---- everything from here on has at least the type ----
+    QTest::newRow("emptybytestring") << raw("\x40") << "\"t\":64";
+    QTest::newRow("bytestring1") << raw("\x41 ") << "\"t\":64";
+    QTest::newRow("undefined") << raw("\xf7") << "\"t\":247";
+    QTest::newRow("0.f") << raw("\xfa\0\0\0\0") << "\"t\":250";
+    QTest::newRow("-1.f") << raw("\xfa\xbf\x80\0\0") << "\"t\":250";
+    QTest::newRow("16777215.f") << raw("\xfa\x4b\x7f\xff\xff") << "\"t\":250";
+    QTest::newRow("-16777215.f") << raw("\xfa\xcb\x7f\xff\xff") << "\"t\":250";
+    QTest::newRow("0.")  << raw("\xfb\0\0\0\0\0\0\0\0") << "\"t\":251";
+    QTest::newRow("-1.") << raw("\xfb\xbf\xf0\0\0\0\0\0\0") << "\"t\":251";
+    QTest::newRow("16777215.") << raw("\xfb\x41\x6f\xff\xff\xe0\0\0\0") << "\"t\":251";
+    QTest::newRow("-16777215.") << raw("\xfb\xc1\x6f\xff\xff\xe0\0\0\0") << "\"t\":251";
+    QTest::newRow("2.^53-1") << raw("\xfb\x43\x3f\xff\xff""\xff\xff\xff\xff") << "\"t\":251";
+    QTest::newRow("2.^64-epsilon") << raw("\xfb\x43\xef\xff\xff""\xff\xff\xff\xff") << "\"t\":251";
+
+    // integers that are too precise for double
+    QTest::newRow("2^53+1") << raw("\x1b\0\x20\0\0""\0\0\0\1")
+                            << "\"t\":0,\"v\":\"+20000000000001\"";
+    QTest::newRow("INT64_MAX-1") << raw("\x1b\x7f\xff\xff\xff""\xff\xff\xff\xfe")
+                                 << "\"t\":0,\"v\":\"+7ffffffffffffffe\"";
+    QTest::newRow("INT64_MAX+1") << raw("\x1b\x80\0\0\0""\0\0\0\1")
+                                 << "\"t\":0,\"v\":\"+8000000000000001\"";
+    QTest::newRow("-2^53-1") << raw("\x3b\0\x20\0\0""\0\0\0\0")
+                             << "\"t\":0,\"v\":\"-20000000000000\"";
+
+    // simple values
+    QTest::newRow("simple0") << raw("\xe0") << "\"t\":224,\"v\":0";
+    QTest::newRow("simple19") << raw("\xf3") << "\"t\":224,\"v\":19";
+    QTest::newRow("simple32") << raw("\xf8\x20") << "\"t\":224,\"v\":32";
+    QTest::newRow("simple255") << raw("\xf8\xff") << "\"t\":224,\"v\":255";
+
+    // infinities and NaN are not supported in JSON, they convert to null
+    QTest::newRow("qnan_f") << raw("\xfa\x7f\xc0\0\0") << "\"t\":250,\"v\":\"nan\"";
+    QTest::newRow("qnan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "\"t\":251,\"v\":\"nan\"";
+    QTest::newRow("snan_f") << raw("\xfa\x7f\xc0\0\0") << "\"t\":250,\"v\":\"nan\"";
+    QTest::newRow("snan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "\"t\":251,\"v\":\"nan\"";
+    QTest::newRow("-inf_f") << raw("\xfa\xff\x80\0\0") << "\"t\":250,\"v\":\"-inf\"";
+    QTest::newRow("-inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << "\"t\":251,\"v\":\"-inf\"";
+    QTest::newRow("+inf_f") << raw("\xfa\x7f\x80\0\0") << "\"t\":250,\"v\":\"inf\"";
+    QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << "\"t\":251,\"v\":\"inf\"";
+
+    // tags on native types
+    QTest::newRow("tag+0") << raw("\xc0\x00") << "\"tag\":\"0\"";
+    QTest::newRow("tag+-2") << raw("\xc0\x21") << "\"tag\":\"0\"";
+    QTest::newRow("tag+0.5") << raw("\xc0\xfb\x3f\xe0\0\0\0\0\0\0") << "\"tag\":\"0\"";
+    QTest::newRow("tag+emptytextstring") << raw("\xc0\x60") << "\"tag\":\"0\"";
+    QTest::newRow("tag+textstring1") << raw("\xc0\x61 ") << "\"tag\":\"0\"";
+    QTest::newRow("tag+false") << raw("\xc0\xf4") << "\"tag\":\"0\"";
+    QTest::newRow("tag+true") << raw("\xc0\xf5") << "\"tag\":\"0\"";
+    QTest::newRow("tag+null") << raw("\xc0\xf6") << "\"tag\":\"0\"";
+    QTest::newRow("tag+emptyarray") << raw("\xc0\x80") << "\"tag\":\"0\"";
+    QTest::newRow("tag+emptymap") << raw("\xc0\xa0") << "\"tag\":\"0\"";
+    QTest::newRow("tag+array*1") << raw("\xc0\x81\xf6") << "\"tag\":\"0\"";
+    QTest::newRow("tag+map*1") << raw("\xc0\xa1\x61z\xf4") << "\"tag\":\"0\"";
+
+    // tags on non-native types
+    QTest::newRow("tag+emptybytestring") << raw("\xc0\x40") << "\"tag\":\"0\",\"t\":64";
+    QTest::newRow("tag+bytestring1") << raw("\xc0\x41 ") << "\"tag\":\"0\",\"t\":64";
+    QTest::newRow("tag+undefined") << raw("\xc0\xf7") << "\"tag\":\"0\",\"t\":247";
+    QTest::newRow("tag+0.f") << raw("\xc0\xfa\0\0\0\0") << "\"tag\":\"0\",\"t\":250";
+    QTest::newRow("tag+-1.f") << raw("\xc0\xfa\xbf\x80\0\0") << "\"tag\":\"0\",\"t\":250";
+    QTest::newRow("tag+16777215.f") << raw("\xc0\xfa\x4b\x7f\xff\xff") << "\"tag\":\"0\",\"t\":250";
+    QTest::newRow("tag+-16777215.f") << raw("\xc0\xfa\xcb\x7f\xff\xff") << "\"tag\":\"0\",\"t\":250";
+    QTest::newRow("tag+0.")  << raw("\xc0\xfb\0\0\0\0\0\0\0\0") << "\"tag\":\"0\",\"t\":251";
+    QTest::newRow("tag+-1.") << raw("\xc0\xfb\xbf\xf0\0\0\0\0\0\0") << "\"tag\":\"0\",\"t\":251";
+    QTest::newRow("tag+16777215.") << raw("\xc0\xfb\x41\x6f\xff\xff\xe0\0\0\0") << "\"tag\":\"0\",\"t\":251";
+    QTest::newRow("tag+-16777215.") << raw("\xc0\xfb\xc1\x6f\xff\xff\xe0\0\0\0") << "\"tag\":\"0\",\"t\":251";
+
+    // big tags (don't fit in JS numbers)
+    QTest::newRow("bigtag1") << raw("\xdb\0\x20\0\0""\0\0\0\1\x60") << "\"tag\":\"9007199254740993\"";
+    QTest::newRow("bigtag2") << raw("\xdb\xff\xff\xff\xff""\xff\xff\xff\xfe\x60")
+                             << "\"tag\":\"18446744073709551614\"";
+
+    // specially-handled tags
+    QTest::newRow("negativebignum") << raw("\xc3\x41 ") << "\"tag\":\"3\",\"t\":64";
+    QTest::newRow("base64") << raw("\xd6\x41 ") << "\"tag\":\"22\",\"t\":64";
+    QTest::newRow("base16") << raw("\xd7\x41 ") << "\"tag\":\"23\",\"t\":64";
+}
+
+void compareMetaData(QByteArray data, const QString &expected, int otherFlags = 0)
+{
+    QString decoded;
+
+    // needs to be in in one map, with the entry called "v"
+    data = "\xa1\x61v" + data;
+
+    {
+        CborParser parser;
+        CborValue first;
+        CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
+        QVERIFY2(!err, QByteArrayLiteral(": Got error \"") + cbor_error_string(err) + "\"");
+
+        err = parseOne(&first, &decoded, CborConvertAddMetadata | otherFlags);
+        QVERIFY2(!err, QByteArrayLiteral(": Got error \"") + cbor_error_string(err) +
+                 "\"; decoded stream:\n" + decoded.toLatin1());
+
+        // check that we consumed everything
+        QCOMPARE((void*)first.ptr, (void*)data.constEnd());
+    }
+
+    QVERIFY(decoded.startsWith("{\"v\":"));
+    QVERIFY(decoded.endsWith('}'));
+//    qDebug() << "was" << decoded;
+
+    // extract just the metadata
+    static const char needle[] = "\"v$cbor\":{";
+    int pos = decoded.indexOf(needle);
+    QCOMPARE(pos == -1, expected.isEmpty());
+    if (pos != -1) {
+        decoded.chop(2);
+        decoded = std::move(decoded).mid(pos + strlen(needle));
+        QCOMPARE(decoded, expected);
+    }
+}
+
+void tst_ToJson::metaData()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+    compareMetaData(data, expected);
+}
+
+void tst_ToJson::metaDataAndTagsToObjects()
+{
+    QFETCH(QByteArray, data);
+
+    // when a tag is converted to an object, the object gets metadata indicating it was a tag
+    compareMetaData(data, "\"t\":192", CborConvertTagsToObjects);
+}
+
+void tst_ToJson::metaDataForKeys_data()
+{
+    nonStringKeyMaps_data();
+
+    // string keys generate no metadata
+    QTest::newRow("string") << raw("\x60") << QString();
+}
+
+void tst_ToJson::metaDataForKeys()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+    if (expected.isEmpty())
+        expected = "{\"\":false}";
+    else
+        expected = "{\"" + expected + "\":false,\"" + expected + "$keycbordump\":true}";
+    compareOne('\xa1' + data + '\xf4', expected,
+               CborConvertAddMetadata | CborConvertStringifyMapKeys);
+}
+
 QTEST_MAIN(tst_ToJson)
-#include "tst_tojson.moc"
