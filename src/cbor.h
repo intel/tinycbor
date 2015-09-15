@@ -153,6 +153,8 @@ CBOR_API CborError cbor_encode_int(CborEncoder *encoder, int64_t value);
 CBOR_API CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value);
 CBOR_API CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag);
 CBOR_API CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size_t length);
+CBOR_INLINE_API CborError cbor_encode_text_stringz(CborEncoder *encoder, const char *string)
+{ return cbor_encode_text_string(encoder, string, strlen(string)); }
 CBOR_API CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length);
 CBOR_API CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value);
 
