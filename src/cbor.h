@@ -260,6 +260,13 @@ CBOR_INLINE_API bool cbor_value_is_unsigned_integer(const CborValue *value)
 CBOR_INLINE_API bool cbor_value_is_negative_integer(const CborValue *value)
 { return cbor_value_is_integer(value) && (value->flags & CborIteratorFlag_NegativeInteger); }
 
+CBOR_INLINE_API CborError cbor_value_get_raw_integer(const CborValue *value, uint64_t *result)
+{
+    assert(cbor_value_is_integer(value));
+    *result = _cbor_value_extract_int64_helper(value);
+    return CborNoError;
+}
+
 CBOR_INLINE_API CborError cbor_value_get_uint64(const CborValue *value, uint64_t *result)
 {
     assert(cbor_value_is_unsigned_integer(value));
