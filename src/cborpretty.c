@@ -226,7 +226,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
         cbor_value_get_raw_integer(it, &val);    // can't fail
 
         if (cbor_value_is_unsigned_integer(it)) {
-            if (fprintf(out, "%" PRIu64, val) < 0)
+            if (fprintf(out, "%" PRIu64 "u", val) < 0)
                 return CborErrorIO;
         } else {
             // CBOR stores the negative number X as -1 - X
