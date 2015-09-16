@@ -71,3 +71,6 @@ Makefile*
 *.map
 
 bin
+lib
+src/cjson
+!Makefile
