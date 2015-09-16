@@ -136,9 +136,17 @@ distcheck: .git
 	cd $$TMPDIR/tinycbor-distcheck && $(MAKE) silentcheck
 	$(RM) -r $$TMPDIR/tinycbor-distcheck
 
+release: .git
+	$(MAKE) -f $(MAKEFILE) distcheck
+	git -C $(SRCDIR) show HEAD:VERSION | \
+	  perl -l -n -e '@_ = split /\./; print "$$_[0]." . ($$_[1] + 1)' > $(SRCDIR)VERSION
+	git -C $(SRCDIR) commit -s -m "Update version number" VERSION
+	v=v`cat $(SRCDIR)VERSION` && git -C $(SRCDIR) tag -a -m "TinyCBOR release $$v" $(GITTAGFLAGS) $$v
+	$(MAKE) -f $(MAKEFILE) dist
+
 .PHONY: all check silentcheck install uninstall
 .PHONY: mostlyclean clean distclean
-.PHONY: dist distcheck
+.PHONY: dist distcheck release
 .SECONDARY:
 
 cflags := $(CPPFLAGS) -I$(SRCDIR)src
