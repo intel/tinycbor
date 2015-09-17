@@ -29,13 +29,22 @@
 #  define _BSD_SOURCE
 #endif
 #include <assert.h>
+#include <float.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#define STRINGIFY(x)            STRINGIFY2(x)
+#define STRINGIFY2(x)           #x
 
 #ifndef UINT32_MAX
 /* C99 requires it in stdint.h, but some systems lack it */
 #  define UINT32_MAX    (0xffffffffU)
 #endif
+#ifndef DBL_DECIMAL_DIG
+// DBL_DECIMAL_DIG is C11
+#  define DBL_DECIMAL_DIG       17
+#endif
+#define DBL_DECIMAL_DIG_STR     STRINGIFY(DBL_DECIMAL_DIG)
 
 #ifndef __has_builtin
 #  define __has_builtin(x)  0

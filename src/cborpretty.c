@@ -28,6 +28,7 @@
 
 #include <float.h>
 #include <inttypes.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -316,26 +317,32 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
     }
 
     case CborDoubleType: {
-        char buffer[32];
+        const char *suffix;
         double val;
         if (false) {
             float f;
     case CborFloatType:
             cbor_value_get_float(it, &f);
             val = f;
+            suffix = "f";
+            if (isnan(f) || isinf(f))
+                suffix = "";
         } else {
             cbor_value_get_double(it, &val);
+            suffix = "";
         }
 
-        int count = snprintf(buffer, sizeof(buffer), "%.19g", val);
-        assert(count < (int)sizeof(buffer));
-        if (buffer[0] != 'i' && buffer[1] != 'i' && buffer[0] != 'n') {
-            if (strchr(buffer, '.') == NULL)
-                strcat(buffer, ".");
-            if (type == CborFloatType)
-                strcat(buffer, "f");
+        uint64_t ival = (uint64_t)fabs(val);
+        int r;
+        if (ival == fabs(val)) {
+            // this double value fits in a 64-bit integer, so show it as such
+            // (followed by a floating point suffix, to disambiguate)
+            r = fprintf(out, "%s%" PRIu64 ".%s", val < 0 ? "-" : "", ival, suffix);
+        } else {
+            // this number is definitely not a 64-bit integer
+            r = fprintf(out, "%." DBL_DECIMAL_DIG_STR "g%s", val, suffix);
         }
-        if (fprintf(out, "%s", buffer) < 0)
+        if (r < 0)
             return CborErrorIO;
         break;
     }

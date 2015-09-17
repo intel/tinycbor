@@ -208,6 +208,15 @@ void addFixedData()
     QTest::newRow("-16777215.f") << raw("\xfa\xcb\x7f\xff\xff") << "-16777215.f";
     QTest::newRow("-16777215.") << raw("\xfb\xc1\x6f\xff\xff\xe0\0\0\0") << "-16777215.";
 
+    QTest::newRow("0.5f") << raw("\xfa\x3f\0\0\0") << "0.5f";
+    QTest::newRow("0.5") << raw("\xfb\x3f\xe0\0\0\0\0\0\0") << "0.5";
+    QTest::newRow("2.f^24-1") << raw("\xfa\x4b\x7f\xff\xff") << "16777215.f";
+    QTest::newRow("2.^53-1") << raw("\xfb\x43\x3f\xff\xff""\xff\xff\xff\xff") << "9007199254740991.";
+    QTest::newRow("2.f^64-epsilon") << raw("\xfa\x5f\x7f\xff\xff") << "18446742974197923840.f";
+    QTest::newRow("2.^64-epsilon") << raw("\xfb\x43\xef\xff\xff""\xff\xff\xff\xff") << "18446744073709549568.";
+    QTest::newRow("2.f^64") << raw("\xfa\x5f\x80\0\0") << "1.8446744073709552e+19f";
+    QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << "1.8446744073709552e+19";
+
     QTest::newRow("qnan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
     QTest::newRow("qnan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
     QTest::newRow("snan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
@@ -325,7 +334,7 @@ void addTagsData()
     QTest::newRow("tag65536+simple32") << raw("\xda\0\1\0\0\xf8\x20") << "65536(simple(32))";
     QTest::newRow("float+unixtime") << raw("\xc1\xfa\x4e\xaa\x97\x80") << "1(1431027712.f)";
     QTest::newRow("double+unixtime") << raw("\xc1\xfb" "\x41\xd5\x52\xef" "\xf4\xc7\xce\xfe")
-                                     << "1(1431027667.122008801)";
+                                     << "1(1431027667.1220088)";
 }
 
 void tst_Parser::tags_data()
