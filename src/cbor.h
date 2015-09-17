@@ -401,7 +401,8 @@ CBOR_API CborError cbor_value_get_half_float(const CborValue *value, void *resul
 CBOR_INLINE_API CborError cbor_value_get_float(const CborValue *value, float *result)
 {
     assert(value->type == CborFloatType);
-    uint32_t data = _cbor_value_extract_int64_helper(value);
+    assert(value->flags & CborIteratorFlag_IntegerValueTooLarge);
+    uint32_t data = _cbor_value_decode_int64_internal(value);
     memcpy(result, &data, sizeof(*result));
     return CborNoError;
 }
@@ -409,7 +410,8 @@ CBOR_INLINE_API CborError cbor_value_get_float(const CborValue *value, float *re
 CBOR_INLINE_API CborError cbor_value_get_double(const CborValue *value, double *result)
 {
     assert(value->type == CborDoubleType);
-    uint64_t data = _cbor_value_extract_int64_helper(value);
+    assert(value->flags & CborIteratorFlag_IntegerValueTooLarge);
+    uint64_t data = _cbor_value_decode_int64_internal(value);
     memcpy(result, &data, sizeof(*result));
     return CborNoError;
 }
