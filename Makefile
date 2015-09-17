@@ -47,7 +47,7 @@ ifeq ($(GIT_DIR),)
 else
   VERSION := $(shell git -C $(SRCDIR) describe --tags | cut -c2-)
   DIRTYSRC := $(shell \
-	test -n `git -C $(SRCDIR) diff --name-only HEAD` && \
+	test -n "`git -C $(SRCDIR) diff --name-only HEAD`" && \
 	echo +)
 endif
 PACKAGE = tinycbor-$(VERSION)
