@@ -101,7 +101,7 @@ lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o) | lib
 	$(AR) cqs $@ $^
 
 bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) lib/libtinycbor.a | bin
-	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS) -lm
 
 bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) lib/libtinycbor.a | bin
 	$(CC) -o $@ $(LDFLAGS) $(LDFLAGS_CJSON) $^ $(LDLIBS) -lm

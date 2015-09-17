@@ -270,19 +270,9 @@ CborError decode_json_with_metadata(cJSON *item, CborEncoder *encoder, struct Me
         return cbor_encode_undefined(encoder);
 
     case CborHalfFloatType:
-        fprintf(stderr, "json2cbor: Unimplemented: encoding to half-float. Encoding as single-precision float instead.\n");
-        md.t = CborFloatType;
-        // fall through
-
     case CborFloatType:
-        if (!md.v) {
-            // we can't get an OOM here because the metadata makes up for space
-            // (the smallest metadata is "$cbor":{"t":250} (17 bytes)
-            return cbor_encode_float(encoder, item->valuedouble);
-        }
-        // fall through
-
     case CborDoubleType: {
+        unsigned short half;
         double v;
         if (!md.v) {
             v = item->valuedouble;
@@ -297,9 +287,11 @@ CborError decode_json_with_metadata(cJSON *item, CborEncoder *encoder, struct Me
             break;
         }
 
-        // no OOM possible either, as the shortest metadata is also 17 bytes
+        // we can't get an OOM here because the metadata makes up for space
+        // (the smallest metadata is "$cbor":{"t":250} (17 bytes)
         return (md.t == CborDoubleType) ? cbor_encode_double(encoder, v) :
-                                          cbor_encode_float(encoder, v);
+               (md.t == CborFloatType) ? cbor_encode_float(encoder, v) :
+                                         (half = encode_half(v), cbor_encode_half_float(encoder, &half));
     }
 
     default:

@@ -325,15 +325,22 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
             cbor_value_get_float(it, &f);
             val = f;
             suffix = "f";
-            if (isnan(f) || isinf(f))
-                suffix = "";
+        } else if (false) {
+            uint16_t f16;
+    case CborHalfFloatType:
+            cbor_value_get_half_float(it, &f16);
+            val = decode_half(f16);
+            suffix = "f16";
         } else {
             cbor_value_get_double(it, &val);
             suffix = "";
         }
 
+        int r = fpclassify(val);
+        if (r == FP_NAN || r == FP_INFINITE)
+            suffix = "";
+
         uint64_t ival = (uint64_t)fabs(val);
-        int r;
         if (ival == fabs(val)) {
             // this double value fits in a 64-bit integer, so show it as such
             // (followed by a floating point suffix, to disambiguate)
@@ -343,13 +350,6 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
             r = fprintf(out, "%." DBL_DECIMAL_DIG_STR "g%s", val, suffix);
         }
         if (r < 0)
-            return CborErrorIO;
-        break;
-    }
-    case CborHalfFloatType: {
-        uint16_t val;
-        cbor_value_get_half_float(it, &val);
-        if (fprintf(out, "__f16(0x%04" PRIu16 ")", val) < 0)
             return CborErrorIO;
         break;
     }

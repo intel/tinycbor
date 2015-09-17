@@ -469,18 +469,24 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
             status->flags = TypeWasNotNative;
             cbor_value_get_float(it, &f);
             val = f;
+        } else if (false) {
+            uint16_t f16;
+    case CborHalfFloatType:
+            status->flags = TypeWasNotNative;
+            cbor_value_get_half_float(it, &f16);
+            val = decode_half(f16);
         } else {
             cbor_value_get_double(it, &val);
         }
 
-        if (isinf(val) || isnan(val)) {
+        int r = fpclassify(val);
+        if (r == FP_NAN || r == FP_INFINITE) {
             if (fprintf(out, "null") < 0)
                 return CborErrorIO;
-            status->flags |= isnan(val) ? NumberWasNaN :
-                                          NumberWasInfinite | (val < 0 ? NumberWasNegative : 0);
+            status->flags |= r == FP_NAN ? NumberWasNaN :
+                                           NumberWasInfinite | (val < 0 ? NumberWasNegative : 0);
         } else {
             uint64_t ival = (uint64_t)fabs(val);
-            int r;
             if ((double)ival == fabs(val)) {
                 // print as integer so we get the full precision
                 r = fprintf(out, "%s%" PRIu64, val < 0 ? "-" : "", ival);
@@ -494,9 +500,6 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         }
         break;
     }
-
-    case CborHalfFloatType:
-        return CborErrorUnsupportedType;
 
     case CborInvalidType:
         return CborErrorUnknownType;

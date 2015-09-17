@@ -197,19 +197,23 @@ void addFixedData()
     QTest::newRow("simple255") << raw("\xf8\xff") << "simple(255)";
 
     // floating point
-    QTest::newRow("0f16") << raw("\xf9\0\0") << "__f16(0x0000)";
 
+    QTest::newRow("0.f16") << raw("\xf9\0\0") << "0.f16";
     QTest::newRow("0.f") << raw("\xfa\0\0\0\0") << "0.f";
     QTest::newRow("0.")  << raw("\xfb\0\0\0\0\0\0\0\0") << "0.";
+    QTest::newRow("-1.f16") << raw("\xf9\xbc\x00") << "-1.f16";
     QTest::newRow("-1.f") << raw("\xfa\xbf\x80\0\0") << "-1.f";
     QTest::newRow("-1.") << raw("\xfb\xbf\xf0\0\0\0\0\0\0") << "-1.";
+    QTest::newRow("65504.f16") << raw("\xf9\x7b\xff") << "65504.f16";
     QTest::newRow("16777215.f") << raw("\xfa\x4b\x7f\xff\xff") << "16777215.f";
     QTest::newRow("16777215.") << raw("\xfb\x41\x6f\xff\xff\xe0\0\0\0") << "16777215.";
     QTest::newRow("-16777215.f") << raw("\xfa\xcb\x7f\xff\xff") << "-16777215.f";
     QTest::newRow("-16777215.") << raw("\xfb\xc1\x6f\xff\xff\xe0\0\0\0") << "-16777215.";
 
+    QTest::newRow("0.5f16") << raw("\xf9\x38\0") << "0.5f16";
     QTest::newRow("0.5f") << raw("\xfa\x3f\0\0\0") << "0.5f";
     QTest::newRow("0.5") << raw("\xfb\x3f\xe0\0\0\0\0\0\0") << "0.5";
+    QTest::newRow("2.f16^11-1") << raw("\xf9\x67\xff") << "2047.f16";
     QTest::newRow("2.f^24-1") << raw("\xfa\x4b\x7f\xff\xff") << "16777215.f";
     QTest::newRow("2.^53-1") << raw("\xfb\x43\x3f\xff\xff""\xff\xff\xff\xff") << "9007199254740991.";
     QTest::newRow("2.f^64-epsilon") << raw("\xfa\x5f\x7f\xff\xff") << "18446742974197923840.f";
@@ -217,12 +221,13 @@ void addFixedData()
     QTest::newRow("2.f^64") << raw("\xfa\x5f\x80\0\0") << "1.8446744073709552e+19f";
     QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << "1.8446744073709552e+19";
 
-    QTest::newRow("qnan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
-    QTest::newRow("qnan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
-    QTest::newRow("snan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
-    QTest::newRow("snan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
+    QTest::newRow("nan_f16") << raw("\xf9\x7e\x00") << "nan";
+    QTest::newRow("nan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
+    QTest::newRow("nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
+    QTest::newRow("-inf_f16") << raw("\xf9\xfc\x00") << "-inf";
     QTest::newRow("-inf_f") << raw("\xfa\xff\x80\0\0") << "-inf";
     QTest::newRow("-inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << "-inf";
+    QTest::newRow("+inf_f16") << raw("\xf9\x7c\x00") << "inf";
     QTest::newRow("+inf_f") << raw("\xfa\x7f\x80\0\0") << "inf";
     QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << "inf";
 
