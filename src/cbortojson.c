@@ -36,6 +36,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern FILE *open_memstream(char **bufptr, size_t *sizeptr);
+
 enum ConversionStatusFlags {
     TypeWasNotNative            = 0x100,    // anything but strings, boolean, null, arrays and maps
     TypeWasTagged               = 0x200,

@@ -74,3 +74,4 @@ bin
 lib
 src/cjson
 !Makefile
+.config

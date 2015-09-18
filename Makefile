@@ -7,7 +7,8 @@ includedir = $(prefix)/include
 pkgconfigdir = $(libdir)/pkgconfig
 
 CFLAGS = -Wall -Wextra
-LDFLAGS = -Wl,--gc-sections
+LDFLAGS_GCSECTIONS = -Wl,--gc-sections
+LDFLAGS = $(if $(gc_sections-pass),$(LDFLAGS_GCSECTIONS))
 
 GIT_ARCHIVE = git archive --prefix="$(PACKAGE)/" -9
 INSTALL = install
@@ -27,6 +28,7 @@ TINYCBOR_SOURCES = \
 	src/cborparser.c \
 	src/cborpretty.c \
 	src/cbortojson.c \
+	$(if $(open_memstream-pass),,src/open_memstream.c) \
 #
 CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 
@@ -67,12 +69,17 @@ ifeq ($(origin QMAKE),file)
   endif
 endif
 
+-include .config
+
 # Rules
-all: lib/libtinycbor.a bin/cbordump tinycbor.pc
+all: .config lib/libtinycbor.a bin/cbordump tinycbor.pc
 check: tests/Makefile | lib/libtinycbor.a
 	$(MAKE) -C tests check
 silentcheck: | lib/libtinycbor.a
 	TESTARGS=-silent $(MAKE) -f $(MAKEFILE) -s check
+configure: .config
+.config: Makefile.configure
+	$(MAKE) -f $(SRCDIR)Makefile.configure OUT='>&10' configure 10> $@
 
 lib bin:
 	$(MKDIR) $@
@@ -145,7 +152,7 @@ release: .git
 	v=v`cat $(SRCDIR)VERSION` && git -C $(SRCDIR) tag -a -m "TinyCBOR release $$v" $(GITTAGFLAGS) $$v
 	$(MAKE) -f $(MAKEFILE) dist
 
-.PHONY: all check silentcheck install uninstall
+.PHONY: all check silentcheck configure install uninstall
 .PHONY: mostlyclean clean distclean
 .PHONY: dist distcheck release
 .SECONDARY:
@@ -156,3 +163,4 @@ cflags += -std=c99 $(CFLAGS)
 %.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
 	$(CC) $(cflags) -c -o $@ $<
+
