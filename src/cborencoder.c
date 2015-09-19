@@ -69,15 +69,32 @@ static inline void put64(void *where, uint64_t v)
     memcpy(where, &v, sizeof(v));
 }
 
+static inline bool would_overflow(CborEncoder *encoder, size_t len)
+{
+    ptrdiff_t remaining = (ptrdiff_t)encoder->end;
+    remaining -= remaining ? (ptrdiff_t)encoder->ptr : encoder->bytes_needed;
+    remaining -= (ptrdiff_t)len;
+    return unlikely(remaining < 0);
+}
+
+static inline void advance_ptr(CborEncoder *encoder, size_t n)
+{
+    if (encoder->end)
+        encoder->ptr += n;
+    else
+        encoder->bytes_needed += n;
+}
+
 static inline CborError append_to_buffer(CborEncoder *encoder, const void *data, size_t len)
 {
-    if (encoder->end - encoder->ptr - (ptrdiff_t)len < 0) {
+    if (would_overflow(encoder, len)) {
         if (encoder->end != NULL) {
             len -= encoder->end - encoder->ptr;
-            encoder->end = encoder->ptr = NULL;
+            encoder->end = NULL;
+            encoder->bytes_needed = 0;
         }
 
-        encoder->ptr += len;
+        advance_ptr(encoder, len);
         return CborErrorOutOfMemory;
     }
 
@@ -88,12 +105,13 @@ static inline CborError append_to_buffer(CborEncoder *encoder, const void *data,
 
 static inline CborError append_byte_to_buffer(CborEncoder *encoder, uint8_t byte)
 {
-    if (encoder->end <= encoder->ptr) {
+    if (would_overflow(encoder, 1)) {
         if (encoder->end != NULL) {
-            encoder->end = encoder->ptr = NULL;
+            encoder->end = NULL;
+            encoder->bytes_needed = 0;
         }
 
-        ++encoder->ptr;
+        advance_ptr(encoder, 1);
         return CborErrorOutOfMemory;
     }
 
@@ -223,7 +241,10 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
 
 CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
-    encoder->ptr = containerEncoder->ptr;
+    if (encoder->end)
+        encoder->ptr = containerEncoder->ptr;
+    else
+        encoder->bytes_needed = containerEncoder->bytes_needed;
     encoder->end = containerEncoder->end;
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
         return append_byte_to_buffer(encoder, BreakByte);

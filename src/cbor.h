@@ -139,7 +139,10 @@ CBOR_API const char *cbor_error_string(CborError error);
 /* Encoder API */
 struct CborEncoder
 {
-    uint8_t *ptr;
+    union {
+        uint8_t *ptr;
+        ptrdiff_t bytes_needed;
+    };
     const uint8_t *end;
     int flags;
 };
