@@ -127,6 +127,10 @@ typedef enum CborError {
     CborErrorDuplicateObjectKeys,
     CborErrorInvalidUtf8TextString,
 
+    /* encoder errors */
+    CborErrorTooManyItems = 768,
+    CborErrorTooFewItems,
+
     /* internal implementation errors */
     CborErrorDataTooLarge = 1024,
     CborErrorNestingTooDeep,
@@ -144,6 +148,7 @@ struct CborEncoder
         ptrdiff_t bytes_needed;
     };
     const uint8_t *end;
+    size_t added;
     int flags;
 };
 typedef struct CborEncoder CborEncoder;
@@ -178,6 +183,7 @@ CBOR_INLINE_API CborError cbor_encode_double(CborEncoder *encoder, double value)
 CBOR_API CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEncoder, size_t length);
 CBOR_API CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder, size_t length);
 CBOR_API CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder);
+CBOR_API CborError cbor_encoder_close_container_checked(CborEncoder *encoder, const CborEncoder *containerEncoder);
 
 /* Parser API */
 
@@ -185,7 +191,8 @@ enum CborParserIteratorFlags
 {
     CborIteratorFlag_IntegerValueTooLarge   = 0x01,
     CborIteratorFlag_NegativeInteger        = 0x02,
-    CborIteratorFlag_UnknownLength          = 0x04
+    CborIteratorFlag_UnknownLength          = 0x04,
+    CborIteratorFlag_ContainerIsMap         = 0x20
 };
 
 struct CborParser

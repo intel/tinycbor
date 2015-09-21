@@ -23,6 +23,7 @@ TINYCBOR_HEADERS = src/cbor.h src/cborjson.h
 TINYCBOR_SOURCES = \
 	src/cborerrorstrings.c \
 	src/cborencoder.c \
+	src/cborencoder_close_container_checked.c \
 	src/cborparser.c \
 	src/cborpretty.c \
 #

@@ -46,6 +46,14 @@ private slots:
 
     void shortBuffer_data() { tags_data(); }
     void shortBuffer();
+    void tooShortArrays_data() { tags_data(); }
+    void tooShortArrays();
+    void tooShortMaps_data() { tags_data(); }
+    void tooShortMaps();
+    void tooBigArrays_data() { tags_data(); }
+    void tooBigArrays();
+    void tooBigMaps_data() { tags_data(); }
+    void tooBigMaps();
     void illegalSimpleType_data();
     void illegalSimpleType();
 };
@@ -157,7 +165,7 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 if (err && !isOomError(err))
                     return err;
             }
-            return static_cast<CborError>(err | cbor_encoder_close_container(encoder, &sub));
+            return static_cast<CborError>(err | cbor_encoder_close_container_checked(encoder, &sub));
         }
         if (type == qMetaTypeId<Map>() || type == qMetaTypeId<IndeterminateLengthMap>()) {
             CborEncoder sub;
@@ -178,7 +186,7 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 if (err && !isOomError(err))
                     return err;
             }
-            return (CborError)(err | cbor_encoder_close_container(encoder, &sub));
+            return (CborError)(err | cbor_encoder_close_container_checked(encoder, &sub));
         }
     }
     return CborErrorUnknownType;
@@ -193,6 +201,7 @@ void compare(const QVariant &input, const QByteArray &output)
     QCOMPARE(int(encodeVariant(&encoder, input)), int(CborNoError));
     buffer.resize(encoder.ptr - reinterpret_cast<const quint8 *>(buffer.constData()));
     QCOMPARE(buffer, output);
+    QCOMPARE(encoder.added, size_t(1));
 }
 
 void addColumns()
@@ -305,7 +314,7 @@ void addArraysAndMaps()
     QTest::newRow("emptymap") << raw("\xa0") << make_map({});
 
     QTest::newRow("array-0") << raw("\x81\0") << QVariant(QVariantList{0});
-    QTest::newRow("array-0") << raw("\x82\0\0") << QVariant(QVariantList{0, 0});
+    QTest::newRow("array-{0-0}") << raw("\x82\0\0") << QVariant(QVariantList{0, 0});
     QTest::newRow("array-Hello") << raw("\x81\x65Hello") << QVariant(QVariantList{"Hello"});
     QTest::newRow("array-array-0") << raw("\x81\x81\0") << QVariant(QVariantList{QVariantList{0}});
     QTest::newRow("array-array-{0-0}") << raw("\x81\x82\0\0") << QVariant(QVariantList{QVariantList{0, 0}});
@@ -328,7 +337,7 @@ void addArraysAndMaps()
     QTest::newRow("_emptymap") << raw("\xbf\xff") << make_ilmap({});
 
     QTest::newRow("_array-0") << raw("\x9f\0\xff") << make_ilarray({0});
-    QTest::newRow("_array-0") << raw("\x9f\0\0\xff") << make_ilarray({0, 0});
+    QTest::newRow("_array-{0-0}") << raw("\x9f\0\0\xff") << make_ilarray({0, 0});
     QTest::newRow("_array-Hello") << raw("\x9f\x65Hello\xff") << make_ilarray({"Hello"});
     QTest::newRow("_array-array-0") << raw("\x9f\x81\0\xff") << make_ilarray({QVariantList{0}});
     QTest::newRow("_array-_array-0") << raw("\x9f\x9f\0\xff\xff") << make_ilarray({make_ilarray({0})});
@@ -534,6 +543,65 @@ void tst_Encoder::shortBuffer()
         QCOMPARE(int(encodeVariant(&encoder, input)), int(CborErrorOutOfMemory));
         QCOMPARE(len + int(encoder.ptr - encoder.end), output.length());
     }
+}
+
+void tst_Encoder::tooShortArrays()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+    QByteArray buffer(output.length() + 1, Qt::Uninitialized);
+
+    CborEncoder encoder, container;
+    cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), buffer.length(), 0);
+    QCOMPARE(cbor_encoder_create_array(&encoder, &container, 2), CborNoError);
+    QCOMPARE(int(encodeVariant(&container, input)), int(CborNoError));
+    QCOMPARE(container.added, size_t(1));
+    QCOMPARE(int(cbor_encoder_close_container_checked(&encoder, &container)), int(CborErrorTooFewItems));
+}
+
+void tst_Encoder::tooShortMaps()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+    QByteArray buffer(output.length() + 1, Qt::Uninitialized);
+
+    CborEncoder encoder, container;
+    cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), buffer.length(), 0);
+    QCOMPARE(cbor_encoder_create_map(&encoder, &container, 2), CborNoError);
+    QCOMPARE(int(encodeVariant(&container, input)), int(CborNoError));
+    QCOMPARE(container.added, size_t(1));
+    QCOMPARE(int(cbor_encoder_close_container_checked(&encoder, &container)), int(CborErrorTooFewItems));
+}
+
+void tst_Encoder::tooBigArrays()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+    QByteArray buffer(output.length() * 2 + 1, Qt::Uninitialized);
+
+    CborEncoder encoder, container;
+    cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), buffer.length(), 0);
+    QCOMPARE(cbor_encoder_create_array(&encoder, &container, 1), CborNoError);
+    QCOMPARE(int(encodeVariant(&container, input)), int(CborNoError));
+    QCOMPARE(int(encodeVariant(&container, input)), int(CborNoError));
+    QCOMPARE(container.added, size_t(2));
+    QCOMPARE(int(cbor_encoder_close_container_checked(&encoder, &container)), int(CborErrorTooManyItems));
+}
+
+void tst_Encoder::tooBigMaps()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+    QByteArray buffer(output.length() * 3 + 1, Qt::Uninitialized);
+
+    CborEncoder encoder, container;
+    cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), buffer.length(), 0);
+    QCOMPARE(cbor_encoder_create_map(&encoder, &container, 1), CborNoError);
+    QCOMPARE(int(encodeVariant(&container, input)), int(CborNoError));
+    QCOMPARE(int(encodeVariant(&container, input)), int(CborNoError));
+    QCOMPARE(int(encodeVariant(&container, input)), int(CborNoError));
+    QCOMPARE(container.added, size_t(3));
+    QCOMPARE(int(cbor_encoder_close_container_checked(&encoder, &container)), int(CborErrorTooManyItems));
 }
 
 void tst_Encoder::illegalSimpleType_data()

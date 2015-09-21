@@ -85,6 +85,12 @@ const char *cbor_error_string(CborError error)
     case CborErrorInvalidUtf8TextString:
         return _("invalid UTF-8 content in string");
 
+    case CborErrorTooManyItems:
+        return _("too many items added to encoder");
+
+    case CborErrorTooFewItems:
+        return _("too few items added to encoder");
+
     case CborErrorDataTooLarge:
         return _("internal error: data too large");
 

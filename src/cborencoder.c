@@ -37,6 +37,7 @@ void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int f
 {
     encoder->ptr = buffer;
     encoder->end = buffer + size;
+    encoder->added = 0;
     encoder->flags = flags;
 }
 
@@ -119,7 +120,7 @@ static inline CborError append_byte_to_buffer(CborEncoder *encoder, uint8_t byte
     return CborNoError;
 }
 
-static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
+static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
 {
     /* Little-endian would have been so much more convenient here:
      * We could just write at the beginning of buf but append_to_buffer
@@ -147,6 +148,13 @@ static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t
 
     return append_to_buffer(encoder, bufstart, bufend - bufstart);
 }
+
+static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
+{
+    ++encoder->added;
+    return encode_number_no_update(encoder, ui, shiftedMajorType);
+}
+
 
 CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value)
 {
@@ -185,12 +193,14 @@ CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, cons
         put32(buf + 1, *(const uint32_t*)value);
     else
         put16(buf + 1, *(const uint16_t*)value);
+    ++encoder->added;
     return append_to_buffer(encoder, buf, size + 1);
 }
 
 CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag)
 {
-    return encode_number(encoder, tag, TagType << MajorTypeShift);
+    // tags don't count towards the number of elements in an array or map
+    return encode_number_no_update(encoder, tag, TagType << MajorTypeShift);
 }
 
 static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shiftedMajorType, const void *string)
@@ -217,15 +227,24 @@ __attribute__((noinline))
 static CborError create_container(CborEncoder *encoder, CborEncoder *container, size_t length, uint8_t shiftedMajorType)
 {
     CborError err;
-    if (length == CborIndefiniteLength)
-        err = append_byte_to_buffer(encoder, shiftedMajorType + IndefiniteLength);
-    else
-        err = encode_number(encoder, length, shiftedMajorType);
+    container->ptr = encoder->ptr;
+    container->end = encoder->end;
+    ++encoder->added;
+    container->added = 0;
+
+    cbor_static_assert(((MapType << MajorTypeShift) & CborIteratorFlag_ContainerIsMap) == CborIteratorFlag_ContainerIsMap);
+    cbor_static_assert(((ArrayType << MajorTypeShift) & CborIteratorFlag_ContainerIsMap) == 0);
+    container->flags = shiftedMajorType & CborIteratorFlag_ContainerIsMap;
+
+    if (length == CborIndefiniteLength) {
+        container->flags |= CborIteratorFlag_UnknownLength;
+        err = append_byte_to_buffer(container, shiftedMajorType + IndefiniteLength);
+    } else {
+        err = encode_number_no_update(container, length, shiftedMajorType);
+    }
     if (err && !isOomError(err))
         return err;
 
-    *container = *encoder;
-    container->flags = length == CborIndefiniteLength ? CborIteratorFlag_UnknownLength : 0;
     return CborNoError;
 }
 
@@ -236,6 +255,8 @@ CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEnco
 
 CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder, size_t length)
 {
+    if (length != CborIndefiniteLength && length > SIZE_MAX / 2)
+        return CborErrorDataTooLarge;
     return create_container(encoder, mapEncoder, length, MapType << MajorTypeShift);
 }
 
