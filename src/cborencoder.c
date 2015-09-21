@@ -193,7 +193,10 @@ CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size
     return encode_string(encoder, length, TextStringType << MajorTypeShift, string);
 }
 
-static CborError create_container(CborEncoder *encoder, size_t length, uint8_t shiftedMajorType, CborEncoder *container)
+#ifdef __GNUC__
+__attribute__((noinline))
+#endif
+static CborError create_container(CborEncoder *encoder, CborEncoder *container, size_t length, uint8_t shiftedMajorType)
 {
     CborError err;
     if (length == CborIndefiniteLength)
@@ -210,12 +213,12 @@ static CborError create_container(CborEncoder *encoder, size_t length, uint8_t s
 
 CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEncoder, size_t length)
 {
-    return create_container(encoder, length, ArrayType << MajorTypeShift, arrayEncoder);
+    return create_container(encoder, arrayEncoder, length, ArrayType << MajorTypeShift);
 }
 
 CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder, size_t length)
 {
-    return create_container(encoder, length, MapType << MajorTypeShift, mapEncoder);
+    return create_container(encoder, mapEncoder, length, MapType << MajorTypeShift);
 }
 
 CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
