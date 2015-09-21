@@ -126,8 +126,8 @@ static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t
      * only the necessary bytes.
      * Since it has to be big endian, do it the other way around:
      * write from the end. */
-    uint8_t buf[1 + sizeof(ui)];
-    uint8_t *const bufend = buf + sizeof(buf);
+    uint64_t buf[2];
+    uint8_t *const bufend = (uint8_t *)buf + sizeof(buf);
     uint8_t *bufstart = bufend - 1;
     put64(buf + 1, ui);     // we probably have a bunch of zeros in the beginning
 
