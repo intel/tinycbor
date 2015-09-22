@@ -106,18 +106,7 @@ static inline CborError append_to_buffer(CborEncoder *encoder, const void *data,
 
 static inline CborError append_byte_to_buffer(CborEncoder *encoder, uint8_t byte)
 {
-    if (would_overflow(encoder, 1)) {
-        if (encoder->end != NULL) {
-            encoder->end = NULL;
-            encoder->bytes_needed = 0;
-        }
-
-        advance_ptr(encoder, 1);
-        return CborErrorOutOfMemory;
-    }
-
-    *encoder->ptr++ = byte;
-    return CborNoError;
+    return append_to_buffer(encoder, &byte, 1);
 }
 
 static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
