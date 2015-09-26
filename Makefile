@@ -71,8 +71,21 @@ endif
 
 -include .config
 
+# json2cbor depends on an external library (cJSON)
+ifneq ($(cjson-pass)$(system-cjson-pass),)
+  JSON2CBOR_SOURCES = tools/json2cbor/json2cbor.c
+  INSTALL_TARGETS += $(bindir)/json2cbor
+  ifeq ($(system-cjson-pass),1)
+    LDFLAGS_CJSON = -lcJSON
+  else
+    JSON2CBOR_SOURCES += src/cjson/cJSON.c
+    json2cbor_CCFLAGS = -I$(SRCDIR)src/cjson
+  endif
+endif
+
 # Rules
 all: .config lib/libtinycbor.a bin/cbordump tinycbor.pc
+all: $(if $(JSON2CBOR_SOURCES),bin/json2cbor)
 check: tests/Makefile | lib/libtinycbor.a
 	$(MAKE) -C tests check
 silentcheck: | lib/libtinycbor.a
@@ -89,6 +102,9 @@ lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o) | lib
 
 bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) lib/libtinycbor.a | bin
 	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+
+bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) lib/libtinycbor.a | bin
+	$(CC) -o $@ $(LDFLAGS) $(LDFLAGS_CJSON) $^ $(LDLIBS) -lm
 
 tinycbor.pc: tinycbor.pc.in
 	$(SED) > $@ < $< \
@@ -130,6 +146,7 @@ mostlyclean:
 
 clean: mostlyclean
 	$(RM) bin/cbordump
+	$(RM) bin/json2cbor
 	$(RM) lib/libtinycbor.a
 	$(RM) tinycbor.pc
 	test -e tests/Makefile && $(MAKE) -C tests clean || :
@@ -162,5 +179,5 @@ cflags += -DTINYCBOR_VERSION=\"$(VERSION)$(DIRTYSRC)\"
 cflags += -std=c99 $(CFLAGS)
 %.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
-	$(CC) $(cflags) -c -o $@ $<
+	$(CC) $(cflags) $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
 
