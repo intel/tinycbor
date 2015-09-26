@@ -161,6 +161,11 @@ CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value)
     return encode_number(encoder, value, UnsignedIntegerType << MajorTypeShift);
 }
 
+CborError cbor_encode_negative_int(CborEncoder *encoder, uint64_t absolute_value)
+{
+    return encode_number(encoder, absolute_value, NegativeIntegerType << MajorTypeShift);
+}
+
 CborError cbor_encode_int(CborEncoder *encoder, int64_t value)
 {
     // adapted from code in RFC 7049 appendix C (pseudocode)

@@ -164,6 +164,7 @@ static const size_t CborIndefiniteLength = SIZE_MAX;
 CBOR_API void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags);
 CBOR_API CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value);
 CBOR_API CborError cbor_encode_int(CborEncoder *encoder, int64_t value);
+CBOR_API CborError cbor_encode_negative_int(CborEncoder *encoder, uint64_t absolute_value);
 CBOR_API CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value);
 CBOR_API CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag);
 CBOR_API CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size_t length);
