@@ -33,6 +33,7 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifndef __cplusplus
 #  include <stdbool.h>
