@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2016 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,118 @@
 
 #include "assert_p.h"       /* Always include last */
 
+/**
+ * \defgroup CborEncoding Encoding to CBOR
+ * \brief Group of functions used to encode data to CBOR.
+ *
+ * CborEncoder is used to encode data into a CBOR stream. The outermost
+ * CborEncoder is initialized by calling cbor_encoder_init(), with the buffer
+ * where the CBOR stream will be stored. The outermost CborEncoder is usually
+ * used to encode exactly one item, most often an array or map. It is possible
+ * to encode more than one item, but care must then be taken on the decoder
+ * side to ensure the state is reset after each item was decoded.
+ *
+ * Nested CborEncoder objects are created using cbor_encoder_create_array() and
+ * cbor_encoder_create_map(), later closed with cbor_encoder_close_container()
+ * or cbor_encoder_close_container_checked(). The pairs of creation and closing
+ * must be exactly matched and their parameters are always the same.
+ *
+ * CborEncoder writes directly to the user-supplied buffer, without extra
+ * buffering. CborEncoder does not allocate memory and CborEncoder objects are
+ * usually created on the stack of the encoding functions.
+ *
+ * The example below initializes a CborEncoder object with a buffer and encodes
+ * a single integer.
+ *
+ * \code
+ *      uint8_t buf[16];
+ *      CborEncoder encoder;
+ *      cbor_encoder_init(&encoder, &buf, sizeof(buf), 0);
+ *      cbor_encode_int(&encoder, some_value);
+ * \endcode
+ *
+ * As explained before, usually the outermost CborEncoder object is used to add
+ * one array or map, which in turn contains multiple elements. The example
+ * below creates a CBOR map with one element: a key "foo" and a boolean value.
+ *
+ * \code
+ *      uint8_t buf[16];
+ *      CborEncoder encoder, mapEncoder;
+ *      cbor_encoder_init(&encoder, &buf, sizeof(buf), 0);
+ *      cbor_encoder_create_map(&encoder, &mapEncoder, 1);
+ *      cbor_encode_text_stringz(&mapEncoder, "foo");
+ *      cbor_encode_boolean(&mapEncoder, some_value);
+ *      cbor_encoder_close_container(&encoder, &mapEncoder);
+ * \endcode
+ *
+ * <h3 class="groupheader">Error checking and buffer size</h2>
+ *
+ * All functions operating on CborEncoder return a condition of type CborError.
+ * If the encoding was successful, they return CborNoError. Some functions do
+ * extra checking on the input provided and may return some other error
+ * conditions (for example, cbor_encode_simple_value() checks that the type is
+ * of the correct type).
+ *
+ * In addition, all functions check whether the buffer has enough bytes to
+ * encode the item being appended. If that is not possible, they return
+ * CborErrorOutOfMemory.
+ *
+ * It is possible to continue with the encoding of data past the first function
+ * that returns CborErrorOutOfMemory. CborEncoder functions will not overrun
+ * the buffer, but will instead count how many more bytes are needed to
+ * complete the encoding. The CborEncoder::bytes_needed member will contain
+ * that count.
+ *
+ * \section1 Finalizing the encoding
+ *
+ * Once all items have been appended and the containers have all been properly
+ * closed, the user-supplied buffer will contain the CBOR stream and may be
+ * immediately used. The CborEncoder::ptr member will contain the pointer to
+ * one-past-the-last byte of the data and can be used to calculate the size of
+ * the payload.
+ *
+ * The example below illustrates how one can encode an item with error checking
+ * and then pass on the buffer for network sending.
+ *
+ * \code
+ *      uint8_t buf[16];
+ *      CborError err;
+ *      CborEncoder encoder, mapEncoder;
+ *      cbor_encoder_init(&encoder, &buf, sizeof(buf), 0);
+ *      err = cbor_encoder_create_map(&encoder, &mapEncoder, 1);
+ *      if (!err)
+ *          return err;
+ *      err = cbor_encode_text_stringz(&mapEncoder, "foo");
+ *      if (!err)
+ *          return err;
+ *      err = cbor_encode_boolean(&mapEncoder, some_value);
+ *      if (!err)
+ *          return err;
+ *      err = cbor_encoder_close_container_checked(&encoder, &mapEncoder);
+ *      if (!err)
+ *          return err;
+ *
+ *      ptrdiff_t len = encoder.ptr - buf;
+ *      send_payload(buf, len);
+ *      return CborNoError;
+ * \endcode
+ */
+
+/**
+ * \addtogroup CborEncoding
+ * @{
+ */
+
+/**
+ * \struct CborEncoder
+ * Structure used to encode to CBOR.
+ */
+
+/**
+ * Initializes a CborEncoder structure \a encoder by pointing it to buffer \a
+ * buffer of size \a size. The \a flags field is currently unused and must be
+ * zero.
+ */
 void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags)
 {
     encoder->ptr = buffer;
@@ -144,17 +256,34 @@ static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t
     return encode_number_no_update(encoder, ui, shiftedMajorType);
 }
 
-
+/**
+ * Appends the unsigned 64-bit integer \a value to the CBOR stream provided by
+ * \a encoder.
+ *
+ * \sa cbor_encode_negative_int, cbor_encode_int
+ */
 CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value)
 {
     return encode_number(encoder, value, UnsignedIntegerType << MajorTypeShift);
 }
 
+/**
+ * Appends the negative 64-bit integer whose absolute value is \a
+ * absolute_value to the CBOR stream provided by \a encoder.
+ *
+ * \sa cbor_encode_uint, cbor_encode_int
+ */
 CborError cbor_encode_negative_int(CborEncoder *encoder, uint64_t absolute_value)
 {
     return encode_number(encoder, absolute_value, NegativeIntegerType << MajorTypeShift);
 }
 
+/**
+ * Appends the signed 64-bit integer \a value to the CBOR stream provided by
+ * \a encoder.
+ *
+ * \sa cbor_encode_negative_int, cbor_encode_uint
+ */
 CborError cbor_encode_int(CborEncoder *encoder, int64_t value)
 {
     /* adapted from code in RFC 7049 appendix C (pseudocode) */
@@ -164,6 +293,13 @@ CborError cbor_encode_int(CborEncoder *encoder, int64_t value)
     return encode_number(encoder, ui, majorType);
 }
 
+/**
+ * Appends the CBOR Simple Type of value \a value to the CBOR stream provided by
+ * \a encoder.
+ *
+ * This function may return error CborErrorIllegalSimpleType if the \a value
+ * variable contains a number that is not a valid simple type.
+ */
 CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value)
 {
 #ifndef CBOR_ENCODER_NO_CHECK_USER
@@ -174,6 +310,17 @@ CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value)
     return encode_number(encoder, value, SimpleTypesType << MajorTypeShift);
 }
 
+/**
+ * Appends the floating-point value of type \a fpType and pointed to by \a
+ * value to the CBOR stream provided by \a encoder. The value of \a fpType must
+ * be one of CborHalfFloatType, CborFloatType or CborDoubleType, otherwise the
+ * behavior of this function is undefined.
+ *
+ * This function is useful for code that needs to pass through floating point
+ * values but does not wish to have the actual floating-point code.
+ *
+ * \sa cbor_encode_half_float, cbor_encode_float, cbor_encode_double
+ */
 CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value)
 {
     uint8_t buf[1 + sizeof(uint64_t)];
@@ -191,6 +338,11 @@ CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, cons
     return append_to_buffer(encoder, buf, size + 1);
 }
 
+/**
+ * Appends the CBOR tag \a tag to the CBOR stream provided by \a encoder.
+ *
+ * \sa CborTag
+ */
 CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag)
 {
     /* tags don't count towards the number of elements in an array or map */
@@ -205,11 +357,35 @@ static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shif
     return append_to_buffer(encoder, string, length);
 }
 
+/**
+ * \fn CborError cbor_encode_text_stringz(CborEncoder *encoder, const char *string)
+ *
+ * Appends the null-terminated text string \a string to the CBOR stream
+ * provided by \a encoder. CBOR requires that \a string be valid UTF-8, but
+ * TinyCBOR makes no verification of correctness. The terminating null is not
+ * included in the stream.
+ *
+ * \sa cbor_encode_text_string, cbor_encode_byte_string
+ */
+
+/**
+ * Appends the text string \a string of length \a length to the CBOR stream
+ * provided by \a encoder. CBOR requires that \a string be valid UTF-8, but
+ * TinyCBOR makes no verification of correctness.
+ *
+ * \sa CborError cbor_encode_text_stringz, cbor_encode_byte_string
+ */
 CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length)
 {
     return encode_string(encoder, length, ByteStringType << MajorTypeShift, string);
 }
 
+/**
+ * Appends the byte string \a string of length \a length to the CBOR stream
+ * provided by \a encoder. CBOR byte strings are arbitrary raw data.
+ *
+ * \sa cbor_encode_text_stringz, cbor_encode_text_string
+ */
 CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size_t length)
 {
     return encode_string(encoder, length, TextStringType << MajorTypeShift, string);
@@ -242,11 +418,43 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
     return CborNoError;
 }
 
+/**
+ * Creates a CBOR array in the CBOR stream provided by \a encoder and
+ * initializes \a arrayEncoder so that items can be added to the array using
+ * the CborEncoder functions. The array must be terminated by calling either
+ * cbor_encoder_close_container() or cbor_encoder_close_container_checked()
+ * with the same \a encoder and \a arrayEncoder parameters.
+ *
+ * The number of items inserted into the array must be exactly \a length items,
+ * otherwise the stream is invalid. If the number of items is not known when
+ * creating the array, the constant \ref CborIndefiniteLength may be passed as
+ * length instead.
+ *
+ * \sa cbor_encoder_create_map
+ */
 CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEncoder, size_t length)
 {
     return create_container(encoder, arrayEncoder, length, ArrayType << MajorTypeShift);
 }
 
+/**
+ * Creates a CBOR map in the CBOR stream provided by \a encoder and
+ * initializes \a mapEncoder so that items can be added to the map using
+ * the CborEncoder functions. The map must be terminated by calling either
+ * cbor_encoder_close_container() or cbor_encoder_close_container_checked()
+ * with the same \a encoder and \a mapEncoder parameters.
+ *
+ * The number of pair of items inserted into the map must be exactly \a length
+ * items, otherwise the stream is invalid. If the number of items is not known
+ * when creating the map, the constant \ref CborIndefiniteLength may be passed as
+ * length instead.
+ *
+ * \b{Implementation limitation:} TinyCBOR cannot encode more than SIZE_MAX/2
+ * key-value pairs in the stream. If the length \a length is larger than this
+ * value, this function returns error CborErrorDataTooLarge.
+ *
+ * \sa cbor_encoder_create_array
+ */
 CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder, size_t length)
 {
     if (length != CborIndefiniteLength && length > SIZE_MAX / 2)
@@ -254,6 +462,18 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
     return create_container(encoder, mapEncoder, length, MapType << MajorTypeShift);
 }
 
+/**
+ * Closes the CBOR container (array or map) provided by \a containerEncoder and
+ * updates the CBOR stream provided by \a encoder. Both parameters must be the
+ * same as were passed to cbor_encoder_create_array() or
+ * cbor_encoder_create_map().
+ *
+ * This function does not verify that the number of items (or pair of items, in
+ * the case of a map) was correct. To execute that verification, call
+ * cbor_encoder_close_container_checked() instead.
+ *
+ * \sa cbor_encoder_create_array(), cbor_encoder_create_map()
+ */
 CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
     if (encoder->end)
@@ -265,3 +485,56 @@ CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *
         return append_byte_to_buffer(encoder, BreakByte);
     return CborNoError;
 }
+
+/**
+ * \fn CborError cbor_encode_boolean(CborEncoder *encoder, bool value)
+ *
+ * Appends the boolean value \a value to the CBOR stream provided by \a encoder.
+ */
+
+/**
+ * \fn CborError cbor_encode_null(CborEncoder *encoder)
+ *
+ * Appends the CBOR type representing a null value to the CBOR stream provided
+ * by \a encoder.
+ *
+ * \sa cbor_encode_undefined()
+ */
+
+/**
+ * \fn CborError cbor_encode_undefined(CborEncoder *encoder)
+ *
+ * Appends the CBOR type representing an undefined value to the CBOR stream
+ * provided by \a encoder.
+ *
+ * \sa cbor_encode_null()
+ */
+
+/**
+ * \fn CborError cbor_encode_half_float(CborEncoder *encoder, const void *value)
+ *
+ * Appends the IEEE 754 half-precision (16-bit) floating point value pointed to
+ * by \a value to the CBOR stream provided by \a encoder.
+ *
+ * \sa cbor_encode_floating_point(), cbor_encode_float(), cbor_encode_double()
+ */
+
+/**
+ * \fn CborError cbor_encode_float(CborEncoder *encoder, float value)
+ *
+ * Appends the IEEE 754 single-precision (32-bit) floating point value \a value
+ * to the CBOR stream provided by \a encoder.
+ *
+ * \sa cbor_encode_floating_point(), cbor_encode_half_float(), cbor_encode_double()
+ */
+
+/**
+ * \fn CborError cbor_encode_double(CborEncoder *encoder, double value)
+ *
+ * Appends the IEEE 754 double-precision (64-bit) floating point value \a value
+ * to the CBOR stream provided by \a encoder.
+ *
+ * \sa cbor_encode_floating_point(), cbor_encode_half_float(), cbor_encode_float()
+ */
+
+/** @} */

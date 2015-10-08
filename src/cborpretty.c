@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2016 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,77 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/**
+ * \defgroup CborPretty Converting CBOR to text
+ * \brief Group of functions used to convert CBOR to text form.
+ *
+ * This group contains two functions that are can be used to convert one
+ * CborValue object to a text representation. This module attempts to follow
+ * the recommendations from RFC 7049 section 6 "Diagnostic Notation", though it
+ * has a few differences. They are noted below.
+ *
+ * TinyCBOR does not provide a way to convert from the text representation back
+ * to encoded form. To produce a text form meant to be parsed, CborToJson is
+ * recommended instead.
+ *
+ * Either of the functions in this section will attempt to convert exactly one
+ * CborValue object to text. Those functions may return any error documented
+ * for the functions for CborParsing. In addition, if the C standard library
+ * stream functions return with error, the text conversion will return with
+ * error CborErrorIO.
+ *
+ * These functions also perform UTF-8 validation in CBOR text strings. If they
+ * encounter a sequence of bytes that not permitted in UTF-8, they will return
+ * CborErrorInvalidUtf8TextString. That includes encoding of surrogate points
+ * in UTF-8.
+ *
+ * \warning The output type produced by these functions is not guaranteed to
+ * remain stable. A future update of TinyCBOR may produce different output for
+ * the same input and parsers may be unable to handle them.
+ *
+ * \sa CborParsing, CborToJson, cbor_parser_init()
+ */
+
+/**
+ * \addtogroup CborPretty
+ * @{
+ * <h2 class="groupheader">Text format</h2>
+ *
+ * As described in RFC 7049 section 6 "Diagnostic Notation", the format is
+ * largely borrowed from JSON, but modified to suit CBOR's different data
+ * types. TinyCBOR makes further modifications to distinguish different, but
+ * similar values.
+ *
+ * CBOR values are currently encoded as follows:
+ * \par Integrals (unsigned and negative)
+ *      Base-10 (decimal) text representation of the value
+ * \par Byte strings:
+ *      <tt>"h'"</tt> followed by the Base16 (hex) representation of the binary data, followed by an ending quote (')
+ * \par Text strings:
+ *      C-style escaped string in quotes, with C11/C++11 escaping of Unicode codepoints above U+007F.
+ * \par Tags:
+ *      Tag value, with the tagged value in parentheses. No special encoding of the tagged value is performed.
+ * \par Simple types:
+ *      <tt>"simple(nn)"</tt> where \c nn is the simple value
+ * \par Null:
+ *      \c null
+ * \par Undefined:
+ *      \c undefined
+ * \par Booleans:
+ *      \c true or \c false
+ * \par Floating point:
+ *      If NaN or infinite, the actual words \c NaN or \c infinite.
+ *      Otherwise, the decimal representation with as many digits as necessary to ensure no loss of information,
+ *      with float values suffixed by "f" and half-float values suffixed by "f16" (doubles have no suffix). A dot is always present.
+ * \par Arrays:
+ *      Comma-separated list of elements, enclosed in square brackets ("[" and "]").
+ *     If the array length is indeterminate, an underscore ("_") appears immediately after the opening bracket.
+ * \par Maps:
+ *      Comma-separated list of key-value pairs, with the key and value separated
+ *      by a colon (":"), enclosed in curly braces ("{" and "}").
+ *      If the map length is indeterminate, an underscore ("_") appears immediately after the opening brace.
+ */
 
 static int hexDump(FILE *out, const uint8_t *buffer, size_t n)
 {
@@ -365,7 +436,30 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
     return err;
 }
 
+/**
+ * \fn CborError cbor_value_to_pretty(FILE *out, const CborValue *value)
+ *
+ * Converts the current CBOR type pointed by \a value to its textual
+ * representation and writes it to the \a out stream. If an error occurs, this
+ * function returns an error code similar to CborParsing.
+ *
+ * \sa cbor_value_to_pretty_advance(), cbor_value_to_json_advance()
+ */
+
+/**
+ * Converts the current CBOR type pointed by \a value to its textual
+ * representation and writes it to the \a out stream. If an error occurs, this
+ * function returns an error code similar to CborParsing.
+ *
+ * If no error ocurred, this function advances \a value to the next element.
+ * Often, concatenating the text representation of multiple elements can be
+ * done by appending a comma to the output stream.
+ *
+ * \sa cbor_value_to_pretty(), cbor_value_to_json_advance()
+ */
 CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value)
 {
     return value_to_pretty(out, value);
 }
+
+/** @} */

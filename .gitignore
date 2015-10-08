@@ -71,7 +71,9 @@ Makefile*
 *.map
 
 bin
+doc
 lib
 src/cjson
+src/doxygen.log
 !Makefile
 .config

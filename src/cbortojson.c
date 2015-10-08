@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2016 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,112 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/**
+ * \defgroup CborToJson Converting CBOR to JSON
+ * \brief Group of functions used to convert CBOR to JSON.
+ *
+ * This group contains two functions that are can be used to convert one
+ * CborValue object to an equivalent JSON representation. This module attempts
+ * to follow the recommendations from RFC 7049 section 4.1 "Converting from
+ * CBOR to JSON", though it has a few differences. They are noted below.
+ *
+ * These functions produce a "minified" JSON output, with no spacing,
+ * indentation or line breaks. If those are necessary, they need to be applied
+ * in a post-processing phase.
+ *
+ * Note that JSON cannot support all CBOR types with fidelity, so the
+ * conversion is usually lossy. For that reason, TinyCBOR supports adding a set
+ * of metadata JSON values that can be used by a JSON-to-CBOR converter to
+ * restore the original data types.
+ *
+ * The TinyCBOR library does not provide a way to convert from JSON
+ * representation back to encoded form. However, it provides a tool called
+ * \c json2cbor which can be used for that purpose. That tool supports the
+ * metadata format that these functions may produce.
+ *
+ * Either of the functions in this section will attempt to convert exactly one
+ * CborValue object to JSON. Those functions may return any error documented
+ * for the functions for CborParsing. In addition, if the C standard library
+ * stream functions return with error, the text conversion will return with
+ * error CborErrorIO.
+ *
+ * These functions also perform UTF-8 validation in CBOR text strings. If they
+ * encounter a sequence of bytes that not permitted in UTF-8, they will return
+ * CborErrorInvalidUtf8TextString. That includes encoding of surrogate points
+ * in UTF-8.
+ *
+ * \warning The metadata produced by these functions is not guaranteed to
+ * remain stable. A future update of TinyCBOR may produce different output for
+ * the same input and parsers may be unable to handle them.
+ *
+ * \sa CborParsing, CborPretty, cbor_parser_init()
+ */
+
+/**
+ * \addtogroup CborToJson
+ * @{
+ * <h2 class="groupheader">Conversion limitations</h2>
+ *
+ * When converting from CBOR to JSON, there may be information loss. This
+ * section lists the possible scenarios.
+ *
+ * \par Number precision:
+ * ALL JSON numbers, due to its JavaScript heritage, are IEEE 754
+ * double-precision floating point. This means JSON is not capable of
+ * representing integers numbers outside the range [-(2<sup>53</sup>)+1,
+ * 2<sup>53</sup>-1] and is not capable of representing NaN or infinite. If the
+ * CBOR data contains a number outside the valid range, the conversion will
+ * lose precision. If the input was NaN or infinite, the result of the
+ * conversion will be "null". In addition, the distinction between half-,
+ * single- and double-precision is lost.
+ *
+ * \par
+ * If enabled, the original value and original type are stored in the metadata.
+ *
+ * \par Non-native types:
+ * CBOR's type system is richer than JSON's, which means some data values
+ * cannot be represented when converted to JSON. The conversion silently turns
+ * them into strings: CBOR simple types become "simple(nn)" where \c nn is the
+ * simple type's value, with the exception of CBOR undefined, which becomes
+ * "undefined", while CBOR byte strings are converted to an Base16, Base64, or
+ * Base64url encoding
+ *
+ * \par
+ * If enabled, the original type is stored in the metadata.
+ *
+ * \par Presence of tags:
+ * JSON has no support for tagged values, so by default tags are dropped when
+ * converting to JSON. However, if the CborConvertObeyByteStringTags option is
+ * active (default), then certain known tags are honored and are used to format
+ * the conversion of the tagged byte string to JSON.
+ *
+ * \par
+ * If the CborConvertTagsToObjects option is active, then the tag and the
+ * tagged value are converted to to a JSON object. Otherwise, if enabled, the
+ * last (innermost) tag is stored in the metadata.
+ *
+ * \par Non-string keys in maps:
+ * JSON requires all Object keys to be strings, while CBOR does not. By
+ * default, if a non-string key is found, the conversion fails with error
+ * CborErrorJsonObjectKeyNotString. If the CborConvertStringifyMapKeys option
+ * is active, then the conversion attempts to create a string representation
+ * using CborPretty. Note that the \c json2cbor tool is not able to parse this
+ * back to the original form.
+ *
+ * \par Duplicate keys in maps:
+ * Neither JSON nor CBOR allow duplicated keys, but current TinyCBOR does not
+ * validate that this is the case. If there are duplicated keys in the input,
+ * they will be repeated in the output, which may JSON tools may flag as
+ * invalid. In addition to that, if the CborConvertStringifyMapKeys option is
+ * active, it is possible that a non-string key in a CBOR map will be converted
+ * to a string form that is identical to another key.
+ *
+ * \par
+ * When metadata support is active, the conversion will add extra key-value
+ * pairs to the JSON output so it can store the metadata. It is possible that
+ * the keys for the metadata clash with existing keys in the JSON map.
+ */
 
 extern FILE *open_memstream(char **bufptr, size_t *sizeptr);
 
@@ -524,8 +630,45 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
     return cbor_value_advance_fixed(it);
 }
 
+/**
+ * \enum CborToJsonFlags
+ * The CborToJsonFlags enum contains flags that control the conversion of CBOR to JSON.
+ *
+ * \value CborConvertAddMetadata        Adds metadata to facilitate restoration of the original CBOR data.
+ * \value CborConvertTagsToObjects      Converts CBOR tags to JSON objects
+ * \value CborConvertIgnoreTags         (default) Ignore CBOR tags, except for byte strings
+ * \value CborConvertObeyByteStringTags (default) Honor formatting of CBOR byte strings if so tagged
+ * \value CborConvertByteStringsToBase64Url Force the conversion of all CBOR byte strings to Base64url encoding, despite any tags
+ * \value CborConvertRequireMapStringKeys (default) Require CBOR map keys to be strings, failing the conversion if they are not
+ * \value CborConvertStringifyMapKeys   Convert non-string keys in CBOR maps to a string form
+ * \value CborConvertDefaultFlags       Default conversion flags.
+ */
+
+/**
+ * \fn CborError cbor_value_to_json(FILE *out, const CborValue *value, int flags)
+ *
+ * Converts the current CBOR type pointed by \a value to JSON and writes that
+ * to the \a out stream. If an error occurs, this function returns an error
+ * code similar to CborParsing. The \a flags parameter indicates one of the
+ * flags from CborToJsonFlags that control the conversion.
+ *
+ * \sa cbor_value_to_json_advance(), cbor_value_to_pretty()
+ */
+
+/**
+ * Converts the current CBOR type pointed by \a value to JSON and writes that
+ * to the \a out stream. If an error occurs, this function returns an error
+ * code similar to CborParsing. The \a flags parameter indicates one of the
+ * flags from CborToJsonFlags that control the conversion.
+ *
+ * If no error ocurred, this function advances \a value to the next element.
+ *
+ * \sa cbor_value_to_json(), cbor_value_to_pretty_advance()
+ */
 CborError cbor_value_to_json_advance(FILE *out, CborValue *value, int flags)
 {
     ConversionStatus status;
     return value_to_json(out, value, flags, cbor_value_get_type(value), &status);
 }
+
+/** @} */

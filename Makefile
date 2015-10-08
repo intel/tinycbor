@@ -154,6 +154,9 @@ clean: mostlyclean
 distclean: clean
 	test -e tests/Makefile && $(MAKE) -C tests distclean || :
 
+docs:
+	cd $(SRCDIR)src && VERSION=$(VERSION) doxygen $(SRCDIR)/../Doxyfile
+
 dist: $(PACKAGE).tar.gz $(PACKAGE).zip
 distcheck: .git
 	-$(RM) -r $$TMPDIR/tinycbor-distcheck
@@ -182,7 +185,7 @@ release: .git
 
 .PHONY: all check silentcheck configure install uninstall
 .PHONY: mostlyclean clean distclean
-.PHONY: dist distcheck release
+.PHONY: docs dist distcheck release
 .SECONDARY:
 
 cflags := $(CPPFLAGS) -I$(SRCDIR)src

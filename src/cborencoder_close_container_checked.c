@@ -32,6 +32,26 @@
 
 #include "assert_p.h"       /* Always include last */
 
+/**
+ * \addtogroup CborEncoding
+ * @{
+ */
+
+/**
+ *
+ * Closes the CBOR container (array or map) provided by \a containerEncoder and
+ * updates the CBOR stream provided by \a encoder. Both parameters must be the
+ * same as were passed to cbor_encoder_create_array() or
+ * cbor_encoder_create_map().
+ *
+ * Unlike cbor_encoder_close_container(), this function checks that the number
+ * of items (or pair of items, in the case of a map) was correct. If the number
+ * of items inserted does not match the length originally passed to
+ * cbor_encoder_create_array() or cbor_encoder_create_map(), this function
+ * returns either CborErrorTooFewItems or CborErrorTooManyItems.
+ *
+ * \sa cbor_encoder_create_array(), cbor_encoder_create_map()
+ */
 CborError cbor_encoder_close_container_checked(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
     const uint8_t *ptr = encoder->ptr;
@@ -53,3 +73,5 @@ CborError cbor_encoder_close_container_checked(CborEncoder *encoder, const CborE
     return actually_added == containerEncoder->added ? CborNoError :
            actually_added < containerEncoder->added ? CborErrorTooManyItems : CborErrorTooFewItems;
 }
+
+/** @} */
