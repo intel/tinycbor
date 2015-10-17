@@ -28,6 +28,8 @@
 #include <locale.h>
 #include <stdio.h>
 
+extern "C" FILE *open_memstream(char **bufptr, size_t *sizeptr);
+
 Q_DECLARE_METATYPE(CborError)
 
 class tst_Parser : public QObject

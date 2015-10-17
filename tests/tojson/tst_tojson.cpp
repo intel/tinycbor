@@ -27,6 +27,8 @@
 #include "cborjson.h"
 #include <locale.h>
 
+extern "C" FILE *open_memstream(char **bufptr, size_t *sizeptr);
+
 class tst_ToJson : public QObject
 {
     Q_OBJECT

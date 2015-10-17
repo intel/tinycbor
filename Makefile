@@ -43,14 +43,14 @@ SRCDIR := $(dir $(MAKEFILE))
 VPATH = $(SRCDIR):$(SRCDIR)/src
 
 # Our version
-GIT_DIR := $(strip $(shell git -C $(SRCDIR) rev-parse --git-dir 2> /dev/null))
+GIT_DIR := $(strip $(shell git -C $(SRCDIR). rev-parse --git-dir 2> /dev/null))
 ifeq ($(GIT_DIR),)
   VERSION = $(shell cat $(SRCDIR)VERSION)
   DIRTYSRC :=
 else
-  VERSION := $(shell git -C $(SRCDIR) describe --tags | cut -c2-)
+  VERSION := $(shell git -C $(SRCDIR). describe --tags | cut -c2-)
   DIRTYSRC := $(shell \
-	test -n "`git -C $(SRCDIR) diff --name-only HEAD`" && \
+	test -n "`git -C $(SRCDIR). diff --name-only HEAD`" && \
 	echo +)
 endif
 PACKAGE = tinycbor-$(VERSION)
@@ -115,7 +115,7 @@ tinycbor.pc: tinycbor.pc.in
 		-e 's,@version@,$(VERSION),'
 
 tests/Makefile: tests/tests.pro
-	$(QMAKE) -o $@ $<
+	$(QMAKE) $(QMAKEFLAGS) -o $@ $<
 
 $(PACKAGE).tar.gz: | .git
 	GIT_DIR=$(SRCDIR).git $(GIT_ARCHIVE) --format=tar.gz -o "$(PACKAGE).tar.gz" HEAD
@@ -163,21 +163,21 @@ distcheck: .git
 
 release: .git
 	$(MAKE) -f $(MAKEFILE) distcheck
-	git -C $(SRCDIR) show HEAD:VERSION | \
+	git -C $(SRCDIR). show HEAD:VERSION | \
 	  perl -l -n -e '@_ = split /\./; print "$$_[0]." . ($$_[1] + 1)' > $(SRCDIR)VERSION
-	git -C $(SRCDIR) commit -s -m "Update version number" VERSION
+	git -C $(SRCDIR). commit -s -m "Update version number" VERSION
 	{ echo "TinyCBOR release `cat $(SRCDIR)VERSION`"; \
 	  echo; \
 	  echo '# Write something nice about this release here'; \
-	  tmpl=`git -C $(SRCDIR) config --get commit.template` && \
+	  tmpl=`git -C $(SRCDIR). config --get commit.template` && \
 		cat "$$tmpl"; \
 	  echo '# Commit log:'; \
-	  git -C $(SRCDIR) shortlog -e --no-merges HEAD --not `git -C $(SRCDIR) tag` | sed 's,^,#   ,'; \
+	  git -C $(SRCDIR). shortlog -e --no-merges HEAD --not `git -C $(SRCDIR). tag` | sed 's,^,#   ,'; \
 	  echo '# Header diff:'; \
-	  git -C $(SRCDIR) diff HEAD --not `git -C $(SRCDIR) tag` -- 'src/*.h' ':!*_p.h' | sed 's,^,# ,'; \
+	  git -C $(SRCDIR). diff HEAD --not `git -C $(SRCDIR). tag` -- 'src/*.h' ':!*_p.h' | sed 's,^,# ,'; \
 	} > $(SRCDIR).git/TAG_EDITMSG
-	@`git -C $(SRCDIR) var GIT_EDITOR` $(SRCDIR).git/TAG_EDITMSG
-	git -C $(SRCDIR) tag -a -F $(SRCDIR).git/TAG_EDITMSG $(GITTAGFLAGS) v`cat $(SRCDIR)VERSION`
+	@`git -C $(SRCDIR). var GIT_EDITOR` $(SRCDIR).git/TAG_EDITMSG
+	git -C $(SRCDIR). tag -a -F $(SRCDIR).git/TAG_EDITMSG $(GITTAGFLAGS) v`cat $(SRCDIR)VERSION`
 	$(MAKE) -f $(MAKEFILE) dist
 
 .PHONY: all check silentcheck configure install uninstall
