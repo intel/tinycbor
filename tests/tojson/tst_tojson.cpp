@@ -25,6 +25,7 @@
 #include <QtTest>
 #include "cbor.h"
 #include "cborjson.h"
+#include <locale.h>
 
 class tst_ToJson : public QObject
 {

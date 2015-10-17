@@ -25,6 +25,7 @@
 #define _XOPEN_SOURCE 700
 #include <QtTest>
 #include "cbor.h"
+#include <locale.h>
 #include <stdio.h>
 
 Q_DECLARE_METATYPE(CborError)
