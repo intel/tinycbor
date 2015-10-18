@@ -81,7 +81,8 @@ static RetType write_to_buffer(void *cookie, const char *data, LenType len)
 static int close_buffer(void *cookie)
 {
     struct Buffer *b = (struct Buffer *)cookie;
-    (*b->ptr)[*b->len] = '\0';
+    if (*b->ptr)
+        (*b->ptr)[*b->len] = '\0';
     free(b);
     return 0;
 }
@@ -106,6 +107,7 @@ FILE *open_memstream(char **bufptr, size_t *lenptr)
         NULL,
         close_buffer
     };
+    return fopencookie(b, "w", vtable);
 #endif
 }
 
