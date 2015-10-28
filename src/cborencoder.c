@@ -92,16 +92,15 @@
  * It is possible to continue with the encoding of data past the first function
  * that returns CborErrorOutOfMemory. CborEncoder functions will not overrun
  * the buffer, but will instead count how many more bytes are needed to
- * complete the encoding. The CborEncoder::bytes_needed member will contain
- * that count.
+ * complete the encoding. At the end, you can obtain that count by calling
+ * cbor_encoder_get_extra_bytes_needed().
  *
  * \section1 Finalizing the encoding
  *
  * Once all items have been appended and the containers have all been properly
  * closed, the user-supplied buffer will contain the CBOR stream and may be
- * immediately used. The CborEncoder::ptr member will contain the pointer to
- * one-past-the-last byte of the data and can be used to calculate the size of
- * the payload.
+ * immediately used. To obtain the size of the buffer, call
+ * cbor_encoder_get_buffer_size() with the original buffer pointer.
  *
  * The example below illustrates how one can encode an item with error checking
  * and then pass on the buffer for network sending.
@@ -124,9 +123,59 @@
  *      if (!err)
  *          return err;
  *
- *      ptrdiff_t len = encoder.ptr - buf;
+ *      size_t len = cbor_encoder_get_buffer_size(&encoder, buf);
  *      send_payload(buf, len);
  *      return CborNoError;
+ * \endcode
+ *
+ * Finally, the example below illustrates expands on the one above and also
+ * deals with dynamically growing the buffer if the initial allocation wasn't
+ * big enough. Note the two places where the error checking was replaced with
+ * an assertion, showing where the author assumes no error can occur.
+ *
+ * \code
+ * uint8_t *encode_string_array(const char **strings, int n, size_t *bufsize)
+ * {
+ *     CborError err;
+ *     CborEncoder encoder, arrayEncoder;
+ *     size_t size = 256;
+ *     uint8_t *buf = NULL;
+ *
+ *     while (1) {
+ *         int i;
+ *         size_t more_bytes;
+ *         uint8_t *nbuf = realloc(buf, size);
+ *         if (nbuf == NULL)
+ *             goto error;
+ *         buf = nbuf;
+ *
+ *         cbor_encoder_init(&encoder, &buf, size, 0);
+ *         err = cbor_encoder_create_array(&encoder, &arrayEncoder, n);
+ *         assert(err);         // can't fail, the buffer is always big enough
+ *
+ *         for (i = 0; i < n; ++i) {
+ *             err = cbor_encode_text_stringz(&arrayEncoder, strings[i]);
+ *             if (err && err != CborErrorOutOfMemory)
+ *                 goto error;
+ *         }
+ *
+ *         err = cbor_encoder_close_container_checked(&encoder, &arrayEncoder);
+ *         assert(err);         // shouldn't fail!
+ *
+ *         more_bytes = cbor_encoder_get_extra_bytes_needed(encoder);
+ *         if (more_size) {
+ *             // buffer wasn't big enough, try again
+ *             size += more_bytes;
+ *             continue;
+ *         }
+ *
+ *         *bufsize = cbor_encoder_get_buffer_size(encoder, buf);
+ *         return buf;
+ *     }
+ *  error:
+ *     free(buf);
+ *     return NULL;
+ *  }
  * \endcode
  */
 
@@ -535,6 +584,41 @@ CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *
  * to the CBOR stream provided by \a encoder.
  *
  * \sa cbor_encode_floating_point(), cbor_encode_half_float(), cbor_encode_float()
+ */
+
+/**
+ * \fn size_t cbor_encoder_get_buffer_size(const CborEncoder *encoder, const uint8_t *buffer)
+ *
+ * Returns the total size of the buffer starting at \a buffer after the
+ * encoding finished without errors. The \a encoder and \a buffer arguments
+ * must be the same as supplied to cbor_encoder_init().
+ *
+ * If the encoding process had errors, the return value of this function is
+ * meaningless. If the only errors were CborErrorOutOfMemory, instead use
+ * cbor_encoder_get_extra_bytes_needed() to find out by how much to grow the
+ * buffer before encoding again.
+ *
+ * See \ref CborEncoding for an example of using this function.
+ *
+ * \sa cbor_encoder_init(), cbor_encoder_get_extra_bytes_needed(), CborEncoding
+ */
+
+/**
+ * \fn size_t cbor_encoder_get_extra_bytes_needed(const CborEncoder *encoder)
+ *
+ * Returns how many more bytes the original buffer supplied to
+ * cbor_encoder_init() needs to be extended by so that no CborErrorOutOfMemory
+ * condition will happen for the encoding. If the buffer was big enough, this
+ * function returns 0. The \a encoder must be the original argument as passed
+ * to cbor_encoder_init().
+ *
+ * This function is usually called after an encoding sequence ended with one or
+ * more CborErrorOutOfMemory errors, but no other error. If any other error
+ * happened, the return value of this function is meaningless.
+ *
+ * See \ref CborEncoding for an example of using this function.
+ *
+ * \sa cbor_encoder_init(), cbor_encoder_get_buffer_size(), CborEncoding
  */
 
 /** @} */

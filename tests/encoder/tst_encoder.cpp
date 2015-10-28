@@ -256,12 +256,16 @@ bool compareFailed;
 void compare(const QVariant &input, const QByteArray &output)
 {
     QByteArray buffer(output.length(), Qt::Uninitialized);
+    uint8_t *bufptr = reinterpret_cast<quint8 *>(buffer.data());
     CborEncoder encoder;
-    cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), buffer.length(), 0);
+    cbor_encoder_init(&encoder, bufptr, buffer.length(), 0);
+
     QCOMPARE(int(encodeVariant(&encoder, input)), int(CborNoError));
-    buffer.resize(encoder.ptr - reinterpret_cast<const quint8 *>(buffer.constData()));
-    QCOMPARE(buffer, output);
     QCOMPARE(encoder.added, size_t(1));
+    QCOMPARE(cbor_encoder_get_extra_bytes_needed(&encoder), size_t(0));
+
+    buffer.resize(int(cbor_encoder_get_buffer_size(&encoder, bufptr)));
+    QCOMPARE(buffer, output);
 }
 
 void addColumns()
@@ -599,7 +603,8 @@ void tst_Encoder::shortBuffer()
         CborEncoder encoder;
         cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), len, 0);
         QCOMPARE(int(encodeVariant(&encoder, input)), int(CborErrorOutOfMemory));
-        QCOMPARE(len + int(encoder.ptr - encoder.end), output.length());
+        QVERIFY(cbor_encoder_get_extra_bytes_needed(&encoder) != 0);
+        QCOMPARE(len + cbor_encoder_get_extra_bytes_needed(&encoder), size_t(output.length()));
     }
 }
 
