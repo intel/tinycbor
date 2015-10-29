@@ -108,7 +108,7 @@ static CborError preparse_value(CborValue *it)
     }
 
     size_t bytesNeeded = descriptor < Value8Bit ? 0 : (1 << (descriptor - Value8Bit));
-    if (it->ptr + 1 + bytesNeeded > parser->end)
+    if (bytesNeeded + 1 > (size_t)(parser->end - it->ptr))
         return CborErrorUnexpectedEOF;
 
     uint8_t majortype = type >> MajorTypeShift;
@@ -521,7 +521,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
         err = extract_length(value->parser, &ptr, &total);
         if (err)
             return err;
-        if (ptr + total > value->parser->end)
+        if (total > (size_t)(value->parser->end - ptr))
             return CborErrorUnexpectedEOF;
         if (total <= *buflen)
             *result = func(buffer, ptr, total);
@@ -556,7 +556,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
             if (unlikely(add_check_overflow(total, chunkLen, &newTotal)))
                 return CborErrorDataTooLarge;
 
-            if (ptr + chunkLen > value->parser->end)
+            if (chunkLen > (size_t)(value->parser->end - ptr))
                 return CborErrorUnexpectedEOF;
 
             if (*result && *buflen >= newTotal)

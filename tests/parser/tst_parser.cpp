@@ -1025,21 +1025,41 @@ void tst_Parser::validation_data()
     QTest::newRow("bytearray-too-short3") << raw("\x81\x58\x01") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("bytearray-too-short4") << raw("\x81\x59") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("bytearray-too-short5") << raw("\x81\x5a\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("bytearray-too-short6") << raw("\x81\x5a\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("bytearray-too-short7") << raw("\x81\x5b\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short6") << raw("\x81\x5b\0\0\0\0\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("string-too-short1") << raw("\x81\x61") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("string-too-short2") << raw("\x81\x78") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("string-too-short3") << raw("\x81\x78\x01") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("string-too-short4") << raw("\x81\x79") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("string-too-short5") << raw("\x81\x7a\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("string-too-short6") << raw("\x81\x7a\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("string-too-short7") << raw("\x81\x7b\xff\xff\xff\xff\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short6") << raw("\x81\x7b\0\0\0\0\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("fp16-too-short1") << raw("\x81\xf9") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("fp16-too-short2") << raw("\x81\xf9\x00") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("float-too-short1") << raw("\x81\xfa") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("float-too-short2") << raw("\x81\xfa\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("double-too-short1") << raw("\x81\xfb") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("double-too-short2") << raw("\x81\xfb\0\0\0\0\0\0\0") << 0 << CborErrorUnexpectedEOF << 1;
+
+    // check for pointer additions wrapping over the limit of the address space
+    CborError tooLargeOn32bit = (sizeof(void *) == 4) ? CborErrorDataTooLarge : CborErrorUnexpectedEOF;
+    // on 32-bit systems, this is a -1
+    QTest::newRow("bytearray-wraparound1") << raw("\x81\x5a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-wraparound1") << raw("\x81\x7a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 1;
+    // on 32-bit systems, a 4GB addition could be dropped
+    QTest::newRow("bytearray-wraparound2") << raw("\x81\x5b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 1;
+    QTest::newRow("string-wraparound2") << raw("\x81\x7b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 1;
+    // on 64-bit systems, this could be a -1
+    QTest::newRow("bytearray-wraparound3") << raw("\x81\x5b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 1;
+    QTest::newRow("string-wraparound3") << raw("\x81\x7b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 1;
+
+    // ditto on chunks
+    QTest::newRow("bytearray-chunk-wraparound1") << raw("\x81\x5f\x5a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-chunk-wraparound1") << raw("\x81\x7f\x7a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 1;
+    // on 32-bit systems, a 4GB addition could be dropped
+    QTest::newRow("bytearray-chunk-wraparound2") << raw("\x81\x5f\x5b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 1;
+    QTest::newRow("string-chunk-wraparound2") << raw("\x81\x7f\x7b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 1;
+    // on 64-bit systems, this could be a -1
+    QTest::newRow("bytearray-chunk-wraparound3") << raw("\x81\x5f\x5b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 1;
+    QTest::newRow("string-chunk-wraparound3") << raw("\x81\x7f\x7b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 1;
 
     QTest::newRow("eof-after-array") << raw("\x81") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("eof-after-array2") << raw("\x81\x78\x20") << 0 << CborErrorUnexpectedEOF << 1;
