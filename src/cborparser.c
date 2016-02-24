@@ -65,8 +65,10 @@ static CborError extract_length(const CborParser *parser, const uint8_t **ptr, s
 {
     uint64_t v;
     CborError err = extract_number(ptr, parser->end, &v);
-    if (err)
+    if (err) {
+        *len = 0;
         return err;
+    }
 
     *len = v;
     if (v != *len)
