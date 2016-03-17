@@ -26,6 +26,7 @@
 #include "cbor.h"
 #include "cborconstants_p.h"
 #include "compilersupport_p.h"
+#include <stdlib.h>
 
 static inline uint16_t get16(const uint8_t *ptr)
 {
