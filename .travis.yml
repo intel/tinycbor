@@ -3,13 +3,13 @@ os:
   - linux
   - osx
 env:
-  - CFLAGS="-O0 -g" QMAKEFLAGS="-config debug" PATH=/opt/qt55/bin:/usr/local/opt/qt5/bin:$PATH
+  - CFLAGS="-O0 -g" QMAKEFLAGS="-config debug" PATH=/opt/qt56/bin:/usr/local/opt/qt5/bin:$PATH
 install:
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-        sudo apt-add-repository -y ppa:beineri/opt-qt55;
+        sudo apt-add-repository -y ppa:beineri/opt-qt56;
         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test;
         sudo apt-get update -qq;
-        sudo apt-get install -y qt55base valgrind g++-5;
+        sudo apt-get install -y qt56base valgrind g++-5;
     else
         brew install qt5;
     fi
