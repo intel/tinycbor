@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static char *readfile(const char *fname, size_t *size)
+static uint8_t *readfile(const char *fname, size_t *size)
 {
     struct stat st;
     FILE *f = fopen(fname, "rb");
@@ -14,7 +14,7 @@ static char *readfile(const char *fname, size_t *size)
         return NULL;
     if (fstat(fileno(f), &st) == -1)
         return NULL;
-    char *buf = malloc(st.st_size);
+    uint8_t *buf = malloc(st.st_size);
     *size = fread(buf, st.st_size, 1, f);
     fclose(f);
     return buf;
@@ -26,10 +26,10 @@ static void indent(int nestingLevel)
         puts("  ");
 }
 
-static void dumpbytes(const char *buf, size_t len)
+static void dumpbytes(const uint8_t *buf, size_t len)
 {
     while (len--)
-        printf("%02X ", (unsigned char)*buf++);
+        printf("%02X ", *buf++);
 }
 
 static bool dumprecursive(CborValue *it, int nestingLevel)
@@ -67,19 +67,25 @@ static bool dumprecursive(CborValue *it, int nestingLevel)
             break;
         }
 
-        case CborByteStringType:
+        case CborByteStringType: {
+            uint8_t *buf;
+            size_t n;
+            err = cbor_value_dup_byte_string(it, &buf, &n, it);
+            if (err)
+                return err;     // parse error
+            dumpbytes(buf, n);
+            puts("");
+            free(buf);
+            continue;
+        }
+
         case CborTextStringType: {
             char *buf;
             size_t n;
-            err = cbor_value_dup_string(it, &buf, &n, it);
+            err = cbor_value_dup_text_string(it, &buf, &n, it);
             if (err)
                 return err;     // parse error
-            if (type == CborByteStringType) {
-                dumpbytes(buf, n);
-                puts("");
-            } else {
-                puts(buf);
-            }
+            puts(buf);
             free(buf);
             continue;
         }
@@ -153,7 +159,7 @@ int main(int argc, char **argv)
     }
 
     size_t length;
-    char *buf = readfile(argv[1], &length);
+    uint8_t *buf = readfile(argv[1], &length);
     if (!buf) {
         perror("readfile");
         return 1;
