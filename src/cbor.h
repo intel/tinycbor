@@ -59,7 +59,11 @@ extern "C" {
 #  if defined(__cplusplus)
 #    define CBOR_INLINE_API inline
 #  else
-#    define CBOR_INLINE_API static inline
+#    ifdef _MSC_VER
+#      define CBOR_INLINE_API static __inline
+#    else
+#      define CBOR_INLINE_API static inline
+#    endif
 #  endif
 #endif
 

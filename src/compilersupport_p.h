@@ -158,7 +158,7 @@
 #  pragma GCC optimize("-ffunction-sections")
 #endif
 
-static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
+CBOR_INLINE_API bool add_check_overflow(size_t v1, size_t v2, size_t *r)
 {
 #if ((defined(__GNUC__) && (__GNUC__ >= 5)) && !defined(__INTEL_COMPILER)) || __has_builtin(__builtin_add_overflow)
     return __builtin_add_overflow(v1, v2, r);
@@ -169,7 +169,7 @@ static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
 #endif
 }
 
-static inline unsigned short encode_half(double val)
+CBOR_INLINE_API unsigned short encode_half(double val)
 {
 #ifdef __F16C__
     return _cvtss_sh(val, 3);
@@ -204,7 +204,7 @@ static inline unsigned short encode_half(double val)
 }
 
 // this function was copied & adapted from RFC 7049 Appendix D
-static inline double decode_half(unsigned short half)
+CBOR_INLINE_API double decode_half(unsigned short half)
 {
 #ifdef __F16C__
     return _cvtsh_ss(half);
