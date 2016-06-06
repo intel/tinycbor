@@ -60,7 +60,7 @@ static CborError extract_number(const uint8_t **ptr, const uint8_t *end, uint64_
     if (unlikely(additional_information > Value64Bit))
         return CborErrorIllegalNumber;
 
-    size_t bytesNeeded = 1 << (additional_information - Value8Bit);
+    size_t bytesNeeded = (size_t)(1 << (additional_information - Value8Bit));
     if (unlikely(bytesNeeded > (size_t)(end - *ptr))) {
         return CborErrorUnexpectedEOF;
     } else if (bytesNeeded == 1) {

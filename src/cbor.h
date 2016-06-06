@@ -265,7 +265,7 @@ CBOR_INLINE_API bool cbor_value_is_simple_type(const CborValue *value)
 CBOR_INLINE_API CborError cbor_value_get_simple_type(const CborValue *value, uint8_t *result)
 {
     assert(cbor_value_is_simple_type(value));
-    *result = value->extra;
+    *result = (uint8_t)value->extra;
     return CborNoError;
 }
 
@@ -419,7 +419,7 @@ CBOR_INLINE_API CborError cbor_value_get_float(const CborValue *value, float *re
 {
     assert(value->type == CborFloatType);
     assert(value->flags & CborIteratorFlag_IntegerValueTooLarge);
-    uint32_t data = _cbor_value_decode_int64_internal(value);
+    uint32_t data = (uint32_t)_cbor_value_decode_int64_internal(value);
     memcpy(result, &data, sizeof(*result));
     return CborNoError;
 }

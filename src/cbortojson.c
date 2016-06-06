@@ -407,7 +407,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         double num;     // JS numbers are IEEE double precision
         uint64_t val;
         cbor_value_get_raw_integer(it, &val);    // can't fail
-        num = val;
+        num = (double)val;
 
         if (cbor_value_is_negative_integer(it)) {
             num = -num - 1;                     // convert to negative
