@@ -3,5 +3,6 @@ QT = core testlib
 
 SOURCES += tst_tojson.cpp
 INCLUDEPATH += ../../src
-POST_TARGETDEPS += ../../lib/libtinycbor.a
+msvc: POST_TARGETDEPS = ../../lib/tinycbor.lib
+else: POST_TARGETDEPS += ../../lib/libtinycbor.a
 LIBS += $$POST_TARGETDEPS
