@@ -25,6 +25,8 @@
 #ifndef COMPILERSUPPORT_H
 #define COMPILERSUPPORT_H
 
+#include "cbor.h"
+
 #ifndef _BSD_SOURCE
 #  define _BSD_SOURCE
 #endif
@@ -49,6 +51,12 @@
 #  define cbor_static_assert(x)         _Static_assert(x, #x)
 #else
 #  define cbor_static_assert(x)         ((void)sizeof(char[2*!!(x) - 1]))
+#endif
+#if __STDC_VERSION__ >= 199901L || defined(__cplusplus)
+/* inline is a keyword */
+#else
+/* use the definition from cbor.h */
+#  define inline    CBOR_INLINE
 #endif
 
 #define STRINGIFY(x)            STRINGIFY2(x)
