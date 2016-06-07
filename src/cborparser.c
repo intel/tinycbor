@@ -365,7 +365,7 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
         err = extract_number(&recursed->ptr, recursed->parser->end, &len);
         assert(err == CborNoError);
 
-        recursed->remaining = len;
+        recursed->remaining = (uint32_t)len;
         if (recursed->remaining != len || len == UINT32_MAX) {
             // back track the pointer to indicate where the error occurred
             recursed->ptr = it->ptr;
@@ -526,7 +526,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
         if (total > (size_t)(value->parser->end - ptr))
             return CborErrorUnexpectedEOF;
         if (total <= *buflen)
-            *result = func(buffer, ptr, total);
+            *result = !!func(buffer, ptr, total);
         else
             *result = false;
         ptr += total;
@@ -562,7 +562,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
                 return CborErrorUnexpectedEOF;
 
             if (*result && *buflen >= newTotal)
-                *result = func(buffer + total, ptr, chunkLen);
+                *result = !!func(buffer + total, ptr, chunkLen);
             else
                 *result = false;
 
@@ -573,7 +573,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
 
     // is there enough room for the ending NUL byte?
     if (*result && *buflen > total)
-        *result = func(buffer + total, (const uint8_t *)"", 1);
+        *result = !!func(buffer + total, (const uint8_t *)"", 1);
     *buflen = total;
 
     if (next) {

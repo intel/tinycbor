@@ -131,7 +131,7 @@ static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t u
             ++more;
         if (ui > 0xffffffffU)
             ++more;
-        bufstart -= 1 << more;
+        bufstart -= (size_t)1 << more;
         *bufstart = shiftedMajorType + Value8Bit + more;
     }
 

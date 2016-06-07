@@ -255,7 +255,7 @@ CBOR_INLINE_API bool cbor_value_is_boolean(const CborValue *value)
 CBOR_INLINE_API CborError cbor_value_get_boolean(const CborValue *value, bool *result)
 {
     assert(cbor_value_is_boolean(value));
-    *result = value->extra;
+    *result = !!value->extra;
     return CborNoError;
 }
 
