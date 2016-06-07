@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 
         case '?':
             fprintf(stderr, "Unknown option -%c.\n", optopt);
-            // fall through
+            /* fall through */
         case 'h':
             puts("Usage: cbordump [OPTION]... [FILE]...\n"
                  "Interprets FILEs as CBOR binary data and dumps the content to stdout.\n"

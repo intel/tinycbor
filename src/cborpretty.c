@@ -41,7 +41,7 @@ static int hexDump(FILE *out, const uint8_t *buffer, size_t n)
         if (r < 0)
             return r;
     }
-    return 0;   // should be n * 2, but we don't have the original n anymore
+    return 0;   /* should be n * 2, but we don't have the original n anymore */
 }
 
 /* This function decodes buffer as UTF-8 and prints as escaped UTF-16.
@@ -52,14 +52,14 @@ static int utf8EscapedDump(FILE *out, const char *buffer, size_t n)
     while (n--) {
         uc = (uint8_t)*buffer++;
         if (uc < 0x80) {
-            // single-byte UTF-8
+            /* single-byte UTF-8 */
             if (uc < 0x7f && uc >= 0x20 && uc != '\\' && uc != '"') {
                 if (fprintf(out, "%c", (char)uc) < 0)
                     return CborErrorIO;
                 continue;
             }
 
-            // print as an escape sequence
+            /* print as an escape sequence */
             char escaped = (char)uc;
             switch (uc) {
             case '"':
@@ -88,7 +88,7 @@ static int utf8EscapedDump(FILE *out, const char *buffer, size_t n)
             continue;
         }
 
-        // multi-byte UTF-8, decode it
+        /* multi-byte UTF-8, decode it */
         unsigned charsNeeded;
         uint32_t min_uc;
         if (unlikely(uc <= 0xC1))
@@ -115,7 +115,7 @@ static int utf8EscapedDump(FILE *out, const char *buffer, size_t n)
         if (n < charsNeeded - 1)
             return CborErrorInvalidUtf8TextString;
 
-        // first continuation character
+        /* first continuation character */
         uint8_t b = (uint8_t)*buffer++;
         if ((b & 0xc0) != 0x80)
             return CborErrorInvalidUtf8TextString;
@@ -123,7 +123,7 @@ static int utf8EscapedDump(FILE *out, const char *buffer, size_t n)
         uc |= b & 0x3f;
 
         if (charsNeeded > 2) {
-            // second continuation character
+            /* second continuation character */
             b = (uint8_t)*buffer++;
             if ((b & 0xc0) != 0x80)
                 return CborErrorInvalidUtf8TextString;
@@ -131,7 +131,7 @@ static int utf8EscapedDump(FILE *out, const char *buffer, size_t n)
             uc |= b & 0x3f;
 
             if (charsNeeded > 3) {
-                // third continuation character
+                /* third continuation character */
                 b = (uint8_t)*buffer++;
                 if ((b & 0xc0) != 0x80)
                     return CborErrorInvalidUtf8TextString;
@@ -140,20 +140,20 @@ static int utf8EscapedDump(FILE *out, const char *buffer, size_t n)
             }
         }
 
-        // overlong sequence? surrogate pair? out or range?
+        /* overlong sequence? surrogate pair? out or range? */
         if (uc < min_uc || uc - 0xd800U < 2048U || uc > 0x10ffff)
             return CborErrorInvalidUtf8TextString;
 
-        // now print the sequence
+        /* now print the sequence */
         if (charsNeeded > 3) {
-            // needs surrogate pairs
+            /* needs surrogate pairs */
             if (fprintf(out, "\\u%04" PRIX32 "\\u%04" PRIX32,
-                        (uc >> 10) + 0xd7c0,    // high surrogate
+                        (uc >> 10) + 0xd7c0,    /* high surrogate */
                         (uc % 0x0400) + 0xdc00) < 0)
                 return CborErrorIO;
         } else {
 print_utf16:
-            // no surrogate pair needed
+            /* no surrogate pair needed */
             if (fprintf(out, "\\u%04" PRIX32, uc) < 0)
                 return CborErrorIO;
         }
@@ -177,7 +177,7 @@ static CborError container_to_pretty(FILE *out, CborValue *it, CborType containe
         if (containerType == CborArrayType)
             continue;
 
-        // map: that was the key, so get the value
+        /* map: that was the key, so get the value */
         if (fprintf(out, ": ") < 0)
             return CborErrorIO;
         err = value_to_pretty(out, it);
@@ -194,7 +194,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
     switch (type) {
     case CborArrayType:
     case CborMapType: {
-        // recursive type
+        /* recursive type */
         CborValue recursed;
 
         if (fprintf(out, type == CborArrayType ? "[" : "{") < 0)
@@ -207,16 +207,16 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
         err = cbor_value_enter_container(it, &recursed);
         if (err) {
             it->ptr = recursed.ptr;
-            return err;       // parse error
+            return err;       /* parse error */
         }
         err = container_to_pretty(out, &recursed, type);
         if (err) {
             it->ptr = recursed.ptr;
-            return err;       // parse error
+            return err;       /* parse error */
         }
         err = cbor_value_leave_container(it, &recursed);
         if (err)
-            return err;       // parse error
+            return err;       /* parse error */
 
         if (fprintf(out, type == CborArrayType ? "]" : "}") < 0)
             return CborErrorIO;
@@ -225,21 +225,21 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
 
     case CborIntegerType: {
         uint64_t val;
-        cbor_value_get_raw_integer(it, &val);    // can't fail
+        cbor_value_get_raw_integer(it, &val);    /* can't fail */
 
         if (cbor_value_is_unsigned_integer(it)) {
             if (fprintf(out, "%" PRIu64, val) < 0)
                 return CborErrorIO;
         } else {
-            // CBOR stores the negative number X as -1 - X
-            // (that is, -1 is stored as 0, -2 as 1 and so forth)
-            if (++val) {                // unsigned overflow may happen
+            /* CBOR stores the negative number X as -1 - X
+             * (that is, -1 is stored as 0, -2 as 1 and so forth) */
+            if (++val) {                /* unsigned overflow may happen */
                 if (fprintf(out, "-%" PRIu64, val) < 0)
                     return CborErrorIO;
             } else {
-                // overflown
-                //   0xffff`ffff`ffff`ffff + 1 =
-                // 0x1`0000`0000`0000`0000 = 18446744073709551616 (2^64)
+                /* overflown
+                 *   0xffff`ffff`ffff`ffff + 1 =
+                 * 0x1`0000`0000`0000`0000 = 18446744073709551616 (2^64) */
                 if (fprintf(out, "-18446744073709551616") < 0)
                     return CborErrorIO;
             }
@@ -277,7 +277,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
 
     case CborTagType: {
         CborTag tag;
-        cbor_value_get_tag(it, &tag);       // can't fail
+        cbor_value_get_tag(it, &tag);       /* can't fail */
         if (fprintf(out, "%" PRIu64 "(", tag) < 0)
             return CborErrorIO;
         err = cbor_value_advance_fixed(it);
@@ -293,7 +293,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
 
     case CborSimpleType: {
         uint8_t simple_type;
-        cbor_value_get_simple_type(it, &simple_type);  // can't fail
+        cbor_value_get_simple_type(it, &simple_type);  /* can't fail */
         if (fprintf(out, "simple(%" PRIu8 ")", simple_type) < 0)
             return CborErrorIO;
         break;
@@ -311,7 +311,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
 
     case CborBooleanType: {
         bool val;
-        cbor_value_get_boolean(it, &val);       // can't fail
+        cbor_value_get_boolean(it, &val);       /* can't fail */
         if (fprintf(out, val ? "true" : "false") < 0)
             return CborErrorIO;
         break;
@@ -343,11 +343,11 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
 
         uint64_t ival = (uint64_t)fabs(val);
         if (ival == fabs(val)) {
-            // this double value fits in a 64-bit integer, so show it as such
-            // (followed by a floating point suffix, to disambiguate)
+            /* this double value fits in a 64-bit integer, so show it as such
+             * (followed by a floating point suffix, to disambiguate) */
             r = fprintf(out, "%s%" PRIu64 ".%s", val < 0 ? "-" : "", ival, suffix);
         } else {
-            // this number is definitely not a 64-bit integer
+            /* this number is definitely not a 64-bit integer */
             r = fprintf(out, "%." DBL_DECIMAL_DIG_STR "g%s", val, suffix);
         }
         if (r < 0)

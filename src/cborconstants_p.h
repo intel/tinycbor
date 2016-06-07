@@ -36,7 +36,7 @@ typedef enum CborSimpleTypes {
 
 enum {
     SmallValueBitLength     = 5U,
-    SmallValueMask          = (1U << SmallValueBitLength) - 1,      // 31
+    SmallValueMask          = (1U << SmallValueBitLength) - 1,      /* 31 */
     Value8Bit               = 24U,
     Value16Bit              = 25U,
     Value32Bit              = 26U,
@@ -49,5 +49,4 @@ enum {
     BreakByte               = (unsigned)Break | (SimpleTypesType << MajorTypeShift)
 };
 
-#endif // CBORCONSTANTS_P_H
-
+#endif /* CBORCONSTANTS_P_H */

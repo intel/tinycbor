@@ -27,7 +27,7 @@
 
 #include <math.h>
 
-// this function was copied & adapted from RFC 7049 Appendix D
+/* this function was copied & adapted from RFC 7049 Appendix D */
 static inline double decode_half(unsigned short half)
 {
 #ifdef __F16C__

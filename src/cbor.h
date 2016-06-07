@@ -455,5 +455,5 @@ CBOR_INLINE_API CborError cbor_value_to_pretty(FILE *out, const CborValue *value
 }
 #endif
 
-#endif // CBOR_H
+#endif /* CBOR_H */
 

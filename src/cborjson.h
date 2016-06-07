@@ -58,5 +58,5 @@ CBOR_INLINE_API CborError cbor_value_to_json(FILE *out, const CborValue *value, 
 }
 #endif
 
-#endif // CBORJSON_H
+#endif /* CBORJSON_H */
 

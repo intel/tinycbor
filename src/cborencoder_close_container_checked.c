@@ -39,7 +39,7 @@ CborError cbor_encoder_close_container_checked(CborEncoder *encoder, const CborE
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength || encoder->end == NULL)
         return err;
 
-    // check what the original length was
+    /* check what the original length was */
     uint64_t actually_added;
     err = extract_number(&ptr, encoder->ptr, &actually_added);
     if (err)

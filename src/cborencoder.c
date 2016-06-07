@@ -47,11 +47,11 @@ static inline void put16(void *where, uint16_t v)
     memcpy(where, &v, sizeof(v));
 }
 
-// Note: Since this is currently only used in situations where OOM is the only
-// valid error, we KNOW this to be true.  Thus, this function now returns just 'true',
-// but if in the future, any function starts returning a non-OOM error, this will need
-// to be changed to the test.  At the moment, this is done to prevent more branches
-// being created in the tinycbor output
+/* Note: Since this is currently only used in situations where OOM is the only
+ * valid error, we KNOW this to be true.  Thus, this function now returns just 'true',
+ * but if in the future, any function starts returning a non-OOM error, this will need
+ * to be changed to the test.  At the moment, this is done to prevent more branches
+ * being created in the tinycbor output */
 static inline bool isOomError(CborError err)
 {
     (void) err;
@@ -119,7 +119,7 @@ static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t u
     uint64_t buf[2];
     uint8_t *const bufend = (uint8_t *)buf + sizeof(buf);
     uint8_t *bufstart = bufend - 1;
-    put64(buf + 1, ui);     // we probably have a bunch of zeros in the beginning
+    put64(buf + 1, ui);     /* we probably have a bunch of zeros in the beginning */
 
     if (ui < Value8Bit) {
         *bufstart += shiftedMajorType;
@@ -157,17 +157,17 @@ CborError cbor_encode_negative_int(CborEncoder *encoder, uint64_t absolute_value
 
 CborError cbor_encode_int(CborEncoder *encoder, int64_t value)
 {
-    // adapted from code in RFC 7049 appendix C (pseudocode)
-    uint64_t ui = value >> 63;              // extend sign to whole length
-    uint8_t majorType = ui & 0x20;          // extract major type
-    ui ^= value;                            // complement negatives
+    /* adapted from code in RFC 7049 appendix C (pseudocode) */
+    uint64_t ui = value >> 63;              /* extend sign to whole length */
+    uint8_t majorType = ui & 0x20;          /* extract major type */
+    ui ^= value;                            /* complement negatives */
     return encode_number(encoder, ui, majorType);
 }
 
 CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value)
 {
 #ifndef CBOR_ENCODER_NO_CHECK_USER
-    // check if this is a valid simple type
+    /* check if this is a valid simple type */
     if (value >= HalfPrecisionFloat && value <= Break)
         return CborErrorIllegalSimpleType;
 #endif
@@ -193,7 +193,7 @@ CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, cons
 
 CborError cbor_encode_tag(CborEncoder *encoder, CborTag tag)
 {
-    // tags don't count towards the number of elements in an array or map
+    /* tags don't count towards the number of elements in an array or map */
     return encode_number_no_update(encoder, tag, TagType << MajorTypeShift);
 }
 

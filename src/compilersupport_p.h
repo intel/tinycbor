@@ -66,7 +66,7 @@
 #  define UINT32_MAX    (0xffffffffU)
 #endif
 #ifndef DBL_DECIMAL_DIG
-// DBL_DECIMAL_DIG is C11
+/* DBL_DECIMAL_DIG is C11 */
 #  define DBL_DECIMAL_DIG       17
 #endif
 #define DBL_DECIMAL_DIG_STR     STRINGIFY(DBL_DECIMAL_DIG)
@@ -142,7 +142,7 @@
 #ifdef __cplusplus
 #  define CONST_CAST(t, v)  const_cast<t>(v)
 #else
-// C-style const_cast without triggering a warning with -Wcast-qual
+/* C-style const_cast without triggering a warning with -Wcast-qual */
 #  define CONST_CAST(t, v)  (t)(uintptr_t)(v)
 #endif
 
@@ -170,7 +170,7 @@ static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
 #if ((defined(__GNUC__) && (__GNUC__ >= 5)) && !defined(__INTEL_COMPILER)) || __has_builtin(__builtin_add_overflow)
     return __builtin_add_overflow(v1, v2, r);
 #else
-    // unsigned additions are well-defined
+    /* unsigned additions are well-defined */
     *r = v1 + v2;
     return v1 > v1 + v2;
 #endif
@@ -185,30 +185,30 @@ static inline unsigned short encode_half(double val)
     memcpy(&v, &val, sizeof(v));
     int sign = v >> 63 << 15;
     int exp = (v >> 52) & 0x7ff;
-    int mant = v << 12 >> 12 >> (53-11);    // keep only the 11 most significant bits of the mantissa
+    int mant = v << 12 >> 12 >> (53-11);    /* keep only the 11 most significant bits of the mantissa */
     exp -= 1023;
     if (exp == 1024) {
-        // infinity or NaN
+        /* infinity or NaN */
         exp = 16;
         mant >>= 1;
     } else if (exp >= 16) {
-        // overflow, as largest number
+        /* overflow, as largest number */
         exp = 15;
         mant = 1023;
     } else if (exp >= -14) {
-        // regular normal
+        /* regular normal */
     } else if (exp >= -24) {
-        // subnormal
+        /* subnormal */
         mant |= 1024;
         mant >>= -(exp + 14);
         exp = -15;
     } else {
-        // underflow, make zero
+        /* underflow, make zero */
         return 0;
     }
     return sign | ((exp + 15) << 10) | mant;
 #endif
 }
 
-#endif // COMPILERSUPPORT_H
+#endif /* COMPILERSUPPORT_H */
 
