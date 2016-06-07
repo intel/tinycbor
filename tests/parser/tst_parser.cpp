@@ -28,7 +28,9 @@
 #include <locale.h>
 #include <stdio.h>
 
+#ifndef Q_CC_MSVC
 extern "C" FILE *open_memstream(char **bufptr, size_t *sizeptr);
+#endif
 
 Q_DECLARE_METATYPE(CborError)
 
@@ -92,11 +94,28 @@ CborError parseOne(CborValue *it, QString *parsed)
     size_t size;
 
     setlocale(LC_ALL, "C");
+#ifdef Q_CC_MSVC
+    // no open_memstream, so use a temporary file
+    QTemporaryFile tmp("./output.XXXXXX.txt");
+    tmp.open();
+
+    FILE *f = fopen(QFile::encodeName(tmp.fileName()), "w+");
+    if (!f)
+        return CborErrorIO;
+    err = cbor_value_to_pretty_advance(f, it);
+    size = ftell(f);
+    rewind(f);
+
+    buffer = static_cast<char *>(malloc(size));
+    size = fread(buffer, 1, size, f);
+    fclose(f);
+#else
     FILE *f = open_memstream(&buffer, &size);
     err = cbor_value_to_pretty_advance(f, it);
     fclose(f);
+#endif
 
-    *parsed = QString::fromLatin1(buffer, size);
+    *parsed = QString::fromLatin1(buffer, int(size));
     free(buffer);
     return err;
 }
