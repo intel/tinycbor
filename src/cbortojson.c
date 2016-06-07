@@ -60,6 +60,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
 static CborError dump_bytestring_base16(char **result, CborValue *it)
 {
     static const char characters[] = "0123456789abcdef";
+    size_t i;
     size_t n = 0;
     uint8_t *buffer;
     CborError err = cbor_value_calculate_string_length(it, &n);
@@ -75,7 +76,7 @@ static CborError dump_bytestring_base16(char **result, CborValue *it)
     err = cbor_value_copy_byte_string(it, buffer + n - 1, &n, it);
     assert(err == CborNoError);
 
-    for (size_t i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i) {
         uint8_t byte = buffer[n + i];
         buffer[2*i]     = characters[byte >> 4];
         buffer[2*i + 1] = characters[byte & 0xf];
