@@ -57,9 +57,19 @@ extern "C" {
 #endif
 #ifndef CBOR_INLINE_API
 #  if defined(__cplusplus)
+#    define CBOR_INLINE inline
 #    define CBOR_INLINE_API inline
 #  else
-#    define CBOR_INLINE_API static inline
+#    define CBOR_INLINE_API static CBOR_INLINE
+#    if defined(_MSC_VER)
+#      define CBOR_INLINE __inline
+#    elif defined(__GNUC__)
+#      define CBOR_INLINE __inline__
+#    elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#      define CBOR_INLINE inline
+#    else
+#      define CBOR_INLINE
+#    endif
 #  endif
 #endif
 
