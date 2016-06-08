@@ -275,10 +275,19 @@ void addFixedData()
     QTest::newRow("-16777215.f") << raw("\xfa\xcb\x7f\xff\xff") << QVariant(-16777215.f);
     QTest::newRow("-16777215.") << raw("\xfb\xc1\x6f\xff\xff\xe0\0\0\0") << QVariant::fromValue(-16777215.);
 
+#ifdef Q_CC_MSVC
+    // MSVC NaNs have the sign bit unset
+    QTest::newRow("qnan_f") << raw("\xfa\x7f\xc0\0\0") << QVariant::fromValue<float>(qQNaN());
+    QTest::newRow("qnan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << QVariant(qQNaN());
+    QTest::newRow("snan_f") << raw("\xfa\x7f\xc0\0\0") << QVariant::fromValue<float>(qSNaN());
+    QTest::newRow("snan") << raw("\xfb\x7f\xf0\0\0\0\0\0\1") << QVariant(qSNaN());
+#else
+    // GCC NaNs have the sign bit set
     QTest::newRow("qnan_f") << raw("\xfa\xff\xc0\0\0") << QVariant::fromValue<float>(qQNaN());
     QTest::newRow("qnan") << raw("\xfb\xff\xf8\0\0\0\0\0\0") << QVariant(qQNaN());
     QTest::newRow("snan_f") << raw("\xfa\x7f\xc0\0\0") << QVariant::fromValue<float>(qSNaN());
     QTest::newRow("snan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << QVariant(qSNaN());
+#endif
     QTest::newRow("-inf_f") << raw("\xfa\xff\x80\0\0") << QVariant::fromValue<float>(-qInf());
     QTest::newRow("-inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << QVariant(-qInf());
     QTest::newRow("+inf_f") << raw("\xfa\x7f\x80\0\0") << QVariant::fromValue<float>(qInf());

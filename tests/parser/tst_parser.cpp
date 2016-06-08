@@ -263,7 +263,13 @@ void addFixedData()
     QTest::newRow("2.f^64") << raw("\xfa\x5f\x80\0\0") << "1.8446744073709552e+19f";
     QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << "1.8446744073709552e+19";
 
-    QTest::newRow("nan_f16") << raw("\xf9\x7e\x00") << "nan";
+    QTest::newRow("nan_f16") << raw("\xf9\x7e\x00")
+#ifdef Q_CC_MSVC
+                             << "-nan(ind)"
+#else
+                             << "nan"
+#endif
+                                ;
     QTest::newRow("nan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
     QTest::newRow("nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
     QTest::newRow("-inf_f16") << raw("\xf9\xfc\x00") << "-inf";
