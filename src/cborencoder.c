@@ -41,7 +41,7 @@ void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int f
     encoder->flags = flags;
 }
 
-static inline void put16(void *where, uint16_t v)
+CBOR_INLINE_API void put16(void *where, uint16_t v)
 {
     v = cbor_htons(v);
     memcpy(where, &v, sizeof(v));
@@ -52,25 +52,25 @@ static inline void put16(void *where, uint16_t v)
 // but if in the future, any function starts returning a non-OOM error, this will need
 // to be changed to the test.  At the moment, this is done to prevent more branches
 // being created in the tinycbor output
-static inline bool isOomError(CborError err)
+CBOR_INLINE_API bool isOomError(CborError err)
 {
     (void) err;
     return true;
 }
 
-static inline void put32(void *where, uint32_t v)
+CBOR_INLINE_API void put32(void *where, uint32_t v)
 {
     v = cbor_htonl(v);
     memcpy(where, &v, sizeof(v));
 }
 
-static inline void put64(void *where, uint64_t v)
+CBOR_INLINE_API void put64(void *where, uint64_t v)
 {
     v = cbor_htonll(v);
     memcpy(where, &v, sizeof(v));
 }
 
-static inline bool would_overflow(CborEncoder *encoder, size_t len)
+CBOR_INLINE_API bool would_overflow(CborEncoder *encoder, size_t len)
 {
     ptrdiff_t remaining = (ptrdiff_t)encoder->end;
     remaining -= remaining ? (ptrdiff_t)encoder->ptr : encoder->bytes_needed;
@@ -78,7 +78,7 @@ static inline bool would_overflow(CborEncoder *encoder, size_t len)
     return unlikely(remaining < 0);
 }
 
-static inline void advance_ptr(CborEncoder *encoder, size_t n)
+CBOR_INLINE_API void advance_ptr(CborEncoder *encoder, size_t n)
 {
     if (encoder->end)
         encoder->ptr += n;
@@ -86,7 +86,7 @@ static inline void advance_ptr(CborEncoder *encoder, size_t n)
         encoder->bytes_needed += n;
 }
 
-static inline CborError append_to_buffer(CborEncoder *encoder, const void *data, size_t len)
+CBOR_INLINE_API CborError append_to_buffer(CborEncoder *encoder, const void *data, size_t len)
 {
     if (would_overflow(encoder, len)) {
         if (encoder->end != NULL) {
@@ -104,12 +104,12 @@ static inline CborError append_to_buffer(CborEncoder *encoder, const void *data,
     return CborNoError;
 }
 
-static inline CborError append_byte_to_buffer(CborEncoder *encoder, uint8_t byte)
+CBOR_INLINE_API CborError append_byte_to_buffer(CborEncoder *encoder, uint8_t byte)
 {
     return append_to_buffer(encoder, &byte, 1);
 }
 
-static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
+CBOR_INLINE_API CborError encode_number_no_update(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
 {
     /* Little-endian would have been so much more convenient here:
      * We could just write at the beginning of buf but append_to_buffer
@@ -138,7 +138,7 @@ static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t u
     return append_to_buffer(encoder, bufstart, bufend - bufstart);
 }
 
-static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
+CBOR_INLINE_API CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
 {
     ++encoder->added;
     return encode_number_no_update(encoder, ui, shiftedMajorType);

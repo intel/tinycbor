@@ -28,21 +28,21 @@
 #include "compilersupport_p.h"
 #include <stdlib.h>
 
-static inline uint16_t get16(const uint8_t *ptr)
+CBOR_INLINE_API uint16_t get16(const uint8_t *ptr)
 {
     uint16_t result;
     memcpy(&result, ptr, sizeof(result));
     return cbor_ntohs(result);
 }
 
-static inline uint32_t get32(const uint8_t *ptr)
+CBOR_INLINE_API uint32_t get32(const uint8_t *ptr)
 {
     uint32_t result;
     memcpy(&result, ptr, sizeof(result));
     return cbor_ntohl(result);
 }
 
-static inline uint64_t get64(const uint8_t *ptr)
+CBOR_INLINE_API uint64_t get64(const uint8_t *ptr)
 {
     uint64_t result;
     memcpy(&result, ptr, sizeof(result));
