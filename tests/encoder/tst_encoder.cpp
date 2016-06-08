@@ -74,6 +74,12 @@ Q_DECLARE_METATYPE(Float16Standin)
 struct Tag { CborTag tag; QVariant tagged; };
 Q_DECLARE_METATYPE(Tag)
 
+template <typename... Args>
+QVariant make_list(const Args &... args)
+{
+    return QVariantList{args...};
+}
+
 typedef QVector<QPair<QVariant, QVariant>> Map;
 Q_DECLARE_METATYPE(Map)
 QVariant make_map(const std::initializer_list<QPair<QVariant, QVariant>> &list)
@@ -319,27 +325,27 @@ void addStringsData()
 
 void addArraysAndMaps()
 {
-    QTest::newRow("emptyarray") << raw("\x80") << QVariant(QVariantList{});
+    QTest::newRow("emptyarray") << raw("\x80") << make_list();
     QTest::newRow("emptymap") << raw("\xa0") << make_map({});
 
-    QTest::newRow("array-0") << raw("\x81\0") << QVariant(QVariantList{0});
-    QTest::newRow("array-{0-0}") << raw("\x82\0\0") << QVariant(QVariantList{0, 0});
-    QTest::newRow("array-Hello") << raw("\x81\x65Hello") << QVariant(QVariantList{"Hello"});
-    QTest::newRow("array-array-0") << raw("\x81\x81\0") << QVariant(QVariantList{QVariantList{0}});
-    QTest::newRow("array-array-{0-0}") << raw("\x81\x82\0\0") << QVariant(QVariantList{QVariantList{0, 0}});
-    QTest::newRow("array-array-0-0") << raw("\x82\x81\0\0") << QVariant(QVariantList{QVariantList{0},0});
-    QTest::newRow("array-array-Hello") << raw("\x81\x81\x65Hello") << QVariant(QVariantList{QVariantList{"Hello"}});
+    QTest::newRow("array-0") << raw("\x81\0") << make_list(0);
+    QTest::newRow("array-{0-0}") << raw("\x82\0\0") << make_list(0, 0);
+    QTest::newRow("array-Hello") << raw("\x81\x65Hello") << make_list("Hello");
+    QTest::newRow("array-array-0") << raw("\x81\x81\0") << make_list(make_list(0));
+    QTest::newRow("array-array-{0-0}") << raw("\x81\x82\0\0") << make_list(make_list(0, 0));
+    QTest::newRow("array-array-0-0") << raw("\x82\x81\0\0") << make_list(make_list(0),0);
+    QTest::newRow("array-array-Hello") << raw("\x81\x81\x65Hello") << make_list(make_list("Hello"));
 
     QTest::newRow("map-0:0") << raw("\xa1\0\0") << make_map({{0,0}});
     QTest::newRow("map-0:0-1:1") << raw("\xa2\0\0\1\1") << make_map({{0,0}, {1,1}});
     QTest::newRow("map-0:{map-0:0-1:1}") << raw("\xa1\0\xa2\0\0\1\1") << make_map({{0, make_map({{0,0}, {1,1}})}});
 
-    QTest::newRow("array-map1") << raw("\x81\xa1\0\0") << QVariant(QVariantList{make_map({{0,0}})});
-    QTest::newRow("array-map2") << raw("\x82\xa1\0\0\xa1\1\1") << QVariant(QVariantList{make_map({{0,0}}), make_map({{1,1}})});
+    QTest::newRow("array-map1") << raw("\x81\xa1\0\0") << make_list(make_map({{0,0}}));
+    QTest::newRow("array-map2") << raw("\x82\xa1\0\0\xa1\1\1") << make_list(make_map({{0,0}}), make_map({{1,1}}));
 
-    QTest::newRow("map-array1") << raw("\xa1\x62oc\x81\0") << make_map({{"oc", QVariantList{0}}});
-    QTest::newRow("map-array2") << raw("\xa1\x62oc\x84\0\1\2\3") << make_map({{"oc", QVariantList{0, 1, 2, 3}}});
-    QTest::newRow("map-array3") << raw("\xa2\x62oc\x82\0\1\2\3") << make_map({{"oc", QVariantList{0, 1}}, {2, 3}});
+    QTest::newRow("map-array1") << raw("\xa1\x62oc\x81\0") << make_map({{"oc", make_list(0)}});
+    QTest::newRow("map-array2") << raw("\xa1\x62oc\x84\0\1\2\3") << make_map({{"oc", make_list(0, 1, 2, 3)}});
+    QTest::newRow("map-array3") << raw("\xa2\x62oc\x82\0\1\2\3") << make_map({{"oc", make_list(0, 1)}, {2, 3}});
 
     // indeterminate length
     QTest::newRow("_emptyarray") << raw("\x9f\xff") << QVariant::fromValue(IndeterminateLengthArray{});
@@ -348,7 +354,7 @@ void addArraysAndMaps()
     QTest::newRow("_array-0") << raw("\x9f\0\xff") << make_ilarray({0});
     QTest::newRow("_array-{0-0}") << raw("\x9f\0\0\xff") << make_ilarray({0, 0});
     QTest::newRow("_array-Hello") << raw("\x9f\x65Hello\xff") << make_ilarray({"Hello"});
-    QTest::newRow("_array-array-0") << raw("\x9f\x81\0\xff") << make_ilarray({QVariantList{0}});
+    QTest::newRow("_array-array-0") << raw("\x9f\x81\0\xff") << make_ilarray({make_list(0)});
     QTest::newRow("_array-_array-0") << raw("\x9f\x9f\0\xff\xff") << make_ilarray({make_ilarray({0})});
     QTest::newRow("_array-_array-{0-0}") << raw("\x9f\x9f\0\0\xff\xff") << make_ilarray({make_ilarray({0, 0})});
     QTest::newRow("_array-_array-0-0") << raw("\x9f\x9f\0\xff\0\xff") << make_ilarray({make_ilarray({0}),0});
@@ -364,16 +370,16 @@ void addArraysAndMaps()
     QTest::newRow("_array-map2") << raw("\x9f\xa1\0\0\xa1\1\1\xff") << make_ilarray({make_map({{0,0}}), make_map({{1,1}})});
     QTest::newRow("_array-_map2") << raw("\x9f\xbf\0\0\xff\xbf\1\1\xff\xff") << make_ilarray({make_ilmap({{0,0}}), make_ilmap({{1,1}})});
 
-    QTest::newRow("_map-array1") << raw("\xbf\x62oc\x81\0\xff") << make_ilmap({{"oc", QVariantList{0}}});
+    QTest::newRow("_map-array1") << raw("\xbf\x62oc\x81\0\xff") << make_ilmap({{"oc", make_list(0)}});
     QTest::newRow("_map-_array1") << raw("\xbf\x62oc\x9f\0\xff\xff") << make_ilmap({{"oc", make_ilarray({0})}});
-    QTest::newRow("_map-array2") << raw("\xbf\x62oc\x84\0\1\2\3\xff") << make_ilmap({{"oc", QVariantList{0, 1, 2, 3}}});
+    QTest::newRow("_map-array2") << raw("\xbf\x62oc\x84\0\1\2\3\xff") << make_ilmap({{"oc", make_list(0, 1, 2, 3)}});
     QTest::newRow("_map-_array2") << raw("\xbf\x62oc\x9f\0\1\2\3\xff\xff") << make_ilmap({{"oc", make_ilarray({0, 1, 2, 3})}});
-    QTest::newRow("_map-array3") << raw("\xbf\x62oc\x82\0\1\2\3\xff") << make_ilmap({{"oc", QVariantList{0, 1}}, {2, 3}});
+    QTest::newRow("_map-array3") << raw("\xbf\x62oc\x82\0\1\2\3\xff") << make_ilmap({{"oc", make_list(0, 1)}, {2, 3}});
     QTest::newRow("_map-_array3") << raw("\xbf\x62oc\x9f\0\1\xff\2\3\xff") << make_ilmap({{"oc", make_ilarray({0, 1})}, {2, 3}});
 
     // tagged
-    QTest::newRow("array-1(0)") << raw("\x81\xc1\0") << QVariant(QVariantList{QVariant::fromValue(Tag{1, 0})});
-    QTest::newRow("array-1(map)") << raw("\x81\xc1\xa0") << QVariant(QVariantList{QVariant::fromValue(Tag{1, make_map({})})});
+    QTest::newRow("array-1(0)") << raw("\x81\xc1\0") << make_list(QVariant::fromValue(Tag{1, 0}));
+    QTest::newRow("array-1(map)") << raw("\x81\xc1\xa0") << make_list(QVariant::fromValue(Tag{1, make_map({})}));
     QTest::newRow("map-1(2):3(4)") << raw("\xa1\xc1\2\xc3\4") << make_map({{QVariant::fromValue(Tag{1, 2}), QVariant::fromValue(Tag{3, 4})}});
 }
 
@@ -454,10 +460,10 @@ void tst_Encoder::arrays()
     QFETCH(QVariant, input);
     QFETCH(QByteArray, output);
 
-    compare(QVariantList{input}, "\x81" + output);
+    compare(make_list(input), "\x81" + output);
     if (compareFailed) return;
 
-    compare(QVariantList{input, input}, "\x82" + output + output);
+    compare(make_list(input, input), "\x82" + output + output);
     if (compareFailed) return;
 
     {
@@ -482,16 +488,16 @@ void tst_Encoder::arrays()
     }
 
     // nested lists
-    compare(QVariantList{QVariantList{input}}, "\x81\x81" + output);
+    compare(make_list(make_list(input)), "\x81\x81" + output);
     if (compareFailed) return;
 
-    compare(QVariantList{QVariantList{input, input}}, "\x81\x82" + output + output);
+    compare(make_list(make_list(input, input)), "\x81\x82" + output + output);
     if (compareFailed) return;
 
-    compare(QVariantList{QVariantList{input}, input}, "\x82\x81" + output + output);
+    compare(make_list(make_list(input), input), "\x82\x81" + output + output);
     if (compareFailed) return;
 
-    compare(QVariantList{QVariantList{input}, QVariantList{input}}, "\x82\x81" + output + "\x81" + output);
+    compare(make_list(make_list(input), make_list(input)), "\x82\x81" + output + "\x81" + output);
 }
 
 void tst_Encoder::maps()
