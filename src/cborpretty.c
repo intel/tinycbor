@@ -25,6 +25,7 @@
 #define _BSD_SOURCE 1
 #include "cbor.h"
 #include "compilersupport_p.h"
+#include "math_support_p.h"
 
 #include <float.h>
 #include <inttypes.h>

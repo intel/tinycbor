@@ -28,6 +28,7 @@
 #include "cbor.h"
 #include "cborjson.h"
 #include "compilersupport_p.h"
+#include "math_support_p.h"
 
 #include <float.h>
 #include <inttypes.h>
