@@ -152,18 +152,32 @@ void compareOne_real(const QByteArray &data, const QString &expected, int line, 
     if (cbor_value_get_type(&first) == CborArrayType) {
         size_t len;
         if (n >= 0) {
+            QVERIFY(cbor_value_is_length_known(&first));
             QCOMPARE(cbor_value_get_array_length(&first, &len), CborNoError);
             QCOMPARE(len, size_t(len));
         } else {
+            QVERIFY(!cbor_value_is_length_known(&first));
             QCOMPARE(cbor_value_get_array_length(&first, &len), CborErrorUnknownLength);
         }
     } else if (cbor_value_get_type(&first) == CborMapType) {
         size_t len;
         if (n >= 0) {
+            QVERIFY(cbor_value_is_length_known(&first));
             QCOMPARE(cbor_value_get_map_length(&first, &len), CborNoError);
             QCOMPARE(len, size_t(len));
         } else {
+            QVERIFY(!cbor_value_is_length_known(&first));
             QCOMPARE(cbor_value_get_map_length(&first, &len), CborErrorUnknownLength);
+        }
+    } else if (cbor_value_is_text_string(&first) || cbor_value_is_byte_string(&first)) {
+        size_t len;
+        QCOMPARE(cbor_value_calculate_string_length(&first, &len), CborNoError);
+        if (cbor_value_is_length_known(&first)) {
+            size_t len2;
+            QCOMPARE(cbor_value_get_string_length(&first, &len2), CborNoError);
+            QCOMPARE(len2, len);
+        } else {
+            QCOMPARE(cbor_value_get_string_length(&first, &len), CborErrorUnknownLength);
         }
     }
 
@@ -772,6 +786,12 @@ void tst_Parser::stringLength()
     err = cbor_value_calculate_string_length(&value, &result);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
     QCOMPARE(result, size_t(expected));
+
+    if (cbor_value_is_length_known(&value)) {
+        QCOMPARE(cbor_value_get_string_length(&value, &result), CborNoError);
+        QCOMPARE(result, size_t(expected));
+    }
+
 }
 
 void tst_Parser::stringCompare_data()
@@ -858,9 +878,21 @@ void compareOneString(const QByteArray &data, const QString &string, bool expect
     QVERIFY2(!err, QByteArray::number(line) + ": Got error \"" + cbor_error_string(err) + "\"");
 
     bool result;
-    err = cbor_value_text_string_equals(&value, string.toUtf8().constData(), &result);
+    QByteArray bastring = string.toUtf8();
+    err = cbor_value_text_string_equals(&value, bastring.constData(), &result);
     QVERIFY2(!err, QByteArray::number(line) + ": Got error \"" + cbor_error_string(err) + "\"");
     QCOMPARE(result, expected);
+
+    if (expected) {
+        size_t len;
+        cbor_value_skip_tag(&value);
+        if (cbor_value_is_length_known(&value)) {
+            QCOMPARE(cbor_value_get_string_length(&value, &len), CborNoError);
+            QCOMPARE(int(len), bastring.size());
+        }
+        QCOMPARE(cbor_value_calculate_string_length(&value, &len), CborNoError);
+        QCOMPARE(int(len), bastring.size());
+    }
 
     compareFailed = false;
 }
