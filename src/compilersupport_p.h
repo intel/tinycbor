@@ -32,7 +32,6 @@
 #endif
 #include <assert.h>
 #include <float.h>
-#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -208,22 +207,6 @@ static inline unsigned short encode_half(double val)
         return 0;
     }
     return sign | ((exp + 15) << 10) | mant;
-#endif
-}
-
-// this function was copied & adapted from RFC 7049 Appendix D
-static inline double decode_half(unsigned short half)
-{
-#ifdef __F16C__
-    return _cvtsh_ss(half);
-#else
-    int exp = (half >> 10) & 0x1f;
-    int mant = half & 0x3ff;
-    double val;
-    if (exp == 0) val = ldexp(mant, -24);
-    else if (exp != 31) val = ldexp(mant + 1024, exp - 25);
-    else val = mant == 0 ? INFINITY : NAN;
-    return half & 0x8000 ? -val : val;
 #endif
 }
 
