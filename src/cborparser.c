@@ -1275,7 +1275,7 @@ error:
  */
 CborError cbor_value_get_half_float(const CborValue *value, void *result)
 {
-    assert(value->type == CborHalfFloatType);
+    assert(cbor_value_is_half_float(value));
 
     /* size has been computed already */
     uint16_t v = get16(value->ptr + 1);

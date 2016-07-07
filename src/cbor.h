@@ -436,19 +436,26 @@ CBOR_INLINE_API CborError cbor_value_get_map_length(const CborValue *value, size
 CBOR_API CborError cbor_value_map_find_value(const CborValue *map, const char *string, CborValue *element);
 
 /* Floating point */
+CBOR_INLINE_API bool cbor_value_is_half_float(const CborValue *value)
+{ return value->type == CborHalfFloatType; }
 CBOR_API CborError cbor_value_get_half_float(const CborValue *value, void *result);
+
+CBOR_INLINE_API bool cbor_value_is_float(const CborValue *value)
+{ return value->type == CborFloatType; }
 CBOR_INLINE_API CborError cbor_value_get_float(const CborValue *value, float *result)
 {
-    assert(value->type == CborFloatType);
+    assert(cbor_value_is_float(value));
     assert(value->flags & CborIteratorFlag_IntegerValueTooLarge);
     uint32_t data = (uint32_t)_cbor_value_decode_int64_internal(value);
     memcpy(result, &data, sizeof(*result));
     return CborNoError;
 }
 
+CBOR_INLINE_API bool cbor_value_is_double(const CborValue *value)
+{ return value->type == CborDoubleType; }
 CBOR_INLINE_API CborError cbor_value_get_double(const CborValue *value, double *result)
 {
-    assert(value->type == CborDoubleType);
+    assert(cbor_value_is_double(value));
     assert(value->flags & CborIteratorFlag_IntegerValueTooLarge);
     uint64_t data = _cbor_value_decode_int64_internal(value);
     memcpy(result, &data, sizeof(*result));
