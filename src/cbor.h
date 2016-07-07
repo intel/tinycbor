@@ -266,9 +266,9 @@ CBOR_INLINE_API CborType cbor_value_get_type(const CborValue *value)
 { return (CborType)value->type; }
 
 /* Null & undefined type */
-CBOR_INLINE_API bool cbor_type_is_null(const CborValue *value)
+CBOR_INLINE_API bool cbor_value_is_null(const CborValue *value)
 { return value->type == CborNullType; }
-CBOR_INLINE_API bool cbor_type_is_undefined(const CborValue *value)
+CBOR_INLINE_API bool cbor_value_is_undefined(const CborValue *value)
 { return value->type == CborUndefinedType; }
 
 /* Booleans */
