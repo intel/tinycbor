@@ -188,7 +188,7 @@ void compareOne_real(const QByteArray &data, const QString &expected, int line, 
     QCOMPARE(decoded, expected);
 
     // check that we consumed everything
-    QCOMPARE((void*)first.ptr, (void*)data.constEnd());
+    QCOMPARE((void*)cbor_value_get_next_byte(&first), (void*)data.constEnd());
 
     compareFailed = false;
 }
@@ -1177,7 +1177,7 @@ void tst_Parser::validation()
 
     err = parseOne(&first, &decoded);
     QCOMPARE(int(err), int(expectedError));
-    QCOMPARE(int(first.ptr - reinterpret_cast<const quint8 *>(data.constBegin())), offset);
+    QCOMPARE(int(cbor_value_get_next_byte(&first) - reinterpret_cast<const quint8 *>(data.constBegin())), offset);
 }
 
 void tst_Parser::resumeParsing_data()

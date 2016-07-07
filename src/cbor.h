@@ -244,6 +244,8 @@ CBOR_API CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flag
 
 CBOR_INLINE_API bool cbor_value_at_end(const CborValue *it)
 { return it->remaining == 0; }
+CBOR_INLINE_API const uint8_t *cbor_value_get_next_byte(const CborValue *it)
+{ return it->ptr; }
 CBOR_API CborError cbor_value_advance_fixed(CborValue *it);
 CBOR_API CborError cbor_value_advance(CborValue *it);
 CBOR_INLINE_API bool cbor_value_is_container(const CborValue *it)

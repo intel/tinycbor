@@ -333,11 +333,33 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborPa
  * \fn bool cbor_value_at_end(const CborValue *it)
  *
  * Returns true if \a it has reached the end of the iteration, usually when
- * advancing after the last item in an array or map. In the case of the
- * outermost CborValue object, this function returns true after decoding a
- * single element.
+ * advancing after the last item in an array or map.
  *
- * \sa cbor_value_advance(), cbor_value_is_valid()
+ * In the case of the outermost CborValue object, this function returns true
+ * after decoding a single element. A pointer to the first byte of the
+ * remaining data (if any) can be obtained with cbor_value_get_next_byte().
+ *
+ * \sa cbor_value_advance(), cbor_value_is_valid(), cbor_value_get_next_byte()
+ */
+
+/**
+ * \fn const uint8_t *cbor_value_get_next_byte(const CborValue *it)
+ *
+ * Returns a pointer to the next byte that would be decoded if this CborValue
+ * object were advanced.
+ *
+ * This function is useful if cbor_value_at_end() returns true for the
+ * outermost CborValue: the pointer returned is the first byte of the data
+ * remaining in the buffer, if any. Code can decide whether to begin decoding a
+ * new CBOR data stream from this point, or parse some other data appended to
+ * the same buffer.
+ *
+ * This function may be used even after a parsing error. If that occurred,
+ * then this function returns a pointer to where the parsing error occurred.
+ * Note that the error recovery is not precise and the pointer may not indicate
+ * the exact byte containing bad data.
+ *
+ * \sa cbor_value_at_end()
  */
 
 /**
