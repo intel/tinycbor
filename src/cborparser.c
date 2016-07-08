@@ -723,6 +723,91 @@ CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
  */
 
 /**
+ * Retrieves the CBOR integer value that \a value points to and stores it in \a
+ * result. If the iterator \a value does not point to an integer value, the
+ * behavior is undefined, so checking with \ref cbor_value_get_type or with
+ * \ref cbor_value_is_integer is recommended.
+ *
+ * Unlike cbor_value_get_int64(), this function performs a check to see if the
+ * stored integer fits in \a result without data loss. If the number is outside
+ * the valid range for the data type, this function returns the recoverable
+ * error CborErrorDataTooLarge. In that case, use either
+ * cbor_value_get_uint64() (if the number is positive) or
+ * cbor_value_get_raw_integer().
+ *
+ * \sa cbor_value_get_type(), cbor_value_is_valid(), cbor_value_is_integer(), cbor_value_get_int64()
+ */
+CborError cbor_value_get_int64_checked(const CborValue *value, int64_t *result)
+{
+    assert(cbor_value_is_integer(value));
+    uint64_t v = _cbor_value_extract_int64_helper(value);
+
+    /* Check before converting, as the standard says (C11 6.3.1.3 paragraph 3):
+     * "[if] the new type is signed and the value cannot be represented in it; either the
+     *  result is implementation-defined or an implementation-defined signal is raised."
+     *
+     * The range for int64_t is -2^63 to 2^63-1 (int64_t is required to be
+     * two's complement, C11 7.20.1.1 paragraph 3), which in CBOR is
+     * represented the same way, differing only on the "sign bit" (the major
+     * type).
+     */
+
+    if (unlikely(v > (uint64_t)INT64_MAX))
+        return CborErrorDataTooLarge;
+
+    *result = v;
+    if (value->flags & CborIteratorFlag_NegativeInteger)
+        *result = -*result - 1;
+    return CborNoError;
+}
+
+/**
+ * Retrieves the CBOR integer value that \a value points to and stores it in \a
+ * result. If the iterator \a value does not point to an integer value, the
+ * behavior is undefined, so checking with \ref cbor_value_get_type or with
+ * \ref cbor_value_is_integer is recommended.
+ *
+ * Unlike cbor_value_get_int(), this function performs a check to see if the
+ * stored integer fits in \a result without data loss. If the number is outside
+ * the valid range for the data type, this function returns the recoverable
+ * error CborErrorDataTooLarge. In that case, use one of the other integer
+ * functions to obtain the value.
+ *
+ * \sa cbor_value_get_type(), cbor_value_is_valid(), cbor_value_is_integer(), cbor_value_get_int64(),
+ *     cbor_value_get_uint64(), cbor_value_get_int64_checked(), cbor_value_get_raw_integer()
+ */
+CborError cbor_value_get_int_checked(const CborValue *value, int *result)
+{
+    assert(cbor_value_is_integer(value));
+    uint64_t v = _cbor_value_extract_int64_helper(value);
+
+    /* Check before converting, as the standard says (C11 6.3.1.3 paragraph 3):
+     * "[if] the new type is signed and the value cannot be represented in it; either the
+     *  result is implementation-defined or an implementation-defined signal is raised."
+     *
+     * But we can convert from signed to unsigned without fault (paragraph 2).
+     *
+     * The range for int is implementation-defined and int is not guaranteed use
+     * two's complement representation (int32_t is).
+     */
+
+    if (value->flags & CborIteratorFlag_NegativeInteger) {
+        if (unlikely(v > (unsigned) -(INT_MIN + 1)))
+            return CborErrorDataTooLarge;
+
+        *result = v;
+        *result = -*result - 1;
+    } else {
+        if (unlikely(v > (uint64_t)INT_MAX))
+            return CborErrorDataTooLarge;
+
+        *result = v;
+    }
+    return CborNoError;
+
+}
+
+/**
  * \fn bool cbor_value_is_length_known(const CborValue *value)
  *
  * Returns true if the length of this type is known without calculation. That

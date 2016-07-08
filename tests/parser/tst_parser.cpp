@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2016 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -77,6 +77,8 @@ private slots:
     void mapFind();
 
     // validation & errors
+    void checkedIntegers_data();
+    void checkedIntegers();
     void validation_data();
     void validation();
     void resumeParsing_data();
@@ -1002,6 +1004,79 @@ void tst_Parser::mapFind()
         QVERIFY(equals);
     } else {
         QCOMPARE(int(element.type), int(CborInvalidType));
+    }
+}
+
+void tst_Parser::checkedIntegers_data()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<QVariant>("result");       // QVariant so we can note numbers out of int64_t range
+
+    QTest::newRow("0") << raw("\x00") << QVariant(Q_INT64_C(0));
+    QTest::newRow("1") << raw("\x01") << QVariant(Q_INT64_C(1));
+    QTest::newRow("10") << raw("\x0a") << QVariant(Q_INT64_C(10));
+    QTest::newRow("23") << raw("\x17") << QVariant(Q_INT64_C(23));
+    QTest::newRow("24") << raw("\x18\x18") << QVariant(Q_INT64_C(24));
+    QTest::newRow("UINT8_MAX") << raw("\x18\xff") << QVariant(Q_INT64_C(255));
+    QTest::newRow("UINT8_MAX+1") << raw("\x19\x01\x00") << QVariant(Q_INT64_C(256));
+    QTest::newRow("UINT16_MAX") << raw("\x19\xff\xff") << QVariant(Q_INT64_C(65535));
+    QTest::newRow("UINT16_MAX+1") << raw("\x1a\0\1\x00\x00") << QVariant(Q_INT64_C(65536));
+    QTest::newRow("INT32_MAX") << raw("\x1a\x7f\xff\xff\xff") << QVariant(Q_INT64_C(2147483647));
+    QTest::newRow("INT32_MAX+1") << raw("\x1a\x80\x00\x00\x00") << QVariant(Q_INT64_C(2147483648));
+    QTest::newRow("UINT32_MAX") << raw("\x1a\xff\xff\xff\xff") << QVariant(Q_INT64_C(4294967295));
+    QTest::newRow("UINT32_MAX+1") << raw("\x1b\0\0\0\1\0\0\0\0") << QVariant(Q_INT64_C(4294967296));
+    QTest::newRow("UINT64_MAX") << raw("\x1b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
+                                << QVariant();  // out of range
+
+    // negative integers
+    QTest::newRow("-1") << raw("\x20") << QVariant(Q_INT64_C(-1));
+    QTest::newRow("-2") << raw("\x21") << QVariant(Q_INT64_C(-2));
+    QTest::newRow("-24") << raw("\x37") << QVariant(Q_INT64_C(-24));
+    QTest::newRow("-25") << raw("\x38\x18") << QVariant(Q_INT64_C(-25));
+    QTest::newRow("-UINT8_MAX") << raw("\x38\xff") << QVariant(Q_INT64_C(-256));
+    QTest::newRow("-UINT8_MAX-1") << raw("\x39\x01\x00") << QVariant(Q_INT64_C(-257));
+    QTest::newRow("-UINT16_MAX") << raw("\x39\xff\xff") << QVariant(Q_INT64_C(-65536));
+    QTest::newRow("-UINT16_MAX-1") << raw("\x3a\0\1\x00\x00") << QVariant(Q_INT64_C(-65537));
+    QTest::newRow("INT32_MIN") << raw("\x3a\x7f\xff\xff\xff") << QVariant(Q_INT64_C(-2147483648));
+    QTest::newRow("INT32_MIN-1") << raw("\x3a\x80\x00\x00\x00") << QVariant(Q_INT64_C(-2147483649));
+    QTest::newRow("-UINT32_MAX") << raw("\x3a\xff\xff\xff\xff") << QVariant(Q_INT64_C(-4294967296));
+    QTest::newRow("-UINT32_MAX-1") << raw("\x3b\0\0\0\1\0\0\0\0") << QVariant(Q_INT64_C(-4294967297));
+    QTest::newRow("INT64_MIN+1") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xfe")
+                               << QVariant(std::numeric_limits<qint64>::min() + 1);
+    QTest::newRow("INT64_MIN") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xff")
+                               << QVariant(std::numeric_limits<qint64>::min());
+    QTest::newRow("INT64_MIN-1") << raw("\x3b\x80\0\0\0""\0\0\0\0") << QVariant();  // out of range
+    QTest::newRow("-UINT64_MAX") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xfe")
+                                   << QVariant();   // out of range
+    QTest::newRow("-UINT64_MAX+1") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
+                                   << QVariant();   // out of range
+}
+
+void tst_Parser::checkedIntegers()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QVariant, result);
+    int64_t expected = result.toLongLong();
+
+    CborParser parser;
+    CborValue value;
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &value);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    int64_t v;
+    err = cbor_value_get_int64_checked(&value, &v);
+    if (result.isNull()) {
+        QCOMPARE(int(err), int(CborErrorDataTooLarge));
+    } else {
+        QCOMPARE(v, expected);
+    }
+
+    int v2;
+    err = cbor_value_get_int_checked(&value, &v2);
+    if (result.isNull() || expected < std::numeric_limits<int>::min() || expected > std::numeric_limits<int>::max()) {
+        QCOMPARE(int(err), int(CborErrorDataTooLarge));
+    } else {
+        QCOMPARE(int64_t(v2), expected);
     }
 }
 
