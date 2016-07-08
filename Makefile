@@ -26,6 +26,7 @@ TINYCBOR_SOURCES = \
 	src/cborencoder.c \
 	src/cborencoder_close_container_checked.c \
 	src/cborparser.c \
+	src/cborparser_dup_string.c \
 	src/cborpretty.c \
 	src/cbortojson.c \
 	$(if $(open_memstream-pass),,src/open_memstream.c) \

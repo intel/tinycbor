@@ -24,12 +24,13 @@
 
 #include "../../src/cborencoder.c"
 #include "../../src/cborparser.c"
+#include "../../src/cborparser_dup_string.c"
 #include "../../src/cborerrorstrings.c"
 
 #include <QtTest>
 
 // This is a compilation-only test.
-// All it does is verify that the three source files above
+// All it does is verify that the four source files above
 // compile as C++ without errors.
 class tst_Cpp : public QObject
 {
