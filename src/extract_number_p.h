@@ -23,6 +23,7 @@
 ****************************************************************************/
 
 #define _BSD_SOURCE 1
+#define _DEFAULT_SOURCE 1
 #include "cbor.h"
 #include "cborconstants_p.h"
 #include "compilersupport_p.h"

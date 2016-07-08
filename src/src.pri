@@ -3,6 +3,7 @@ SOURCES += \
     $$PWD/cborencoder_close_container_checked.c \
     $$PWD/cborerrorstrings.c \
     $$PWD/cborparser.c \
+    $$PWD/cborparser_dup_string.c \
     $$PWD/cborpretty.c \
     $$PWD/cbortojson.c \
 

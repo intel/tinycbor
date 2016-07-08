@@ -39,6 +39,7 @@ Makefile*
 *.gcno
 *.flc
 .*.swp
+tinycbor.pc
 
 # Visual Studio generated files
 *.ib_pdb_index

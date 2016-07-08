@@ -23,6 +23,7 @@
 ****************************************************************************/
 
 #define _BSD_SOURCE 1
+#define _DEFAULT_SOURCE 1
 #include "cbor.h"
 #include "compilersupport_p.h"
 #include "math_support_p.h"
