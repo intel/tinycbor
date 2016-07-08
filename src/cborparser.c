@@ -29,7 +29,6 @@
 #include "extract_number_p.h"
 
 #include <assert.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "assert_p.h"       /* Always include last */
@@ -424,71 +423,6 @@ CborError cbor_value_calculate_string_length(const CborValue *value, size_t *len
 {
     *len = SIZE_MAX;
     return _cbor_value_copy_string(value, NULL, len, NULL);
-}
-
-/**
- * \fn CborError cbor_value_dup_text_string(const CborValue *value, char **buffer, size_t *buflen, CborValue *next)
- *
- * Allocates memory for the string pointed by \a value and copies it into this
- * buffer. The pointer to the buffer is stored in \a buffer and the number of
- * bytes copied is stored in \a len (those variables must not be NULL).
- *
- * If \c malloc returns a NULL pointer, this function will return error
- * condition \ref CborErrorOutOfMemory.
- *
- * On success, \c{*buffer} will contain a valid pointer that must be freed by
- * calling \c{free()}. This is the case even for zero-length strings.
- *
- * The \a next pointer, if not null, will be updated to point to the next item
- * after this string. If \a value points to the last item, then \a next will be
- * invalid.
- *
- * \note This function does not perform UTF-8 validation on the incoming text
- * string.
- *
- * \sa cbor_value_copy_text_string(), cbor_value_dup_byte_string()
- */
-
-/**
- * \fn CborError cbor_value_dup_byte_string(const CborValue *value, uint8_t **buffer, size_t *buflen, CborValue *next)
- *
- * Allocates memory for the string pointed by \a value and copies it into this
- * buffer. The pointer to the buffer is stored in \a buffer and the number of
- * bytes copied is stored in \a len (those variables must not be NULL).
- *
- * If \c malloc returns a NULL pointer, this function will return error
- * condition \ref CborErrorOutOfMemory.
- *
- * On success, \c{*buffer} will contain a valid pointer that must be freed by
- * calling \c{free()}. This is the case even for zero-length strings.
- *
- * The \a next pointer, if not null, will be updated to point to the next item
- * after this string. If \a value points to the last item, then \a next will be
- * invalid.
- *
- * \sa cbor_value_copy_byte_string(), cbor_value_dup_text_string()
- */
-CborError _cbor_value_dup_string(const CborValue *value, void **buffer, size_t *buflen, CborValue *next)
-{
-    assert(buffer);
-    assert(buflen);
-    *buflen = SIZE_MAX;
-    CborError err = _cbor_value_copy_string(value, NULL, buflen, NULL);
-    if (err)
-        return err;
-
-    ++*buflen;
-    *buffer = malloc(*buflen);
-    if (!*buffer) {
-        /* out of memory */
-        return CborErrorOutOfMemory;
-    }
-    err = _cbor_value_copy_string(value, *buffer, buflen, next);
-    if (err) {
-        free(*buffer);
-        return err;
-    }
-    return CborNoError;
 }
 
 /* We return uintptr_t so that we can pass memcpy directly as the iteration
