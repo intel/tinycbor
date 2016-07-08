@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2016 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,60 @@ private slots:
 };
 
 #include "tst_encoder.moc"
+
+static float myNaNf()
+{
+    uint32_t v = 0x7fc00000;
+    float f;
+    memcpy(&f, &v, sizeof(f));
+    Q_ASSERT(qIsNaN(f));
+    return f;
+}
+
+static float myInff()
+{
+    uint32_t v = 0x7f800000;
+    float f;
+    memcpy(&f, &v, sizeof(f));
+    Q_ASSERT(qIsInf(f));
+    return f;
+}
+
+static float myNInff()
+{
+    uint32_t v = 0xff800000;
+    float f;
+    memcpy(&f, &v, sizeof(f));
+    Q_ASSERT(qIsInf(f));
+    return f;
+}
+
+static double myNaN()
+{
+    uint64_t v = UINT64_C(0x7ff8000000000000);
+    double f;
+    memcpy(&f, &v, sizeof(f));
+    Q_ASSERT(qIsNaN(f));
+    return f;
+}
+
+static double myInf()
+{
+    uint64_t v = UINT64_C(0x7ff0000000000000);
+    double f;
+    memcpy(&f, &v, sizeof(f));
+    Q_ASSERT(qIsInf(f));
+    return f;
+}
+
+static double myNInf()
+{
+    uint64_t v = UINT64_C(0xfff0000000000000);
+    double f;
+    memcpy(&f, &v, sizeof(f));
+    Q_ASSERT(qIsInf(f));
+    return f;
+}
 
 template <size_t N> QByteArray raw(const char (&data)[N])
 {
@@ -281,23 +335,12 @@ void addFixedData()
     QTest::newRow("-16777215.f") << raw("\xfa\xcb\x7f\xff\xff") << QVariant(-16777215.f);
     QTest::newRow("-16777215.") << raw("\xfb\xc1\x6f\xff\xff\xe0\0\0\0") << QVariant::fromValue(-16777215.);
 
-#ifdef Q_CC_MSVC
-    // MSVC NaNs have the sign bit unset
-    QTest::newRow("qnan_f") << raw("\xfa\x7f\xc0\0\0") << QVariant::fromValue<float>(qQNaN());
-    QTest::newRow("qnan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << QVariant(qQNaN());
-    QTest::newRow("snan_f") << raw("\xfa\x7f\xc0\0\0") << QVariant::fromValue<float>(qSNaN());
-    QTest::newRow("snan") << raw("\xfb\x7f\xf0\0\0\0\0\0\1") << QVariant(qSNaN());
-#else
-    // GCC NaNs have the sign bit set
-    QTest::newRow("qnan_f") << raw("\xfa\xff\xc0\0\0") << QVariant::fromValue<float>(qQNaN());
-    QTest::newRow("qnan") << raw("\xfb\xff\xf8\0\0\0\0\0\0") << QVariant(qQNaN());
-    QTest::newRow("snan_f") << raw("\xfa\x7f\xc0\0\0") << QVariant::fromValue<float>(qSNaN());
-    QTest::newRow("snan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << QVariant(qSNaN());
-#endif
-    QTest::newRow("-inf_f") << raw("\xfa\xff\x80\0\0") << QVariant::fromValue<float>(-qInf());
-    QTest::newRow("-inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << QVariant(-qInf());
-    QTest::newRow("+inf_f") << raw("\xfa\x7f\x80\0\0") << QVariant::fromValue<float>(qInf());
-    QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << QVariant(qInf());
+    QTest::newRow("nan_f") << raw("\xfa\x7f\xc0\0\0") << QVariant::fromValue<float>(myNaNf());
+    QTest::newRow("nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << QVariant(myNaN());
+    QTest::newRow("-inf_f") << raw("\xfa\xff\x80\0\0") << QVariant::fromValue<float>(myNInff());
+    QTest::newRow("-inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << QVariant(myNInf());
+    QTest::newRow("+inf_f") << raw("\xfa\x7f\x80\0\0") << QVariant::fromValue<float>(myInff());
+    QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << QVariant(myInf());
 }
 
 void addStringsData()
