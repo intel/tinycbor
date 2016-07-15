@@ -1,0 +1,50 @@
+[OPTIONS]
+Compatibility=1.1
+Full-text search=Yes
+Contents file=index.hhc
+Default Window=main
+Default topic=index.html
+Index file=index.hhk
+Language=0x409 English (United States)
+Binary TOC=YES
+Create CHI file=YES
+Title=TinyCBOR 0.3 API
+
+[WINDOWS]
+main="TinyCBOR 0.3 API","index.hhc","index.hhk","index.html","index.html",,,,,0x23520,,0x70387e,,,,,,,,0
+
+[FILES]
+a00005_source.html
+a00009_source.html
+a00005.html
+a00009.html
+a00015.html
+a00016.html
+a00017.html
+a00018.html
+a00019.html
+a00002.html
+a00003.html
+index.html
+modules.html
+annotated.html
+classes.html
+files.html
+globals.html
+globals_func.html
+globals_vars.html
+globals_type.html
+globals_enum.html
+tab_a.png
+tab_b.png
+tab_h.png
+tab_s.png
+nav_h.png
+nav_f.png
+bc_s.png
+doxygen.png
+closed.png
+open.png
+bdwn.png
+sync_on.png
+sync_off.png
