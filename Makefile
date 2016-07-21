@@ -93,7 +93,7 @@ silentcheck: | lib/libtinycbor.a
 	TESTARGS=-silent $(MAKE) -f $(MAKEFILE) -s check
 configure: .config
 .config: Makefile.configure
-	$(MAKE) -f $(SRCDIR)Makefile.configure OUT='>&10' configure 10> $@
+	$(MAKE) -f $(SRCDIR)Makefile.configure OUT='>&9' configure 9> $@
 
 lib bin:
 	$(MKDIR) $@
