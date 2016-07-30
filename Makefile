@@ -123,15 +123,17 @@ $(PACKAGE).tar.gz: | .git
 $(PACKAGE).zip: | .git
 	GIT_DIR=$(SRCDIR).git $(GIT_ARCHIVE) --format=zip -o "$(PACKAGE).zip" HEAD
 
-$(DESTDIR)%/:
-	$(INSTALL) -d $@
-$(DESTDIR)$(libdir)/%: lib/% | $(DESTDIR)$(libdir)/
+$(DESTDIR)$(libdir)/%: lib/%
+	$(INSTALL) -d $(@D)
 	$(INSTALL_DATA) $< $@
-$(DESTDIR)$(bindir)/%: bin/% | $(DESTDIR)$(bindir)/
+$(DESTDIR)$(bindir)/%: bin/%
+	$(INSTALL) -d $(@D)
 	$(INSTALL_PROGRAM) $< $@
-$(DESTDIR)$(pkgconfigdir)/%: % | $(DESTDIR)$(pkgconfigdir)/
+$(DESTDIR)$(pkgconfigdir)/%: %
+	$(INSTALL) -d $(@D)
 	$(INSTALL_DATA) $< $@
-$(DESTDIR)$(includedir)/tinycbor/%: src/% | $(DESTDIR)$(includedir)/tinycbor/
+$(DESTDIR)$(includedir)/tinycbor/%: src/%
+	$(INSTALL) -d $(@D)
 	$(INSTALL_DATA) $< $@
 
 install-strip:
