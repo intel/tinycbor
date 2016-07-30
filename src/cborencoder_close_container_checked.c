@@ -55,14 +55,14 @@
  */
 CborError cbor_encoder_close_container_checked(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
-    const uint8_t *ptr = encoder->ptr;
+    const uint8_t *ptr = encoder->data.ptr;
     CborError err = cbor_encoder_close_container(encoder, containerEncoder);
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength || encoder->end == NULL)
         return err;
 
     /* check what the original length was */
     uint64_t actually_added;
-    err = extract_number(&ptr, encoder->ptr, &actually_added);
+    err = extract_number(&ptr, encoder->data.ptr, &actually_added);
     if (err)
         return err;
 
