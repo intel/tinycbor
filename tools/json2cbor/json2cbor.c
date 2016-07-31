@@ -332,7 +332,7 @@ encode_double:
                 return err;
 
             *encoder = container;   // restore state
-            encoder->ptr = newbuffer + (container.ptr - buffer);
+            encoder->data.ptr = newbuffer + (container.data.ptr - buffer);
             encoder->end = newbuffer + buffersize;
             buffer = newbuffer;
             goto encode_double;
@@ -483,7 +483,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    fwrite(buffer, 1, encoder.ptr - buffer, stdout);
+    fwrite(buffer, 1, encoder.data.ptr - buffer, stdout);
     free(buffer);
     return EXIT_SUCCESS;
 }
