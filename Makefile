@@ -160,10 +160,10 @@ docs:
 
 dist: $(PACKAGE).tar.gz $(PACKAGE).zip
 distcheck: .git
-	-$(RM) -r $$TMPDIR/tinycbor-distcheck
-	GIT_DIR=$(SRCDIR).git git archive --prefix=tinycbor-distcheck/ --format=tar HEAD | tar -xf - -C $$TMPDIR
-	cd $$TMPDIR/tinycbor-distcheck && $(MAKE) silentcheck
-	$(RM) -r $$TMPDIR/tinycbor-distcheck
+	-$(RM) -r $${TMPDIR-/tmp}/tinycbor-distcheck
+	GIT_DIR=$(SRCDIR).git git archive --prefix=tinycbor-distcheck/ --format=tar HEAD | tar -xf - -C $${TMPDIR-/tmp}
+	cd $${TMPDIR-/tmp}/tinycbor-distcheck && $(MAKE) silentcheck
+	$(RM) -r $${TMPDIR-/tmp}/tinycbor-distcheck
 
 release: .git
 	$(MAKE) -f $(MAKEFILE) distcheck
