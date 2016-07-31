@@ -197,7 +197,7 @@
  */
 void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags)
 {
-    encoder->data.ptr = buffer;
+    encoder->ptr = buffer;
     encoder->end = buffer + size;
     encoder->added = 0;
     encoder->flags = flags;
@@ -235,7 +235,7 @@ static inline void put64(void *where, uint64_t v)
 static inline bool would_overflow(CborEncoder *encoder, size_t len)
 {
     ptrdiff_t remaining = (ptrdiff_t)encoder->end;
-    remaining -= remaining ? (ptrdiff_t)encoder->data.ptr : encoder->data.bytes_needed;
+    remaining -= remaining ? (ptrdiff_t)encoder->ptr : encoder->bytes_needed;
     remaining -= (ptrdiff_t)len;
     return unlikely(remaining < 0);
 }
@@ -243,26 +243,26 @@ static inline bool would_overflow(CborEncoder *encoder, size_t len)
 static inline void advance_ptr(CborEncoder *encoder, size_t n)
 {
     if (encoder->end)
-        encoder->data.ptr += n;
+        encoder->ptr += n;
     else
-        encoder->data.bytes_needed += n;
+        encoder->bytes_needed += n;
 }
 
 static inline CborError append_to_buffer(CborEncoder *encoder, const void *data, size_t len)
 {
     if (would_overflow(encoder, len)) {
         if (encoder->end != NULL) {
-            len -= encoder->end - encoder->data.ptr;
+            len -= encoder->end - encoder->ptr;
             encoder->end = NULL;
-            encoder->data.bytes_needed = 0;
+            encoder->bytes_needed = 0;
         }
 
         advance_ptr(encoder, len);
         return CborErrorOutOfMemory;
     }
 
-    memcpy(encoder->data.ptr, data, len);
-    encoder->data.ptr += len;
+    memcpy(encoder->ptr, data, len);
+    encoder->ptr += len;
     return CborNoError;
 }
 
@@ -447,7 +447,7 @@ __attribute__((noinline))
 static CborError create_container(CborEncoder *encoder, CborEncoder *container, size_t length, uint8_t shiftedMajorType)
 {
     CborError err;
-    container->data.ptr = encoder->data.ptr;
+    container->ptr = encoder->ptr;
     container->end = encoder->end;
     ++encoder->added;
     container->added = 0;
@@ -527,9 +527,9 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
 CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
     if (encoder->end)
-        encoder->data.ptr = containerEncoder->data.ptr;
+        encoder->ptr = containerEncoder->ptr;
     else
-        encoder->data.bytes_needed = containerEncoder->data.bytes_needed;
+        encoder->bytes_needed = containerEncoder->bytes_needed;
     encoder->end = containerEncoder->end;
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
         return append_byte_to_buffer(encoder, BreakByte);
