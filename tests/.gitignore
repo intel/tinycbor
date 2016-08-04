@@ -2,3 +2,8 @@ Makefile
 debug
 release
 target_wrapper.*
+moc_predefs.h
+cpp/cpp
+encoder/encoder
+parser/parser
+tojson/tojson
