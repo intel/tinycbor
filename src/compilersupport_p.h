@@ -64,10 +64,11 @@
 #define STRINGIFY(x)            STRINGIFY2(x)
 #define STRINGIFY2(x)           #x
 
-#ifndef UINT32_MAX
-/* C99 requires it in stdint.h, but some systems lack it */
-#  define UINT32_MAX    (0xffffffffU)
+#if !defined(UINT32_MAX) || !defined(INT64_MAX)
+/* C89? We can define UINT32_MAX portably, but not INT64_MAX */
+#  error "Your system has stdint.h but that doesn't define UINT32_MAX or INT64_MAX"
 #endif
+
 #ifndef DBL_DECIMAL_DIG
 /* DBL_DECIMAL_DIG is C11 */
 #  define DBL_DECIMAL_DIG       17
