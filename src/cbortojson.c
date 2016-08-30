@@ -402,6 +402,11 @@ static CborError stringify_map_key(char **key, CborValue *it, int flags, CborTyp
 {
     (void)flags;    /* unused */
     (void)type;     /* unused */
+#ifdef WITHOUT_OPEN_MEMSTREAM
+    (void)key;      /* unused */
+    (void)it;       /* unused */
+    return CborErrorJsonNotImplemented;
+#else
     size_t size;
 
     FILE *memstream = open_memstream(key, &size);
@@ -412,6 +417,7 @@ static CborError stringify_map_key(char **key, CborValue *it, int flags, CborTyp
     if (unlikely(fclose(memstream) < 0 || *key == NULL))
         return CborErrorInternalError;
     return err;
+#endif
 }
 
 static CborError array_to_json(FILE *out, CborValue *it, int flags, ConversionStatus *status)
