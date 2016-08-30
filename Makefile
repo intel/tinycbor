@@ -29,7 +29,6 @@ TINYCBOR_SOURCES = \
 	src/cborparser_dup_string.c \
 	src/cborpretty.c \
 	src/cbortojson.c \
-	$(if $(open_memstream-pass),,src/open_memstream.c) \
 #
 CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 
@@ -71,6 +70,17 @@ ifeq ($(origin QMAKE),file)
 endif
 
 -include .config
+
+# if open_memstream is unavailable on the system, try to implement our own
+# version using funopen or fopencookie
+ifeq ($(open_memstream-pass),)
+  ifeq ($(funopen-pass)$(fopencookie-pass),)
+    CFLAGS += -DWITHOUT_OPEN_MEMSTREAM
+    $(warning warning: funopen and fopencookie unavailable, open_memstream can not be implemented and conversion to JSON will not work properly!)
+  else
+    TINYCBOR_SOURCES += src/open_memstream.c
+  endif
+endif
 
 # json2cbor depends on an external library (cJSON)
 ifneq ($(cjson-pass)$(system-cjson-pass),)
