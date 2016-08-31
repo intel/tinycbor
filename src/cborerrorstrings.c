@@ -155,6 +155,8 @@ const char *cbor_error_string(CborError error)
     case CborErrorJsonObjectKeyNotString:
         return _("conversion to JSON failed: key in object is not a string");
 
+    case CborErrorJsonNotImplemented:
+        return _("conversion to JSON failed: open_memstream unavailable");
 
     case CborErrorInternalError:
         return _("internal error");
