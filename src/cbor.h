@@ -361,7 +361,7 @@ CBOR_INLINE_API CborError cbor_value_get_string_length(const CborValue *value, s
     if (!cbor_value_is_length_known(value))
         return CborErrorUnknownLength;
     uint64_t v = _cbor_value_extract_int64_helper(value);
-    *length = v;
+    *length = (size_t)v;
     if (*length != v)
         return CborErrorDataTooLarge;
     return CborNoError;
@@ -416,7 +416,7 @@ CBOR_INLINE_API CborError cbor_value_get_array_length(const CborValue *value, si
     if (!cbor_value_is_length_known(value))
         return CborErrorUnknownLength;
     uint64_t v = _cbor_value_extract_int64_helper(value);
-    *length = v;
+    *length = (size_t)v;
     if (*length != v)
         return CborErrorDataTooLarge;
     return CborNoError;
@@ -428,7 +428,7 @@ CBOR_INLINE_API CborError cbor_value_get_map_length(const CborValue *value, size
     if (!cbor_value_is_length_known(value))
         return CborErrorUnknownLength;
     uint64_t v = _cbor_value_extract_int64_helper(value);
-    *length = v;
+    *length = (size_t)v;
     if (*length != v)
         return CborErrorDataTooLarge;
     return CborNoError;
