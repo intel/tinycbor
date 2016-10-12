@@ -210,7 +210,9 @@ static inline unsigned short encode_half(double val)
         /* underflow, make zero */
         return 0;
     }
-    return sign | ((exp + 15) << 10) | mant;
+
+    /* safe cast here as bit operations above guarantee not to overflow */
+    return (unsigned short)(sign | ((exp + 15) << 10) | mant);
 #endif
 }
 
