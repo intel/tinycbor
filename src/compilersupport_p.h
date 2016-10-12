@@ -210,7 +210,15 @@ static inline unsigned short encode_half(double val)
         /* underflow, make zero */
         return 0;
     }
+
+//
+// bugbug: working with tinycbor folks to address this properly. 
+// Issue https://github.com/01org/tinycbor/issues/47
+//
+#pragma warning(disable:4244)
     return sign | ((exp + 15) << 10) | mant;
+#pragma warning(default:4244)
+
 #endif
 }
 
