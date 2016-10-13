@@ -290,7 +290,7 @@ static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t u
     if (ui < Value8Bit) {
         *bufstart += shiftedMajorType;
     } else {
-		uint8_t more = 0;
+        uint8_t more = 0;
         if (ui > 0xffU)
             ++more;
         if (ui > 0xffffU)
