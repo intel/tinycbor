@@ -599,7 +599,7 @@ void tst_Encoder::shortBuffer()
     QFETCH(QByteArray, output);
     QByteArray buffer(output.length(), Qt::Uninitialized);
 
-    for (int len = 0; len < output.length() - 1; ++len) {
+    for (int len = 0; len < output.length(); ++len) {
         CborEncoder encoder;
         cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), len, 0);
         QCOMPARE(int(encodeVariant(&encoder, input)), int(CborErrorOutOfMemory));

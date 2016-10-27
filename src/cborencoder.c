@@ -466,10 +466,7 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
     } else {
         err = encode_number_no_update(container, length, shiftedMajorType);
     }
-    if (err && !isOomError(err))
-        return err;
-
-    return CborNoError;
+    return err;
 }
 
 /**
