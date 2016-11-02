@@ -61,7 +61,9 @@
 #  define inline    CBOR_INLINE
 #endif
 
+#ifndef STRINGIFY
 #define STRINGIFY(x)            STRINGIFY2(x)
+#endif
 #define STRINGIFY2(x)           #x
 
 #if !defined(UINT32_MAX) || !defined(INT64_MAX)
@@ -151,8 +153,12 @@
 #endif
 
 #ifdef __GNUC__
+#ifndef likely
 #  define likely(x)     __builtin_expect(!!(x), 1)
+#endif
+#ifndef unlikely
 #  define unlikely(x)   __builtin_expect(!!(x), 0)
+#endif
 #  define unreachable() __builtin_unreachable()
 #elif defined(_MSC_VER)
 #  define likely(x)     (x)
