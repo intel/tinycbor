@@ -179,9 +179,15 @@ distcheck: .git
 
 release: .git
 	$(MAKE) -f $(MAKEFILE) distcheck
+ifeq ($(VERSION),)
 	git -C $(SRCDIR). show HEAD:VERSION | \
 	  perl -l -n -e '@_ = split /\./; print "$$_[0]." . ($$_[1] + 1)' > $(SRCDIR)VERSION
-	git -C $(SRCDIR). commit -s -m "Update version number" VERSION
+else
+	echo "$(VERSION)" > VERSION
+endif
+	if test -n "`git diff VERSION`"; then \
+	  git -C $(SRCDIR). commit -s -m "Update version number" VERSION; \
+	fi
 	{ echo "TinyCBOR release `cat $(SRCDIR)VERSION`"; \
 	  echo; \
 	  echo '# Write something nice about this release here'; \
@@ -194,7 +200,6 @@ release: .git
 	} > $(SRCDIR).git/TAG_EDITMSG
 	@`git -C $(SRCDIR). var GIT_EDITOR` $(SRCDIR).git/TAG_EDITMSG
 	git -C $(SRCDIR). tag -a -F $(SRCDIR).git/TAG_EDITMSG $(GITTAGFLAGS) v`cat $(SRCDIR)VERSION`
-	$(MAKE) -f $(MAKEFILE) dist
 
 .PHONY: all check silentcheck configure install uninstall
 .PHONY: mostlyclean clean distclean
