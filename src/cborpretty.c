@@ -190,6 +190,7 @@ static int utf8EscapedDump(FILE *out, const char *buffer, size_t n)
 
         if (n < charsNeeded - 1)
             return CborErrorInvalidUtf8TextString;
+        n -= charsNeeded - 1;
 
         /* first continuation character */
         uint8_t b = (uint8_t)*buffer++;

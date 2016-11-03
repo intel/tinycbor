@@ -333,6 +333,13 @@ void addStringsData()
     QTest::newRow("textstring256") << raw("\x79\1\0") + QByteArray(256, '3')
                                    << '"' + QString(256, '3') + '"';
 
+    // some strings with UTF-8 content
+    // we had a bug in the pretty dumper - see issue #54
+    QTest::newRow("textstringutf8-2char") << raw("\x62\xc2\xa0") << "\"\\u00A0\"";
+    QTest::newRow("textstringutf8-2char2") << raw("\x64\xc2\xa0\xc2\xa9") << "\"\\u00A0\\u00A9\"";
+    QTest::newRow("textstringutf8-3char") << raw("\x63\xe2\x88\x80") << "\"\\u2200\"";
+    QTest::newRow("textstringutf8-4char") << raw("\x64\xf0\x90\x88\x83") << "\"\\uD800\\uDE03\"";
+
     // strings with overlong length
     QTest::newRow("emptybytestring*1") << raw("\x58\x00") << "h''";
     QTest::newRow("emptytextstring*1") << raw("\x78\x00") << "\"\"";
