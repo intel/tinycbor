@@ -177,29 +177,8 @@ distcheck: .git
 	cd $${TMPDIR-/tmp}/tinycbor-distcheck && $(MAKE) silentcheck
 	$(RM) -r $${TMPDIR-/tmp}/tinycbor-distcheck
 
-release: .git
-	$(MAKE) -f $(MAKEFILE) distcheck
-ifeq ($(VERSION),)
-	git -C $(SRCDIR). show HEAD:VERSION | \
-	  perl -l -n -e '@_ = split /\./; print "$$_[0]." . ($$_[1] + 1)' > $(SRCDIR)VERSION
-else
-	echo "$(VERSION)" > VERSION
-endif
-	if test -n "`git diff VERSION`"; then \
-	  git -C $(SRCDIR). commit -s -m "Update version number" VERSION; \
-	fi
-	{ echo "TinyCBOR release `cat $(SRCDIR)VERSION`"; \
-	  echo; \
-	  echo '# Write something nice about this release here'; \
-	  tmpl=`git -C $(SRCDIR). config --get commit.template` && \
-		cat "$$tmpl"; \
-	  echo '# Commit log:'; \
-	  git -C $(SRCDIR). shortlog -e --no-merges HEAD --not `git -C $(SRCDIR). tag` | sed 's,^,#   ,'; \
-	  echo '# Header diff:'; \
-	  git -C $(SRCDIR). diff HEAD --not `git -C $(SRCDIR). tag` -- 'src/*.h' ':!*_p.h' | sed 's,^,# ,'; \
-	} > $(SRCDIR).git/TAG_EDITMSG
-	@`git -C $(SRCDIR). var GIT_EDITOR` $(SRCDIR).git/TAG_EDITMSG
-	git -C $(SRCDIR). tag -a -F $(SRCDIR).git/TAG_EDITMSG $(GITTAGFLAGS) v`cat $(SRCDIR)VERSION`
+tag: distcheck
+	@cd $(SRCDIR). && perl maketag.pl
 
 .PHONY: all check silentcheck configure install uninstall
 .PHONY: mostlyclean clean distclean
