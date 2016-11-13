@@ -27,7 +27,7 @@
 #include "cbor.h"
 #include "compilersupport_p.h"
 
-#include <cJSON.h>
+#include <cjson/cJSON.h>
 
 #include <errno.h>
 #include <math.h>
