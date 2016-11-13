@@ -82,12 +82,12 @@ ifeq ($(open_memstream-pass),)
   endif
 endif
 
-# json2cbor depends on an external library (cJSON)
+# json2cbor depends on an external library (cjson)
 ifneq ($(cjson-pass)$(system-cjson-pass),)
   JSON2CBOR_SOURCES = tools/json2cbor/json2cbor.c
   INSTALL_TARGETS += $(bindir)/json2cbor
   ifeq ($(system-cjson-pass),1)
-    LDFLAGS_CJSON = -lcJSON
+    LDFLAGS_CJSON = -lcjson
   else
     JSON2CBOR_SOURCES += src/cjson/cJSON.c
     json2cbor_CCFLAGS = -I$(SRCDIR)src/cjson
