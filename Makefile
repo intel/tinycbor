@@ -192,3 +192,4 @@ cflags += -std=c99 $(CFLAGS)
 	@test -d $(@D) || $(MKDIR) $(@D)
 	$(CC) $(cflags) $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
 
+-include src/*.d
