@@ -38,5 +38,5 @@ tag:
 	@perl maketag.pl
 
 {src\}.c{src\}.obj:
-	$(CC) -nologo $(CFLAGS) -Isrc -DTINYCBOR_VERSION="" -c -Fo$@ $<
+	$(CC) -nologo $(CFLAGS) -Isrc -DTINYCBOR_VERSION_SUFFIX="" -c -Fo$@ $<
 

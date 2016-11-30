@@ -186,7 +186,7 @@ tag: distcheck
 .SECONDARY:
 
 cflags := $(CPPFLAGS) -I$(SRCDIR)src
-cflags += -DTINYCBOR_VERSION=\"$(VERSION)$(DIRTYSRC)\"
+cflags += -DTINYCBOR_VERSION_SUFFIX=\"$(DIRTYSRC)\"
 cflags += -std=c99 $(CFLAGS)
 %.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
