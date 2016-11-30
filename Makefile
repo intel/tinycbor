@@ -105,16 +105,16 @@ configure: .config
 .config: Makefile.configure
 	$(MAKE) -f $(SRCDIR)Makefile.configure OUT='>&9' configure 9> $@
 
-lib bin:
-	$(MKDIR) $@
-
-lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o) | lib
+lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o)
+	@$(MKDIR) -p lib
 	$(AR) cqs $@ $^
 
-bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) lib/libtinycbor.a | bin
+bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) lib/libtinycbor.a
+	@$(MKDIR) -p bin
 	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS) -lm
 
-bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) lib/libtinycbor.a | bin
+bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) lib/libtinycbor.a
+	@$(MKDIR) -p bin
 	$(CC) -o $@ $(LDFLAGS) $(LDFLAGS_CJSON) $^ $(LDLIBS) -lm
 
 tinycbor.pc: tinycbor.pc.in
