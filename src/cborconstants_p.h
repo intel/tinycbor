@@ -44,7 +44,7 @@ enum {
     IndefiniteLength        = 31U,
 
     MajorTypeShift          = SmallValueBitLength,
-    MajorTypeMask           = ~0U << MajorTypeShift,
+    MajorTypeMask           = (int) (~0U << MajorTypeShift),
 
     BreakByte               = (unsigned)Break | (SimpleTypesType << MajorTypeShift)
 };
