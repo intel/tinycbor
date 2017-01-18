@@ -151,8 +151,8 @@ typedef enum CborError {
     CborErrorJsonObjectKeyNotString,
     CborErrorJsonNotImplemented,
 
-    CborErrorOutOfMemory = ~0U / 2 + 1,
-    CborErrorInternalError = ~0U
+    CborErrorOutOfMemory = (int) (~0U / 2 + 1),
+    CborErrorInternalError = (int) ~0U
 } CborError;
 
 CBOR_API const char *cbor_error_string(CborError error);
