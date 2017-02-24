@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Intel Corporation
+** Copyright (C) 2017 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -932,12 +932,155 @@ CborError cbor_value_get_int_checked(const CborValue *value, int *result)
  * CborErrorDataTooLarge if the stream indicates a length that is too big to
  * fit in 32-bit.
  *
- * \sa cbor_value_get_string_length(), cbor_value_copy_string(), cbor_value_is_length_known()
+ * \sa cbor_value_get_string_length(), cbor_value_copy_text_string(), cbor_value_copy_byte_string(), cbor_value_is_length_known()
  */
 CborError cbor_value_calculate_string_length(const CborValue *value, size_t *len)
 {
     *len = SIZE_MAX;
     return _cbor_value_copy_string(value, NULL, len, NULL);
+}
+
+static CborError get_string_chunk(CborValue *it, const void **bufferptr, size_t *len)
+{
+    CborError err;
+
+    /* Possible states:
+     * length known | iterating | meaning
+     *     no       |    no     | before the first chunk of a chunked string
+     *     yes      |    no     | at a non-chunked string
+     *     no       |    yes    | second or later chunk
+     *     yes      |    yes    | after a non-chunked string
+     */
+    if (it->flags & CborIteratorFlag_IteratingStringChunks) {
+        /* already iterating */
+        if (cbor_value_is_length_known(it)) {
+            /* if the length was known, it wasn't chunked, so finish iteration */
+            goto last_chunk;
+        }
+    } else if (!cbor_value_is_length_known(it)) {
+        /* chunked string, we're before the first chunk */
+        ++it->ptr;
+    }
+
+    /* are we at the end? */
+    if (it->ptr == it->parser->end)
+        return CborErrorUnexpectedEOF;
+
+    if (*it->ptr == BreakByte) {
+        /* last chunk */
+        ++it->ptr;
+last_chunk:
+        *bufferptr = NULL;
+        return preparse_next_value(it);
+    } else if ((uint8_t)(*it->ptr & MajorTypeMask) == it->type) {
+        err = extract_length(it->parser, &it->ptr, len);
+        if (err)
+            return err;
+        if (*len > (size_t)(it->parser->end - it->ptr))
+            return CborErrorUnexpectedEOF;
+
+        *bufferptr = it->ptr;
+        it->ptr += *len;
+    } else {
+        return CborErrorIllegalType;
+    }
+
+    it->flags |= CborIteratorFlag_IteratingStringChunks;
+    return CborNoError;
+}
+
+/**
+ * \fn CborError cbor_value_get_text_string_chunk(const CborValue *value, const char **bufferptr, size_t *len, CborValue *next)
+ *
+ * Extracts one text string chunk pointed to by \a value and stores a pointer
+ * to the data in \a buffer and the size in \a len, which must not be null. If
+ * no more chunks are available, then \a bufferptr will be set to null. This
+ * function may be used to iterate over any string without causing its contents
+ * to be copied to a separate buffer, like the convenience function
+ * cbor_value_copy_text_string() does.
+ *
+ * It is designed to be used in code like:
+ *
+ * \code
+ *   if (cbor_value_is_text_string(value)) {
+ *       char *ptr;
+ *       size_t len;
+ *       while (1) {
+ *           err = cbor_value_get_text_string(value, &ptr, &len, &value));
+ *           if (err) return err;
+ *           if (ptr == NULL) return CborNoError;
+ *           consume(ptr, len);
+ *       }
+ *   }
+ * \endcode
+ *
+ * If the iterator \a value does not point to a text string, the behaviour is
+ * undefined, so checking with \ref cbor_value_get_type or \ref
+ * cbor_value_is_text_string is recommended.
+ *
+ * The \a next pointer, if not null, will be updated to point to the next item
+ * after this string. During iteration, the pointer must only be passed back
+ * again to this function; passing it to any other function in this library
+ * results in undefined behavior. If there are no more chunks to be read from
+ * \a value, then \a next will be set to the next item after this string; if \a
+ * value points to the last item, then \a next will be invalid.
+ *
+ * \note This function does not perform UTF-8 validation on the incoming text
+ * string.
+ *
+ * \sa cbor_value_dup_text_string(), cbor_value_copy_text_string(), cbor_value_caculate_string_length(), cbor_value_get_byte_string_chunk()
+ */
+
+/**
+ * \fn CborError cbor_value_get_byte_string_chunk(const CborValue *value, const char **bufferptr, size_t *len, CborValue *next)
+ *
+ * Extracts one byte string chunk pointed to by \a value and stores a pointer
+ * to the data in \a buffer and the size in \a len, which must not be null. If
+ * no more chunks are available, then \a bufferptr will be set to null. This
+ * function may be used to iterate over any string without causing its contents
+ * to be copied to a separate buffer, like the convenience function
+ * cbor_value_copy_byte_string() does.
+ *
+ * It is designed to be used in code like:
+ *
+ * \code
+ *   if (cbor_value_is_byte_string(value)) {
+ *       char *ptr;
+ *       size_t len;
+ *       while (1) {
+ *           err = cbor_value_get_byte_string(value, &ptr, &len, &value));
+ *           if (err) return err;
+ *           if (ptr == NULL) return CborNoError;
+ *           consume(ptr, len);
+ *       }
+ *   }
+ * \endcode
+ *
+ * If the iterator \a value does not point to a byte string, the behaviour is
+ * undefined, so checking with \ref cbor_value_get_type or \ref
+ * cbor_value_is_byte_string is recommended.
+ *
+ * The \a next pointer, if not null, will be updated to point to the next item
+ * after this string. During iteration, the pointer must only be passed back
+ * again to this function; passing it to any other function in this library
+ * results in undefined behavior. If there are no more chunks to be read from
+ * \a value, then \a next will be set to the next item after this string; if \a
+ * value points to the last item, then \a next will be invalid.
+ *
+ * \note This function does not perform UTF-8 validation on the incoming byte
+ * string.
+ *
+ * \sa cbor_value_dup_byte_string(), cbor_value_copy_byte_string(), cbor_value_caculate_string_length(), cbor_value_get_text_string_chunk()
+ */
+
+CborError _cbor_value_get_string_chunk(const CborValue *value, const void **bufferptr,
+                                                        size_t *len, CborValue *next)
+{
+    CborValue tmp;
+    if (!next)
+        next = &tmp;
+    *next = *value;
+    return get_string_chunk(next, bufferptr, len);
 }
 
 /* We return uintptr_t so that we can pass memcpy directly as the iteration
@@ -1066,7 +1209,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
  * \note This function does not perform UTF-8 validation on the incoming text
  * string.
  *
- * \sa cbor_value_dup_text_string(), cbor_value_copy_byte_string(), cbor_value_get_string_length(), cbor_value_calculate_string_length()
+ * \sa cbor_value_get_text_string_chunk() cbor_value_dup_text_string(), cbor_value_copy_byte_string(), cbor_value_get_string_length(), cbor_value_calculate_string_length()
  */
 
 /**
@@ -1097,7 +1240,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
  * This function may not run in constant time (it will run in O(n) time on the
  * number of chunks). It requires constant memory (O(1)).
  *
- * \sa cbor_value_dup_text_string(), cbor_value_copy_text_string(), cbor_value_get_string_length(), cbor_value_calculate_string_length()
+ * \sa cbor_value_get_byte_string_chunk(), cbor_value_dup_text_string(), cbor_value_copy_text_string(), cbor_value_get_string_length(), cbor_value_calculate_string_length()
  */
 
 CborError _cbor_value_copy_string(const CborValue *value, void *buffer,

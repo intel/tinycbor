@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2017 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -223,6 +223,7 @@ enum CborParserIteratorFlags
 {
     CborIteratorFlag_IntegerValueTooLarge   = 0x01,
     CborIteratorFlag_NegativeInteger        = 0x02,
+    CborIteratorFlag_IteratingStringChunks  = 0x02,
     CborIteratorFlag_UnknownLength          = 0x04,
     CborIteratorFlag_ContainerIsMap         = 0x20
 };
@@ -404,7 +405,20 @@ CBOR_INLINE_API CborError cbor_value_dup_byte_string(const CborValue *value, uin
     return _cbor_value_dup_string(value, (void **)buffer, buflen, next);
 }
 
-/* ### TBD: partial reading API */
+CBOR_PRIVATE_API CborError _cbor_value_get_string_chunk(const CborValue *value, const void **bufferptr,
+                                                        size_t *len, CborValue *next);
+CBOR_INLINE_API CborError cbor_value_get_text_string_chunk(const CborValue *value, const char **bufferptr,
+                                                           size_t *len, CborValue *next)
+{
+    assert(cbor_value_is_text_string(value));
+    return _cbor_value_get_string_chunk(value, (const void **)bufferptr, len, next);
+}
+CBOR_INLINE_API CborError cbor_value_get_byte_string_chunk(const CborValue *value, const uint8_t **bufferptr,
+                                                           size_t *len, CborValue *next)
+{
+    assert(cbor_value_is_byte_string(value));
+    return _cbor_value_get_string_chunk(value, (const void **)bufferptr, len, next);
+}
 
 CBOR_API CborError cbor_value_text_string_equals(const CborValue *value, const char *string, bool *result);
 
