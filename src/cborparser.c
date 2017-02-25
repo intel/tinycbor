@@ -1107,60 +1107,34 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
 {
     cbor_assert(cbor_value_is_byte_string(value) || cbor_value_is_text_string(value));
 
-    size_t total;
     CborError err;
-    const uint8_t *ptr = value->ptr;
-    if (cbor_value_is_length_known(value)) {
-        /* easy case: fixed length */
-        err = extract_length(value->parser, &ptr, &total);
+    CborValue tmp;
+    size_t total = 0;
+    const void *ptr;
+
+    if (!next)
+        next = &tmp;
+    *next = *value;
+    *result = true;
+
+    while (1) {
+        size_t newTotal;
+        size_t chunkLen;
+        err = get_string_chunk(next, &ptr, &chunkLen);
         if (err)
             return err;
-        if (total > (size_t)(value->parser->end - ptr))
-            return CborErrorUnexpectedEOF;
-        if (total <= *buflen)
-            *result = !!func(buffer, ptr, total);
+        if (!ptr)
+            break;
+
+        if (unlikely(add_check_overflow(total, chunkLen, &newTotal)))
+            return CborErrorDataTooLarge;
+
+        if (*result && *buflen >= newTotal)
+            *result = !!func(buffer + total, (const uint8_t *)ptr, chunkLen);
         else
             *result = false;
-        ptr += total;
-    } else {
-        /* chunked */
-        ++ptr;
-        total = 0;
-        *result = true;
-        while (true) {
-            size_t chunkLen;
-            size_t newTotal;
 
-            if (ptr == value->parser->end)
-                return CborErrorUnexpectedEOF;
-
-            if (*ptr == (uint8_t)BreakByte) {
-                ++ptr;
-                break;
-            }
-
-            /* is this the right type? */
-            if ((*ptr & MajorTypeMask) != value->type)
-                return CborErrorIllegalType;
-
-            err = extract_length(value->parser, &ptr, &chunkLen);
-            if (err)
-                return err;
-
-            if (unlikely(add_check_overflow(total, chunkLen, &newTotal)))
-                return CborErrorDataTooLarge;
-
-            if (chunkLen > (size_t)(value->parser->end - ptr))
-                return CborErrorUnexpectedEOF;
-
-            if (*result && *buflen >= newTotal)
-                *result = !!func(buffer + total, ptr, chunkLen);
-            else
-                *result = false;
-
-            ptr += chunkLen;
-            total = newTotal;
-        }
+        total = newTotal;
     }
 
     /* is there enough room for the ending NUL byte? */
@@ -1169,12 +1143,6 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
         *result = !!func(buffer + total, nul, 1);
     }
     *buflen = total;
-
-    if (next) {
-        *next = *value;
-        next->ptr = ptr;
-        return preparse_next_value(next);
-    }
     return CborNoError;
 }
 
