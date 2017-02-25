@@ -977,8 +977,10 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
     }
 
     /* is there enough room for the ending NUL byte? */
-    if (*result && *buflen > total)
-        *result = !!func(buffer + total, (const uint8_t *)"", 1);
+    if (*result && *buflen > total) {
+        uint8_t nul[] = { 0 };
+        *result = !!func(buffer + total, nul, 1);
+    }
     *buflen = total;
 
     if (next) {
