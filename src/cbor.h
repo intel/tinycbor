@@ -482,11 +482,17 @@ CBOR_INLINE_API CborError cbor_value_get_double(const CborValue *value, double *
 }
 
 /* Human-readable (dump) API */
+
+enum CborPrettyFlags {
+    CborPrettyDefaultFlags          = 0
+};
+
+CBOR_API CborError cbor_value_to_pretty_advance_flags(FILE *out, CborValue *value, int flags);
 CBOR_API CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value);
 CBOR_INLINE_API CborError cbor_value_to_pretty(FILE *out, const CborValue *value)
 {
     CborValue copy = *value;
-    return cbor_value_to_pretty_advance(out, &copy);
+    return cbor_value_to_pretty_advance_flags(out, &copy, CborPrettyDefaultFlags);
 }
 
 #ifdef __cplusplus
