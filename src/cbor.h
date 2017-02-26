@@ -484,6 +484,9 @@ CBOR_INLINE_API CborError cbor_value_get_double(const CborValue *value, double *
 /* Human-readable (dump) API */
 
 enum CborPrettyFlags {
+    CborPrettyNumericEncodingIndicators     = 0x01,
+    CborPrettyTextualEncodingIndicators     = 0,
+
     CborPrettyDefaultFlags          = 0
 };
 

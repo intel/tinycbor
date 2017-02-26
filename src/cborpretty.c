@@ -99,8 +99,11 @@
  *      \c true or \c false
  * \par Floating point:
  *      If NaN or infinite, the actual words \c NaN or \c infinite.
- *      Otherwise, the decimal representation with as many digits as necessary to ensure no loss of information,
- *      with float values suffixed by "f" and half-float values suffixed by "f16" (doubles have no suffix). A dot is always present.
+ *      Otherwise, the decimal representation with as many digits as necessary to ensure no loss of information.
+ *      By default, float values are suffixed by "f" and half-float values suffixed by "f16" (doubles have no suffix).
+ *      If the CborPrettyNumericEncodingIndicators flag is active, the values instead are encoded following the
+ *      Section 6 recommended encoding indicators: float values are suffixed with "_2" and half-float with "_1".
+ *      A dot is always present.
  * \par Arrays:
  *      Comma-separated list of elements, enclosed in square brackets ("[" and "]").
  *     If the array length is indeterminate, an underscore ("_") appears immediately after the opening bracket.
@@ -114,6 +117,8 @@
  * \enum CborPrettyFlags
  * The CborPrettyFlags enum contains flags that control the conversion of CBOR to text format.
  *
+ * \value CborPrettyNumericEncodingIndicators   Use numeric encoding indicators instead of textual for float and half-float.
+ * \value CborPrettyTextualEncodingIndicators   Use textual encoding indicators for float ("f") and half-float ("f16").
  * \value CborPrettyDefaultFlags       Default conversion flags.
  */
 
@@ -404,26 +409,29 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
     case CborDoubleType: {
         const char *suffix;
         double val;
+        int r;
         if (false) {
             float f;
     case CborFloatType:
             cbor_value_get_float(it, &f);
             val = f;
-            suffix = "f";
+            suffix = flags & CborPrettyNumericEncodingIndicators ? "_2" : "f";
         } else if (false) {
             uint16_t f16;
     case CborHalfFloatType:
             cbor_value_get_half_float(it, &f16);
             val = decode_half(f16);
-            suffix = "f16";
+            suffix = flags & CborPrettyNumericEncodingIndicators ? "_1" : "f16";
         } else {
             cbor_value_get_double(it, &val);
             suffix = "";
         }
 
-        int r = fpclassify(val);
-        if (r == FP_NAN || r == FP_INFINITE)
-            suffix = "";
+        if ((flags & CborPrettyNumericEncodingIndicators) == 0) {
+            r = fpclassify(val);
+            if (r == FP_NAN || r == FP_INFINITE)
+                suffix = "";
+        }
 
         uint64_t ival = (uint64_t)fabs(val);
         if (ival == fabs(val)) {
