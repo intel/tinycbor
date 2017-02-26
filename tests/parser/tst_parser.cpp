@@ -1650,8 +1650,8 @@ void tst_Parser::strictValidation_data()
     QTest::newRow("unknown-tag-256") << raw("\xd9\1\0\x60") << int(CborValidateNoUnknownTags) << CborErrorUnknownTag;
     QTest::newRow("unknown-tag-65536") << raw("\xda\0\1\0\0\x60") << int(CborValidateNoUnknownTags) << CborErrorUnknownTag;
     QTest::newRow("unknown-tag-4294967296") << raw("\xdb\0\0\0\1\0\0\0\0\x60") << int(CborValidateNoUnknownTags) << CborErrorUnknownTag;
-//    QTest::newRow("allowed-tag-31") << raw("\xd8\x1f\x60") << int(CborValidateNoUnknownTagsSA) << CborNoError;
-//    QTest::newRow("allowed-tag-256") << raw("\xd8\x1f\x60") << int(CborValidateNoUnknownTagsSR) << CborNoError;
+    QTest::newRow("allowed-tag-31") << raw("\xd8\x1f\x60") << int(CborValidateNoUnknownTagsSA) << CborNoError;
+    QTest::newRow("allowed-tag-256") << raw("\xd9\1\0\x60") << int(CborValidateNoUnknownTagsSR) << CborNoError;
 
     // excluded tags
     QTest::newRow("excluded-tag-0") << raw("\xc0\x60") << int(CborValidateNoTags) << CborErrorExcludedType;

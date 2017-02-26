@@ -116,8 +116,114 @@
  *
  * \par
  * These are the tags known to the current TinyCBOR release:
-[will be added in the next commit]
+<table>
+  <tr>
+    <th>Tag</th>
+    <th>Data Item</th>
+    <th>Semantics</th>
+  </tr>
+  <tr>
+    <td>0</td>
+    <td>UTF-8 text string</td>
+    <td>Standard date/time string</td>
+  </td>
+  <tr>
+    <td>1</td>
+    <td>integer</td>
+    <td>Epoch-based date/time</td>
+  </td>
+  <tr>
+    <td>2</td>
+    <td>byte string</td>
+    <td>Positive bignum</td>
+  </td>
+  <tr>
+    <td>3</td>
+    <td>byte string</td>
+    <td>Negative bignum</td>
+  </td>
+  <tr>
+    <td>4</td>
+    <td>array</td>
+    <td>Decimal fraction</td>
+  </td>
+  <tr>
+    <td>5</td>
+    <td>array</td>
+    <td>Bigfloat</td>
+  </td>
+  <tr>
+    <td>21</td>
+    <td>byte string, array, map</td>
+    <td>Expected conversion to base64url encoding</td>
+  </td>
+  <tr>
+    <td>22</td>
+    <td>byte string, array, map</td>
+    <td>Expected conversion to base64 encoding</td>
+  </td>
+  <tr>
+    <td>23</td>
+    <td>byte string, array, map</td>
+    <td>Expected conversion to base16 encoding</td>
+  </td>
+  <tr>
+    <td>24</td>
+    <td>byte string</td>
+    <td>Encoded CBOR data item</td>
+  </td>
+  <tr>
+    <td>32</td>
+    <td>UTF-8 text string</td>
+    <td>URI</td>
+  </td>
+  <tr>
+    <td>33</td>
+    <td>UTF-8 text string</td>
+    <td>base64url</td>
+  </td>
+  <tr>
+    <td>34</td>
+    <td>UTF-8 text string</td>
+    <td>base64</td>
+  </td>
+  <tr>
+    <td>35</td>
+    <td>UTF-8 text string</td>
+    <td>Regular expression</td>
+  </td>
+  <tr>
+    <td>36</td>
+    <td>UTF-8 text string</td>
+    <td>MIME message</td>
+  </td>
+  <tr>
+    <td>55799</td>
+    <td>any</td>
+    <td>Self-describe CBOR</td>
+  </td>
+</table>
  */
+
+struct KnownTagData { uint32_t tag; };
+static const struct KnownTagData knownTagData[] = {
+    { 0 },
+    { 1 },
+    { 2 },
+    { 3 },
+    { 4 },
+    { 5 },
+    { 21 },
+    { 22 },
+    { 23 },
+    { 24 },
+    { 32 },
+    { 33 },
+    { 34 },
+    { 35 },
+    { 36 },
+    { 55799 }
+};
 
 static CborError validate_value(CborValue *it, int flags, int recursionLeft);
 
@@ -135,20 +241,34 @@ static inline CborError validate_simple_type(uint8_t simple_type, int flags)
 static inline CborError validate_tag(CborValue *it, CborTag tag, int flags, int recursionLeft)
 {
     CborType type = cbor_value_get_type(it);
+    const size_t knownTagCount = sizeof(knownTagData) / sizeof(knownTagData[0]);
+    const struct KnownTagData *tagData = knownTagData;
+    const struct KnownTagData * const knownTagDataEnd = knownTagData + knownTagCount;
+
     if (!recursionLeft)
         return CborErrorNestingTooDeep;
-
     if (flags & CborValidateNoTags)
         return CborErrorExcludedType;
-    if (flags & CborValidateNoUnknownTags) {
-        if (tag > 255 && (flags & CborValidateNoUnknownTagsSR) == 0)
+
+    /* find the tag data, if any */
+    for ( ; tagData != knownTagDataEnd; ++tagData) {
+        if (tagData->tag < tag)
+            continue;
+        if (tagData->tag > tag)
+            tagData = NULL;
+        break;
+    }
+    if (tagData == knownTagDataEnd)
+        tagData = NULL;
+
+    if (flags & CborValidateNoUnknownTags && !tagData) {
+        /* tag not found */
+        if (flags & CborValidateNoUnknownTagsSA && tag < 24)
             return CborErrorUnknownTag;
-        if (flags & CborValidateNoUnknownTagsSR) {
-            if (tag > 23 && (flags & CborValidateNoUnknownTagsSA) == 0)
-                return CborErrorUnknownTag;
-            if (flags & CborValidateNoUnknownTagsSA)
-                return CborErrorUnknownTag;
-        }
+        if ((flags & CborValidateNoUnknownTagsSR) == CborValidateNoUnknownTagsSR && tag < 256)
+            return CborErrorUnknownTag;
+        if ((flags & CborValidateNoUnknownTags) == CborValidateNoUnknownTags)
+            return CborErrorUnknownTag;
     }
 
     return validate_value(it, flags, recursionLeft);

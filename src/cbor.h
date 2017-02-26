@@ -97,7 +97,7 @@ typedef enum CborType {
 
 typedef uint64_t CborTag;
 typedef enum CborKnownTags {
-    CborDateTimeStringTag          = 0,        /* RFC 3339 format: YYYY-MM-DD hh:mm:ss+zzzz */
+    CborDateTimeStringTag          = 0,
     CborUnixTime_tTag              = 1,
     CborPositiveBignumTag          = 2,
     CborNegativeBignumTag          = 3,
@@ -106,11 +106,12 @@ typedef enum CborKnownTags {
     CborExpectedBase64urlTag       = 21,
     CborExpectedBase64Tag          = 22,
     CborExpectedBase16Tag          = 23,
-    CborUriTag                     = 32,
+    CborEncodedCborTag             = 24,
+    CborUrlTag                     = 32,
     CborBase64urlTag               = 33,
     CborBase64Tag                  = 34,
     CborRegularExpressionTag       = 35,
-    CborMimeMessageTag             = 36,       /* RFC 2045-2047 */
+    CborMimeMessageTag             = 36,
     CborSignatureTag               = 55799
 } CborKnownTags;
 
