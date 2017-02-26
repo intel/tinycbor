@@ -118,6 +118,8 @@
  *
  * \value CborPrettyNumericEncodingIndicators   Use numeric encoding indicators instead of textual for float and half-float.
  * \value CborPrettyTextualEncodingIndicators   Use textual encoding indicators for float ("f") and half-float ("f16").
+ * \value CborPrettyShowStringFragments         If the byte or text string is transmitted in chunks, show each individually.
+ * \value CborPrettyMergeStringFragment         Merge all chunked byte or text strings and display them in a single entry.
  * \value CborPrettyDefaultFlags       Default conversion flags.
  */
 
@@ -341,6 +343,8 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
     case CborTextStringType: {
         size_t n = 0;
         const void *ptr;
+        bool showingFragments = (flags & CborPrettyShowStringFragments) && !cbor_value_is_length_known(it);
+        const char *separator = "";
         char close = '\'';
         char open[3] = "h'";
 
@@ -349,7 +353,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
             open[1] = '\0';
         }
 
-        if (fputs(open, out) < 0)
+        if (fputs(showingFragments ? "(_ " : open, out) < 0)
             return CborErrorIO;
 
         while (1) {
@@ -359,12 +363,19 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
             if (!ptr)
                 break;
 
+            if (showingFragments && fprintf(out, "%s%s", separator, open) < 0)
+                return CborErrorIO;
             err = (type == CborByteStringType ? hexDump(out, ptr, n) : utf8EscapedDump(out, ptr, n));
             if (err)
                 return err;
+            if (showingFragments) {
+                if (fputc(close, out) < 0)
+                    return CborErrorIO;
+                separator = ", ";
+            }
         }
 
-        if (fputc(close, out) < 0)
+        if (fputc(showingFragments ? ')' : close, out) < 0)
             return CborErrorIO;
         return CborNoError;
     }

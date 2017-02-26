@@ -101,6 +101,8 @@ CborError parseOne(CborValue *it, QString *parsed)
     char *buffer;
     size_t size;
 
+    int flags = CborPrettyShowStringFragments;
+
     setlocale(LC_ALL, "C");
 #ifdef Q_CC_MSVC
     // no open_memstream, so use a temporary file
@@ -110,7 +112,7 @@ CborError parseOne(CborValue *it, QString *parsed)
     FILE *f = fopen(QFile::encodeName(tmp.fileName()), "w+");
     if (!f)
         return CborErrorIO;
-    err = cbor_value_to_pretty_advance(f, it);
+    err = cbor_value_to_pretty_advance_flags(f, it, flags);
     size = ftell(f);
     rewind(f);
 
@@ -119,7 +121,7 @@ CborError parseOne(CborValue *it, QString *parsed)
     fclose(f);
 #else
     FILE *f = open_memstream(&buffer, &size);
-    err = cbor_value_to_pretty_advance(f, it);
+    err = cbor_value_to_pretty_advance_flags(f, it, flags);
     fclose(f);
 #endif
 
@@ -130,8 +132,6 @@ CborError parseOne(CborValue *it, QString *parsed)
 
 CborError parseOneChunk(CborValue *it, QString *parsed)
 {
-    // we can't use the cborpretty.c API here because it uses
-    // cbor_value_advance_fixed and cbor_value_dup_xxxx_string
     CborError err;
     CborType ourType = cbor_value_get_type(it);
     if (ourType == CborByteStringType) {
@@ -397,18 +397,18 @@ void addStringsData()
     QTest::newRow("textstring5*8") << raw("\x7b\0\0\0\0\0\0\0\x05Hello") << "\"Hello\"";
 
     // strings with undefined length
-    QTest::newRow("_emptybytestring") << raw("\x5f\xff") << "h''";
-    QTest::newRow("_emptytextstring") << raw("\x7f\xff") << "\"\"";
-    QTest::newRow("_emptybytestring2") << raw("\x5f\x40\xff") << "h''";
-    QTest::newRow("_emptytextstring2") << raw("\x7f\x60\xff") << "\"\"";
-    QTest::newRow("_emptybytestring3") << raw("\x5f\x40\x40\xff") << "h''";
-    QTest::newRow("_emptytextstring3") << raw("\x7f\x60\x60\xff") << "\"\"";
-    QTest::newRow("_bytestring5*2") << raw("\x5f\x43Hel\x42lo\xff") << "h'48656c6c6f'";
-    QTest::newRow("_textstring5*2") << raw("\x7f\x63Hel\x62lo\xff") << "\"Hello\"";
-    QTest::newRow("_bytestring5*5") << raw("\x5f\x41H\x41""e\x41l\x41l\x41o\xff") << "h'48656c6c6f'";
-    QTest::newRow("_textstring5*5") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "\"Hello\"";
-    QTest::newRow("_bytestring5*6") << raw("\x5f\x41H\x41""e\x40\x41l\x41l\x41o\xff") << "h'48656c6c6f'";
-    QTest::newRow("_textstring5*6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << "\"Hello\"";
+    QTest::newRow("_emptybytestring") << raw("\x5f\xff") << "(_ )";
+    QTest::newRow("_emptytextstring") << raw("\x7f\xff") << "(_ )";
+    QTest::newRow("_emptybytestring2") << raw("\x5f\x40\xff") << "(_ h'')";
+    QTest::newRow("_emptytextstring2") << raw("\x7f\x60\xff") << "(_ \"\")";
+    QTest::newRow("_emptybytestring3") << raw("\x5f\x40\x40\xff") << "(_ h'', h'')";
+    QTest::newRow("_emptytextstring3") << raw("\x7f\x60\x60\xff") << "(_ \"\", \"\")";
+    QTest::newRow("_bytestring5*2") << raw("\x5f\x43Hel\x42lo\xff") << "(_ h'48656c', h'6c6f')";
+    QTest::newRow("_textstring5*2") << raw("\x7f\x63Hel\x62lo\xff") << "(_ \"Hel\", \"lo\")";
+    QTest::newRow("_bytestring5*5") << raw("\x5f\x41H\x41""e\x41l\x41l\x41o\xff") << "(_ h'48', h'65', h'6c', h'6c', h'6f')";
+    QTest::newRow("_textstring5*5") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "(_ \"H\", \"e\", \"l\", \"l\", \"o\")";
+    QTest::newRow("_bytestring5*6") << raw("\x5f\x41H\x41""e\x40\x41l\x41l\x41o\xff") << "(_ h'48', h'65', h'', h'6c', h'6c', h'6f')";
+    QTest::newRow("_textstring5*6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << "(_ \"H\", \"e\", \"l\", \"\", \"l\", \"o\")";
 }
 
 void tst_Parser::strings_data()
@@ -763,7 +763,7 @@ void tst_Parser::mapsAndArrays()
 
     // mixed with indeterminate length strings
     compareOneSize(-1, "\xbf\1\x9f" + data + "\xff\x65Hello\xbf" + data + "\x7f\xff\xff\xff",
-                   "{_ 1: [_ " + expected + "], \"Hello\": {_ " + expected + ": \"\"}}");
+                   "{_ 1: [_ " + expected + "], \"Hello\": {_ " + expected + ": (_ )}}");
 }
 
 void tst_Parser::chunkedString_data()
