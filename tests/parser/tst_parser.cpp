@@ -87,8 +87,6 @@ private slots:
     void checkedIntegers();
     void validation_data();
     void validation();
-    void chunkedStringValidation_data();
-    void chunkedStringValidation();
     void resumeParsing_data();
     void resumeParsing();
     void endPointer_data();
@@ -771,35 +769,39 @@ void tst_Parser::mapsAndArrays()
 void tst_Parser::chunkedString_data()
 {
     QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<QString>("concatenated");
     QTest::addColumn<QStringList>("chunks");
 
     // non-chunked:
-    QTest::newRow("emptybytestring") << raw("\x40") << QStringList{"h''"};
-    QTest::newRow("bytestring1") << raw("\x41 ") << QStringList{"h'20'"};
-    QTest::newRow("emptytextstring") << raw("\x60") << QStringList{"\"\""};
-    QTest::newRow("textstring1") << raw("\x61 ") << QStringList{"\" \""};
+    QTest::newRow("emptybytestring") << raw("\x40") << "h''" << QStringList{"h''"};
+    QTest::newRow("bytestring1") << raw("\x41 ") << "h'20'" << QStringList{"h'20'"};
+    QTest::newRow("emptytextstring") << raw("\x60") << "\"\"" << QStringList{"\"\""};
+    QTest::newRow("textstring1") << raw("\x61 ") << "\" \"" << QStringList{"\" \""};
 
     // empty chunked:
-    QTest::newRow("_emptybytestring") << raw("\x5f\xff") << QStringList{};
-    QTest::newRow("_emptytextstring") << raw("\x7f\xff") << QStringList{};
-    QTest::newRow("_emptybytestring2") << raw("\x5f\x40\xff") << QStringList{"h''"};
-    QTest::newRow("_emptytextstring2") << raw("\x7f\x60\xff") << QStringList{"\"\""};
-    QTest::newRow("_emptybytestring3") << raw("\x5f\x40\x40\xff") << QStringList{"h''", "h''"};
-    QTest::newRow("_emptytextstring3") << raw("\x7f\x60\x60\xff") << QStringList{"\"\"", "\"\""};
+    QTest::newRow("_emptybytestring") << raw("\x5f\xff") << "h''" << QStringList{};
+    QTest::newRow("_emptytextstring") << raw("\x7f\xff") << "\"\"" << QStringList{};
+    QTest::newRow("_emptybytestring2") << raw("\x5f\x40\xff") << "h''" << QStringList{"h''"};
+    QTest::newRow("_emptytextstring2") << raw("\x7f\x60\xff") << "\"\"" << QStringList{"\"\""};
+    QTest::newRow("_emptybytestring3") << raw("\x5f\x40\x40\xff") << "h''" << QStringList{"h''", "h''"};
+    QTest::newRow("_emptytextstring3") << raw("\x7f\x60\x60\xff") << "\"\"" << QStringList{"\"\"", "\"\""};
 
     // regular chunks
-    QTest::newRow("_bytestring1") << raw("\x5f\x41 \xff") << QStringList{"h'20'"};
-    QTest::newRow("_bytestring2") << raw("\x5f\x41 \x41z\xff") << QStringList{"h'20'", "h'7a'"};
+    QTest::newRow("_bytestring1") << raw("\x5f\x41 \xff") << "h'20'" << QStringList{"h'20'"};
+    QTest::newRow("_bytestring2") << raw("\x5f\x41 \x41z\xff") << "h'207a'" << QStringList{"h'20'", "h'7a'"};
     QTest::newRow("_bytestring3") << raw("\x5f\x41 \x58\x18""123456789012345678901234\x41z\xff")
+                                  << "h'203132333435363738393031323334353637383930313233347a'"
                                   << QStringList{"h'20'", "h'313233343536373839303132333435363738393031323334'", "h'7a'"};
 
-    QTest::newRow("_textstring1") << raw("\x7f\x61 \xff") << QStringList{"\" \""};
-    QTest::newRow("_textstring2") << raw("\x7f\x61 \x61z\xff") << QStringList{"\" \"", "\"z\""};
+    QTest::newRow("_textstring1") << raw("\x7f\x61 \xff") << "\" \"" << QStringList{"\" \""};
+    QTest::newRow("_textstring2") << raw("\x7f\x61 \x61z\xff") << "\" z\"" << QStringList{"\" \"", "\"z\""};
     QTest::newRow("_textstring3") << raw("\x7f\x61 \x78\x18""123456789012345678901234\x61z\xff")
+                                  << "\" 123456789012345678901234z\""
                                   << QStringList{"\" \"", "\"123456789012345678901234\"", "\"z\""};
 }
 
-static void chunkedStringTest(const QByteArray &data, QStringList &chunks, CborType ourType)
+static void chunkedStringTest(const QByteArray &data, const QString &concatenated,
+                              QStringList &chunks, CborType ourType)
 {
     CborParser parser;
     CborValue first;
@@ -810,6 +812,9 @@ static void chunkedStringTest(const QByteArray &data, QStringList &chunks, CborT
     QVERIFY(cbor_value_is_array(&first));
     err = cbor_value_enter_container(&first, &value);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+    QVERIFY(cbor_value_is_byte_string(&value) || cbor_value_is_text_string(&value));
+
+    CborValue copy = value;
 
     forever {
         QString decoded;
@@ -824,6 +829,30 @@ static void chunkedStringTest(const QByteArray &data, QStringList &chunks, CborT
         QCOMPARE(decoded, expected);
     }
     QVERIFY2(chunks.isEmpty(), "Too few chunks");
+
+    // compare to the concatenated data
+    {
+        size_t n;
+        err = cbor_value_calculate_string_length(&copy, &n);
+        QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+        QByteArray buffer(n, Qt::Uninitialized);
+        QString formatted;
+        if (cbor_value_is_byte_string(&copy)) {
+            err = cbor_value_copy_byte_string(&copy, (uint8_t *)buffer.data(), &n, nullptr);
+            QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+            QCOMPARE(int(n), buffer.size());
+
+            formatted = QString::fromLatin1("h'" + buffer.toHex() + '\'');
+        } else {
+            err = cbor_value_copy_text_string(&copy, buffer.data(), &n, nullptr);
+            QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+            QCOMPARE(int(n), buffer.size());
+
+            formatted = '"' + QString::fromUtf8(buffer.data(), n) + '"';
+        }
+        QCOMPARE(formatted, concatenated);
+    }
 
     // confirm that the extra string we appended is still here
     QVERIFY(!cbor_value_at_end(&value));
@@ -847,6 +876,7 @@ static void chunkedStringTest(const QByteArray &data, QStringList &chunks, CborT
 void tst_Parser::chunkedString()
 {
     QFETCH(QByteArray, data);
+    QFETCH(QString, concatenated);
     QFETCH(QStringList, chunks);
 
     // Make this an array of two entries, with the second an empty byte or text string
@@ -854,12 +884,13 @@ void tst_Parser::chunkedString()
     data.prepend(char(0x82));
     data.append(ourType);
 
-    chunkedStringTest(data, chunks, ourType);
+    chunkedStringTest(data, concatenated, chunks, ourType);
 }
 
 void tst_Parser::chunkedStringInUndefArray()
 {
     QFETCH(QByteArray, data);
+    QFETCH(QString, concatenated);
     QFETCH(QStringList, chunks);
 
     // Make this an array of undefined length entries, with the second entry an empty byte or text string
@@ -868,7 +899,7 @@ void tst_Parser::chunkedStringInUndefArray()
     data.append(ourType);
     data.append(char(0xff));
 
-    chunkedStringTest(data, chunks, ourType);
+    chunkedStringTest(data, concatenated, chunks, ourType);
 }
 
 void tst_Parser::stringLength_data()
@@ -1305,18 +1336,18 @@ static void addValidationData()
     QTest::newRow("tag-too-short-8-0") << raw("\x81\xdb") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("tag-too-short-8-7") << raw("\x81\xdb\1\2\3\4\5\6\7") << 0 << CborErrorUnexpectedEOF << 1;
 
-    QTest::newRow("bytearray-too-short1") << raw("\x81\x41") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short1") << raw("\x81\x41") << 0 << CborErrorUnexpectedEOF << 2;
     QTest::newRow("bytearray-too-short2") << raw("\x81\x58") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("bytearray-too-short3") << raw("\x81\x58\x01") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short3") << raw("\x81\x58\x01") << 0 << CborErrorUnexpectedEOF << 3;
     QTest::newRow("bytearray-too-short4") << raw("\x81\x59") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("bytearray-too-short5") << raw("\x81\x5a\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("bytearray-too-short6") << raw("\x81\x5b\0\0\0\0\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("string-too-short1") << raw("\x81\x61") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-too-short5") << raw("\x81\x5a\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 6;
+    QTest::newRow("bytearray-too-short6") << raw("\x81\x5b\0\0\0\0\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 10;
+    QTest::newRow("string-too-short1") << raw("\x81\x61") << 0 << CborErrorUnexpectedEOF << 2;
     QTest::newRow("string-too-short2") << raw("\x81\x78") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("string-too-short3") << raw("\x81\x78\x01") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short3") << raw("\x81\x78\x01") << 0 << CborErrorUnexpectedEOF << 3;
     QTest::newRow("string-too-short4") << raw("\x81\x79") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("string-too-short5") << raw("\x81\x7a\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("string-too-short6") << raw("\x81\x7b\0\0\0\0\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("string-too-short5") << raw("\x81\x7a\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 6;
+    QTest::newRow("string-too-short6") << raw("\x81\x7b\0\0\0\0\0\0\0\1") << 0 << CborErrorUnexpectedEOF << 10;
     QTest::newRow("fp16-too-short1") << raw("\x81\xf9") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("fp16-too-short2") << raw("\x81\xf9\x00") << 0 << CborErrorUnexpectedEOF << 1;
     QTest::newRow("float-too-short1") << raw("\x81\xfa") << 0 << CborErrorUnexpectedEOF << 1;
@@ -1327,27 +1358,27 @@ static void addValidationData()
     // check for pointer additions wrapping over the limit of the address space
     CborError tooLargeOn32bit = (sizeof(void *) == 4) ? CborErrorDataTooLarge : CborErrorUnexpectedEOF;
     // on 32-bit systems, this is a -1
-    QTest::newRow("bytearray-wraparound1") << raw("\x81\x5a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("string-wraparound1") << raw("\x81\x7a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-wraparound1") << raw("\x81\x5a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 6;
+    QTest::newRow("string-wraparound1") << raw("\x81\x7a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 6;
     // on 32-bit systems, a 4GB addition could be dropped
-    QTest::newRow("bytearray-wraparound2") << raw("\x81\x5b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 1;
-    QTest::newRow("string-wraparound2") << raw("\x81\x7b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 1;
+    QTest::newRow("bytearray-wraparound2") << raw("\x81\x5b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 10;
+    QTest::newRow("string-wraparound2") << raw("\x81\x7b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 10;
     // on 64-bit systems, this could be a -1
-    QTest::newRow("bytearray-wraparound3") << raw("\x81\x5b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 1;
-    QTest::newRow("string-wraparound3") << raw("\x81\x7b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 1;
+    QTest::newRow("bytearray-wraparound3") << raw("\x81\x5b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 10;
+    QTest::newRow("string-wraparound3") << raw("\x81\x7b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 10;
 
     // ditto on chunks
-    QTest::newRow("bytearray-chunk-wraparound1") << raw("\x81\x5f\x5a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("string-chunk-wraparound1") << raw("\x81\x7f\x7a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("bytearray-chunk-wraparound1") << raw("\x81\x5f\x5a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 7;
+    QTest::newRow("string-chunk-wraparound1") << raw("\x81\x7f\x7a\xff\xff\xff\xff") << 0 << CborErrorUnexpectedEOF << 7;
     // on 32-bit systems, a 4GB addition could be dropped
-    QTest::newRow("bytearray-chunk-wraparound2") << raw("\x81\x5f\x5b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 1;
-    QTest::newRow("string-chunk-wraparound2") << raw("\x81\x7f\x7b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 1;
+    QTest::newRow("bytearray-chunk-wraparound2") << raw("\x81\x5f\x5b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 11;
+    QTest::newRow("string-chunk-wraparound2") << raw("\x81\x7f\x7b\0\0\0\1\0\0\0\0") << 0 << tooLargeOn32bit << 11;
     // on 64-bit systems, this could be a -1
-    QTest::newRow("bytearray-chunk-wraparound3") << raw("\x81\x5f\x5b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 1;
-    QTest::newRow("string-chunk-wraparound3") << raw("\x81\x7f\x7b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 1;
+    QTest::newRow("bytearray-chunk-wraparound3") << raw("\x81\x5f\x5b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 11;
+    QTest::newRow("string-chunk-wraparound3") << raw("\x81\x7f\x7b\xff\xff\xff\xff\xff\xff\xff\xff") << 0 << tooLargeOn32bit << 11;
 
     QTest::newRow("eof-after-array") << raw("\x81") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("eof-after-array2") << raw("\x81\x78\x20") << 0 << CborErrorUnexpectedEOF << 1;
+    QTest::newRow("eof-after-array2") << raw("\x81\x78\x20") << 0 << CborErrorUnexpectedEOF << 3;
     QTest::newRow("eof-after-array-element") << raw("\x81\x82\x01") << 0 << CborErrorUnexpectedEOF << 3;
     QTest::newRow("eof-after-object") << raw("\x81\xa1") << 0 << CborErrorUnexpectedEOF << 2;
     QTest::newRow("eof-after-object2") << raw("\x81\xb8\x20") << 0 << CborErrorUnexpectedEOF << 3;
@@ -1376,41 +1407,43 @@ static void addValidationData()
 
     QTest::newRow("no-break-for-array0") << raw("\x81\x9f") << 0 << CborErrorUnexpectedEOF << 2;
     QTest::newRow("no-break-for-array1") << raw("\x81\x9f\x01") << 0 << CborErrorUnexpectedEOF << 3;
-}
 
-static void addChunkedStringValidationData()
-{
-    // add an extra column, for the failure offset when doing chunked string decoding
-    QTest::addColumn<int>("chunkedOffset");
+    QTest::newRow("no-break-string0") << raw("\x81\x7f") << 0 << CborErrorUnexpectedEOF << 2;
+    QTest::newRow("no-break-string1") << raw("\x81\x7f\x61Z") << 0 << CborErrorUnexpectedEOF << 4;
 
-    QTest::newRow("no-break-string0") << raw("\x81\x7f") << 0 << CborErrorUnexpectedEOF << 1 << 2;
-    QTest::newRow("no-break-string1") << raw("\x81\x7f\x61Z") << 0 << CborErrorUnexpectedEOF << 1 << 4;
+    QTest::newRow("nested-indefinite-length-bytearrays") << raw("\x81\x5f\x5f\xff\xff") << 0 << CborErrorIllegalNumber << 3;
+    QTest::newRow("nested-indefinite-length-strings") << raw("\x81\x7f\x7f\xff\xff") << 0 << CborErrorIllegalNumber << 3;
 
-    QTest::newRow("nested-indefinite-length-bytearrays") << raw("\x81\x5f\x5f\xff\xff") << 0 << CborErrorIllegalNumber << 1 << 3;
-    QTest::newRow("nested-indefinite-length-strings") << raw("\x81\x7f\x7f\xff\xff") << 0 << CborErrorIllegalNumber << 1 << 3;
+    QTest::newRow("string-chunk-unsigned") << raw("\x81\x7f\0\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-negative") << raw("\x81\x7f\x20\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-bytearray") << raw("\x81\x7f\x40\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-array") << raw("\x81\x7f\x80\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-map") << raw("\x81\x7f\xa0\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-tag") << raw("\x81\x7f\xc0\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-tagged-string") << raw("\x81\x7f\xc0\x60\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-simple0") << raw("\x81\x7f\xe0\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-false") << raw("\x81\x7f\xf4\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-true") << raw("\x81\x7f\xf5\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-null") << raw("\x81\x7f\xf6\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("string-chunk-undefined") << raw("\x81\x7f\xf7\xff") << 0 << CborErrorIllegalType << 2;
 
-    QTest::newRow("string-chunk-unsigned") << raw("\x81\x7f\0\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-negative") << raw("\x81\x7f\x20\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-bytearray") << raw("\x81\x7f\x40\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-array") << raw("\x81\x7f\x80\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-map") << raw("\x81\x7f\xa0\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-tag") << raw("\x81\x7f\xc0\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-tagged-string") << raw("\x81\x7f\xc0\x60\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-simple0") << raw("\x81\x7f\xe0\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-false") << raw("\x81\x7f\xf4\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-true") << raw("\x81\x7f\xf5\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-null") << raw("\x81\x7f\xf6\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("string-chunk-undefined") << raw("\x81\x7f\xf7\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("bytearray-chunk-string") << raw("\x81\x5f\x60\xff") << 0 << CborErrorIllegalType << 2;
+    QTest::newRow("bytearray-chunk-tagged-bytearray") << raw("\x81\x7f\xc0\x40\xff") << 0 << CborErrorIllegalType << 2;
 
-    QTest::newRow("bytearray-chunk-string") << raw("\x81\x5f\x60\xff") << 0 << CborErrorIllegalType << 1 << 2;
-    QTest::newRow("bytearray-chunk-tagged-bytearray") << raw("\x81\x7f\xc0\x40\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    // RFC 7049 Section 2.2.2 "Indefinite-Length Byte Strings and Text Strings" says
+    //    Text strings with indefinite lengths act the same as byte strings
+    //    with indefinite lengths, except that all their chunks MUST be
+    //    definite-length text strings.  Note that this implies that the bytes
+    //    of a single UTF-8 character cannot be spread between chunks: a new
+    //    chunk can only be started at a character boundary.
+    // This test technically tests the dumper, not the parser.
+    QTest::newRow("string-utf8-chunk-split") << raw("\x81\x7f\x61\xc2\x61\xa0\xff") << 0 << CborErrorInvalidUtf8TextString << 4;
 }
 
 void tst_Parser::validation_data()
 {
     addValidationColumns();
     addValidationData();
-    addChunkedStringValidationData();
 }
 
 void tst_Parser::validation()
@@ -1429,43 +1462,6 @@ void tst_Parser::validation()
     err = parseOne(&first, &decoded);
     QCOMPARE(int(err), int(expectedError));
     QCOMPARE(int(cbor_value_get_next_byte(&first) - reinterpret_cast<const quint8 *>(data.constBegin())), offset);
-}
-
-void tst_Parser::chunkedStringValidation_data()
-{
-    addValidationColumns();
-    addChunkedStringValidationData();
-}
-
-void tst_Parser::chunkedStringValidation()
-{
-    QFETCH(QByteArray, data);
-    QFETCH(int, flags);
-    QFETCH(CborError, expectedError);
-    QFETCH(int, chunkedOffset);
-
-    CborParser parser;
-    CborValue first;
-    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), flags, &parser, &first);
-    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
-
-    CborValue value;
-    QVERIFY(cbor_value_is_array(&first));
-    err = cbor_value_enter_container(&first, &value);
-    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
-
-    forever {
-        QString decoded;
-        err = parseOneChunk(&value, &decoded);
-        if (err)
-            break;
-
-        if (decoded.isEmpty())
-            break;          // last chunk
-    }
-
-    QCOMPARE(int(err), int(expectedError));
-    QCOMPARE(int(cbor_value_get_next_byte(&value) - reinterpret_cast<const quint8 *>(data.constBegin())), chunkedOffset);
 }
 
 void tst_Parser::resumeParsing_data()
