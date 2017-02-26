@@ -31,11 +31,6 @@
 #include <string.h>
 #include <unistd.h>
 
-enum Mode {
-    PrintCborDump = 0,
-    PrintJson = 0x80000000
-};
-
 void *xrealloc(void *old, size_t size, const char *fname)
 {
     old = realloc(old, size);
@@ -52,7 +47,7 @@ void printerror(CborError err, const char *fname)
     exit(EXIT_FAILURE);
 }
 
-void dumpFile(FILE *in, const char *fname, int mode)
+void dumpFile(FILE *in, const char *fname, bool printJosn, int flags)
 {
     static const size_t chunklen = 16 * 1024;
     static size_t bufsize = 0;
@@ -77,10 +72,10 @@ void dumpFile(FILE *in, const char *fname, int mode)
     CborValue value;
     CborError err = cbor_parser_init(buffer, buflen, 0, &parser, &value);
     if (!err) {
-        if (mode)
-            err = cbor_value_to_json_advance(stdout, &value, mode & ~PrintJson);
+        if (printJosn)
+            err = cbor_value_to_json_advance(stdout, &value, flags);
         else
-            err = cbor_value_to_pretty_advance(stdout, &value);
+            err = cbor_value_to_pretty_advance_flags(stdout, &value, flags);
         if (!err)
             puts("");
     }
@@ -92,29 +87,37 @@ void dumpFile(FILE *in, const char *fname, int mode)
 
 int main(int argc, char **argv)
 {
-    int mode = PrintCborDump;
+    bool printJson = false;
+    int json_flags = CborConvertDefaultFlags;
+    int cbor_flags = CborPrettyDefaultFlags;
     int c;
-    while ((c = getopt(argc, argv, "MOSUcjh")) != -1) {
+    while ((c = getopt(argc, argv, "MOSUcjhfn")) != -1) {
         switch (c) {
         case 'c':
-            mode = PrintCborDump;
+            printJson = false;
             break;
         case 'j':
-            mode &= ~PrintCborDump;
-            mode |= PrintJson;
+            printJson = true;
+            break;
+
+        case 'f':
+            cbor_flags |= CborPrettyShowStringFragments;
+            break;
+        case 'n':
+            cbor_flags |= CborPrettyIndicateIndetermineLength | CborPrettyNumericEncodingIndicators;
             break;
 
         case 'M':
-            mode |= CborConvertAddMetadata;
+            json_flags |= CborConvertAddMetadata;
             break;
         case 'O':
-            mode |= CborConvertTagsToObjects;
+            json_flags |= CborConvertTagsToObjects;
             break;
         case 'S':
-            mode |= CborConvertStringifyMapKeys;
+            json_flags |= CborConvertStringifyMapKeys;
             break;
         case 'U':
-            mode |= CborConvertByteStringsToBase64Url;
+            json_flags |= CborConvertByteStringsToBase64Url;
             break;
 
         case '?':
@@ -132,7 +135,10 @@ int main(int argc, char **argv)
                  " -M       Add metadata so converting back to CBOR is possible\n"
                  " -O       Convert CBOR tags to JSON objects\n"
                  " -S       Stringify non-text string map keys\n"
-                 " -U       Convert all CBOR byte strings to Base64url regardless of tags"
+                 " -U       Convert all CBOR byte strings to Base64url regardless of tags\n"
+                 "When CBOR dump is active, the following options are recognized:\n"
+                 " -f       Show text and byte string fragments\n"
+                 " -n       Show overlong encoding of CBOR numbers and length"
                  "");
             return c == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
         }
@@ -140,7 +146,7 @@ int main(int argc, char **argv)
 
     char **fname = argv + optind;
     if (!*fname) {
-        dumpFile(stdin, "-", mode);
+        dumpFile(stdin, "-", printJson, printJson ? json_flags : cbor_flags);
     } else {
         for ( ; *fname; ++fname) {
             FILE *in = fopen(*fname, "rb");
@@ -149,7 +155,7 @@ int main(int argc, char **argv)
                 return EXIT_FAILURE;
             }
 
-            dumpFile(in, *fname, mode);
+            dumpFile(in, *fname, printJson, printJson ? json_flags : cbor_flags);
             fclose(in);
         }
     }
