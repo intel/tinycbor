@@ -222,11 +222,16 @@ void compareOne_real(const QByteArray &data, const QString &expected, int line, 
         }
     }
 
+    CborError err2 = cbor_value_validate_basic(&first);
+
     QString decoded;
     err = parseOne(&first, &decoded);
     QVERIFY2(!err, QByteArray::number(line) + ": Got error \"" + cbor_error_string(err) +
                    "\"; decoded stream:\n" + decoded.toLatin1());
     QCOMPARE(decoded, expected);
+
+    // check that the errors are the same
+    QCOMPARE(int(err2), int(err));
 
     // check that we consumed everything
     QCOMPARE((void*)cbor_value_get_next_byte(&first), (void*)data.constEnd());
@@ -1520,8 +1525,11 @@ void tst_Parser::validation()
     CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), flags, &parser, &first);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
+    CborError err2 = cbor_value_validate_basic(&first);
     err = parseOne(&first, &decoded);
     QCOMPARE(int(err), int(expectedError));
+    if (!QByteArray(QTest::currentDataTag()).contains("utf8"))
+        QCOMPARE(int(err2), int(expectedError));
 }
 
 void tst_Parser::resumeParsing_data()

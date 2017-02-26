@@ -248,6 +248,8 @@ typedef struct CborValue CborValue;
 
 CBOR_API CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborParser *parser, CborValue *it);
 
+CBOR_API CborError cbor_value_validate_basic(const CborValue *it);
+
 CBOR_INLINE_API bool cbor_value_at_end(const CborValue *it)
 { return it->remaining == 0; }
 CBOR_INLINE_API const uint8_t *cbor_value_get_next_byte(const CborValue *it)

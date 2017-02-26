@@ -421,6 +421,33 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborPa
  */
 
 /**
+ * Performs a basic validation of the CBOR stream pointed by \a it and returns
+ * the error it found. If no error was found, it returns CborNoError and the
+ * application can iterate over the items with certainty that no other errors
+ * will appear during parsing.
+ *
+ * A basic validation checks for:
+ * \list
+ *   \li absence of undefined additional information bytes;
+ *   \li well-formedness of all numbers, lengths, and simple values;
+ *   \li string contents match reported sizes;
+ *   \li arrays and maps contain the number of elements they are reported to have;
+ * \endlist
+ *
+ * For further checks, see cbor_value_validate().
+ *
+ * This function has the same timing and memory requirements as
+ * cbor_value_advance().
+ *
+ * \sa cbor_value_validate(), cbor_value_advance()
+ */
+CborError cbor_value_validate_basic(const CborValue *it)
+{
+    CborValue value = *it;
+    return cbor_value_advance(&value);
+}
+
+/**
  * Advances the CBOR value \a it by one fixed-size position. Fixed-size types
  * are: integers, tags, simple types (including boolean, null and undefined
  * values) and floating point types.
@@ -480,6 +507,9 @@ static CborError advance_recursive(CborValue *it, int nestingLevel)
  * and will recurse into itself (it will run on O(n) time for the number of
  * elements or chunks and will use O(n) memory for the number of nested
  * containers).
+ *
+ * The number of recursions can be limited at compile time to avoid stack
+ * exhaustion in constrained systems.
  *
  * \sa cbor_value_at_end(), cbor_value_advance_fixed(), cbor_value_enter_container(), cbor_value_leave_container()
  */
