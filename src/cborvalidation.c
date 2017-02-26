@@ -31,6 +31,7 @@
 #include "cbor.h"
 #include "cborinternal_p.h"
 #include "compilersupport_p.h"
+#include "utf8_p.h"
 
 #include <string.h>
 
@@ -227,6 +228,18 @@ static const struct KnownTagData knownTagData[] = {
 
 static CborError validate_value(CborValue *it, int flags, int recursionLeft);
 
+static inline CborError validate_utf8_string(const void *ptr, size_t n)
+{
+    const uint8_t *buffer = (const uint8_t *)ptr;
+    const uint8_t * const end = buffer + n;
+    while (buffer < end) {
+        uint32_t uc = get_utf8(&buffer, end);
+        if (uc == ~0U)
+            return CborErrorInvalidUtf8TextString;
+    }
+    return CborNoError;
+}
+
 static inline CborError validate_simple_type(uint8_t simple_type, int flags)
 {
     /* At current time, all known simple types are those from RFC 7049,
@@ -421,6 +434,12 @@ static CborError validate_value(CborValue *it, int flags, int recursionLeft)
                 return err;
             if (!ptr)
                 break;
+
+            if (type == CborTextStringType && flags & CborValidateUtf8) {
+                err = validate_utf8_string(ptr, n);
+                if (err)
+                    return err;
+            }
         }
 
         return CborNoError;

@@ -31,6 +31,7 @@
 #include "cbor.h"
 #include "cborinternal_p.h"
 #include "compilersupport_p.h"
+#include "utf8_p.h"
 
 #include <float.h>
 #include <inttypes.h>
@@ -161,10 +162,13 @@ static CborError hexDump(FILE *out, const void *ptr, size_t n)
  * On UTF-8 decoding error, it returns CborErrorInvalidUtf8TextString */
 static CborError utf8EscapedDump(FILE *out, const void *ptr, size_t n)
 {
-    const char *buffer = (const char *)ptr;
-    uint32_t uc;
-    while (n--) {
-        uc = (uint8_t)*buffer++;
+    const uint8_t *buffer = (const uint8_t *)ptr;
+    const uint8_t * const end = buffer + n;
+    while (buffer < end) {
+        uint32_t uc = get_utf8(&buffer, end);
+        if (uc == ~0U)
+            return CborErrorInvalidUtf8TextString;
+
         if (uc < 0x80) {
             /* single-byte UTF-8 */
             if (uc < 0x7f && uc >= 0x20 && uc != '\\' && uc != '"') {
@@ -202,65 +206,8 @@ static CborError utf8EscapedDump(FILE *out, const void *ptr, size_t n)
             continue;
         }
 
-        /* multi-byte UTF-8, decode it */
-        unsigned charsNeeded;
-        uint32_t min_uc;
-        if (unlikely(uc <= 0xC1))
-            return CborErrorInvalidUtf8TextString;
-        if (uc < 0xE0) {
-            /* two-byte UTF-8 */
-            charsNeeded = 2;
-            min_uc = 0x80;
-            uc &= 0x1f;
-        } else if (uc < 0xF0) {
-            /* three-byte UTF-8 */
-            charsNeeded = 3;
-            min_uc = 0x800;
-            uc &= 0x0f;
-        } else if (uc < 0xF5) {
-            /* four-byte UTF-8 */
-            charsNeeded = 4;
-            min_uc = 0x10000;
-            uc &= 0x07;
-        } else {
-            return CborErrorInvalidUtf8TextString;
-        }
-
-        if (n < charsNeeded - 1)
-            return CborErrorInvalidUtf8TextString;
-        n -= charsNeeded - 1;
-
-        /* first continuation character */
-        uint8_t b = (uint8_t)*buffer++;
-        if ((b & 0xc0) != 0x80)
-            return CborErrorInvalidUtf8TextString;
-        uc <<= 6;
-        uc |= b & 0x3f;
-
-        if (charsNeeded > 2) {
-            /* second continuation character */
-            b = (uint8_t)*buffer++;
-            if ((b & 0xc0) != 0x80)
-                return CborErrorInvalidUtf8TextString;
-            uc <<= 6;
-            uc |= b & 0x3f;
-
-            if (charsNeeded > 3) {
-                /* third continuation character */
-                b = (uint8_t)*buffer++;
-                if ((b & 0xc0) != 0x80)
-                    return CborErrorInvalidUtf8TextString;
-                uc <<= 6;
-                uc |= b & 0x3f;
-            }
-        }
-
-        /* overlong sequence? surrogate pair? out or range? */
-        if (uc < min_uc || uc - 0xd800U < 2048U || uc > 0x10ffff)
-            return CborErrorInvalidUtf8TextString;
-
         /* now print the sequence */
-        if (charsNeeded > 3) {
+        if (uc > 0xffffU) {
             /* needs surrogate pairs */
             if (fprintf(out, "\\u%04" PRIX32 "\\u%04" PRIX32,
                         (uc >> 10) + 0xd7c0,    /* high surrogate */
