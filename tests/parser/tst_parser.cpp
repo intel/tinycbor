@@ -101,7 +101,8 @@ CborError parseOne(CborValue *it, QString *parsed)
     char *buffer;
     size_t size;
 
-    int flags = CborPrettyShowStringFragments;
+    int flags = CborPrettyShowStringFragments | CborPrettyIndicateIndetermineLength |
+                CborPrettyIndicateOverlongNumbers;
 
     setlocale(LC_ALL, "C");
 #ifdef Q_CC_MSVC
@@ -274,14 +275,14 @@ void addFixedData()
                                    << "-18446744073709551616";
 
     // overlongs
-    QTest::newRow("0*1") << raw("\x18\x00") << "0";
-    QTest::newRow("0*2") << raw("\x19\x00\x00") << "0";
-    QTest::newRow("0*4") << raw("\x1a\0\0\0\0") << "0";
-    QTest::newRow("0*8") << raw("\x1b\0\0\0\0\0\0\0\0") << "0";
-    QTest::newRow("-1*1") << raw("\x38\x00") << "-1";
-    QTest::newRow("-1*2") << raw("\x39\x00\x00") << "-1";
-    QTest::newRow("-1*4") << raw("\x3a\0\0\0\0") << "-1";
-    QTest::newRow("-1*8") << raw("\x3b\0\0\0\0\0\0\0\0") << "-1";
+    QTest::newRow("0*1") << raw("\x18\x00") << "0_0";
+    QTest::newRow("0*2") << raw("\x19\x00\x00") << "0_1";
+    QTest::newRow("0*4") << raw("\x1a\0\0\0\0") << "0_2";
+    QTest::newRow("0*8") << raw("\x1b\0\0\0\0\0\0\0\0") << "0_3";
+    QTest::newRow("-1*1") << raw("\x38\x00") << "-1_0";
+    QTest::newRow("-1*2") << raw("\x39\x00\x00") << "-1_1";
+    QTest::newRow("-1*4") << raw("\x3a\0\0\0\0") << "-1_2";
+    QTest::newRow("-1*8") << raw("\x3b\0\0\0\0\0\0\0\0") << "-1_3";
 
     QTest::newRow("simple0") << raw("\xe0") << "simple(0)";
     QTest::newRow("simple19") << raw("\xf3") << "simple(19)";
@@ -379,36 +380,42 @@ void addStringsData()
     QTest::newRow("textstringutf8-4char") << raw("\x64\xf0\x90\x88\x83") << "\"\\uD800\\uDE03\"";
 
     // strings with overlong length
-    QTest::newRow("emptybytestring*1") << raw("\x58\x00") << "h''";
-    QTest::newRow("emptytextstring*1") << raw("\x78\x00") << "\"\"";
-    QTest::newRow("emptybytestring*2") << raw("\x59\x00\x00") << "h''";
-    QTest::newRow("emptytextstring*2") << raw("\x79\x00\x00") << "\"\"";
-    QTest::newRow("emptybytestring*4") << raw("\x5a\0\0\0\0") << "h''";
-    QTest::newRow("emptytextstring*4") << raw("\x7a\0\0\0\0") << "\"\"";
-    QTest::newRow("emptybytestring*8") << raw("\x5b\0\0\0\0\0\0\0\0") << "h''";
-    QTest::newRow("emptytextstring*8") << raw("\x7b\0\0\0\0\0\0\0\0") << "\"\"";
-    QTest::newRow("bytestring5*1") << raw("\x58\x05Hello") << "h'48656c6c6f'";
-    QTest::newRow("textstring5*1") << raw("\x78\x05Hello") << "\"Hello\"";
-    QTest::newRow("bytestring5*2") << raw("\x59\0\5Hello") << "h'48656c6c6f'";
-    QTest::newRow("textstring5*2") << raw("\x79\0\x05Hello") << "\"Hello\"";
-    QTest::newRow("bytestring5*4") << raw("\x5a\0\0\0\5Hello") << "h'48656c6c6f'";
-    QTest::newRow("textstring5*4") << raw("\x7a\0\0\0\x05Hello") << "\"Hello\"";
-    QTest::newRow("bytestring5*8") << raw("\x5b\0\0\0\0\0\0\0\5Hello") << "h'48656c6c6f'";
-    QTest::newRow("textstring5*8") << raw("\x7b\0\0\0\0\0\0\0\x05Hello") << "\"Hello\"";
+    QTest::newRow("emptybytestring*1") << raw("\x58\x00") << "h''_0";
+    QTest::newRow("emptytextstring*1") << raw("\x78\x00") << "\"\"_0";
+    QTest::newRow("emptybytestring*2") << raw("\x59\x00\x00") << "h''_1";
+    QTest::newRow("emptytextstring*2") << raw("\x79\x00\x00") << "\"\"_1";
+    QTest::newRow("emptybytestring*4") << raw("\x5a\0\0\0\0") << "h''_2";
+    QTest::newRow("emptytextstring*4") << raw("\x7a\0\0\0\0") << "\"\"_2";
+    QTest::newRow("emptybytestring*8") << raw("\x5b\0\0\0\0\0\0\0\0") << "h''_3";
+    QTest::newRow("emptytextstring*8") << raw("\x7b\0\0\0\0\0\0\0\0") << "\"\"_3";
+    QTest::newRow("bytestring5*1") << raw("\x58\x05Hello") << "h'48656c6c6f'_0";
+    QTest::newRow("textstring5*1") << raw("\x78\x05Hello") << "\"Hello\"_0";
+    QTest::newRow("bytestring5*2") << raw("\x59\0\5Hello") << "h'48656c6c6f'_1";
+    QTest::newRow("textstring5*2") << raw("\x79\0\x05Hello") << "\"Hello\"_1";
+    QTest::newRow("bytestring5*4") << raw("\x5a\0\0\0\5Hello") << "h'48656c6c6f'_2";
+    QTest::newRow("textstring5*4") << raw("\x7a\0\0\0\x05Hello") << "\"Hello\"_2";
+    QTest::newRow("bytestring5*8") << raw("\x5b\0\0\0\0\0\0\0\5Hello") << "h'48656c6c6f'_3";
+    QTest::newRow("textstring5*8") << raw("\x7b\0\0\0\0\0\0\0\x05Hello") << "\"Hello\"_3";
 
     // strings with undefined length
     QTest::newRow("_emptybytestring") << raw("\x5f\xff") << "(_ )";
     QTest::newRow("_emptytextstring") << raw("\x7f\xff") << "(_ )";
     QTest::newRow("_emptybytestring2") << raw("\x5f\x40\xff") << "(_ h'')";
     QTest::newRow("_emptytextstring2") << raw("\x7f\x60\xff") << "(_ \"\")";
+    QTest::newRow("_emptybytestring2*1") << raw("\x5f\x58\x00\xff") << "(_ h''_0)";
+    QTest::newRow("_emptytextstring2*1") << raw("\x7f\x78\x00\xff") << "(_ \"\"_0)";
     QTest::newRow("_emptybytestring3") << raw("\x5f\x40\x40\xff") << "(_ h'', h'')";
     QTest::newRow("_emptytextstring3") << raw("\x7f\x60\x60\xff") << "(_ \"\", \"\")";
-    QTest::newRow("_bytestring5*2") << raw("\x5f\x43Hel\x42lo\xff") << "(_ h'48656c', h'6c6f')";
-    QTest::newRow("_textstring5*2") << raw("\x7f\x63Hel\x62lo\xff") << "(_ \"Hel\", \"lo\")";
-    QTest::newRow("_bytestring5*5") << raw("\x5f\x41H\x41""e\x41l\x41l\x41o\xff") << "(_ h'48', h'65', h'6c', h'6c', h'6f')";
-    QTest::newRow("_textstring5*5") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "(_ \"H\", \"e\", \"l\", \"l\", \"o\")";
-    QTest::newRow("_bytestring5*6") << raw("\x5f\x41H\x41""e\x40\x41l\x41l\x41o\xff") << "(_ h'48', h'65', h'', h'6c', h'6c', h'6f')";
-    QTest::newRow("_textstring5*6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << "(_ \"H\", \"e\", \"l\", \"\", \"l\", \"o\")";
+    QTest::newRow("_emptybytestring3*2") << raw("\x5f\x59\x00\x00\x40\xff") << "(_ h''_1, h'')";
+    QTest::newRow("_emptytextstring3*2") << raw("\x7f\x79\x00\x00\x60\xff") << "(_ \"\"_1, \"\")";
+    QTest::newRow("_bytestring5x2") << raw("\x5f\x43Hel\x42lo\xff") << "(_ h'48656c', h'6c6f')";
+    QTest::newRow("_textstring5x2") << raw("\x7f\x63Hel\x62lo\xff") << "(_ \"Hel\", \"lo\")";
+    QTest::newRow("_bytestring5x2*8*4") << raw("\x5f\x5b\0\0\0\0\0\0\0\3Hel\x5a\0\0\0\2lo\xff") << "(_ h'48656c'_3, h'6c6f'_2)";
+    QTest::newRow("_textstring5x2*8*4") << raw("\x7f\x7b\0\0\0\0\0\0\0\3Hel\x7a\0\0\0\2lo\xff") << "(_ \"Hel\"_3, \"lo\"_2)";
+    QTest::newRow("_bytestring5x5") << raw("\x5f\x41H\x41""e\x41l\x41l\x41o\xff") << "(_ h'48', h'65', h'6c', h'6c', h'6f')";
+    QTest::newRow("_textstring5x5") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "(_ \"H\", \"e\", \"l\", \"l\", \"o\")";
+    QTest::newRow("_bytestring5x6") << raw("\x5f\x41H\x41""e\x40\x41l\x41l\x41o\xff") << "(_ h'48', h'65', h'', h'6c', h'6c', h'6f')";
+    QTest::newRow("_textstring5x6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << "(_ \"H\", \"e\", \"l\", \"\", \"l\", \"o\")";
 }
 
 void tst_Parser::strings_data()
@@ -433,10 +440,10 @@ void addTagsData()
                                 << QString::number(std::numeric_limits<uint64_t>::max()) + "(0)";
 
     // overlong tags
-    QTest::newRow("tag0*1") << raw("\xd8\0\x00") << "0(0)";
-    QTest::newRow("tag0*2") << raw("\xd9\0\0\x00") << "0(0)";
-    QTest::newRow("tag0*4") << raw("\xda\0\0\0\0\x00") << "0(0)";
-    QTest::newRow("tag0*8") << raw("\xdb\0\0\0\0\0\0\0\0\x00") << "0(0)";
+    QTest::newRow("tag0*1") << raw("\xd8\0\x00") << "0_0(0)";
+    QTest::newRow("tag0*2") << raw("\xd9\0\0\x00") << "0_1(0)";
+    QTest::newRow("tag0*4") << raw("\xda\0\0\0\0\x00") << "0_2(0)";
+    QTest::newRow("tag0*8") << raw("\xdb\0\0\0\0\0\0\0\0\x00") << "0_3(0)";
 
     // tag other things
     QTest::newRow("unixtime") << raw("\xc1\x1a\x55\x4b\xbf\xd3") << "1(1431027667)";
@@ -510,13 +517,13 @@ void tst_Parser::arrays()
     if (compareFailed) return;
 
     // overlong length
-    compareOneSize(1, "\x98\1" + data, '[' + expected + ']');
+    compareOneSize(1, "\x98\1" + data, "[_0 " + expected + ']');
     if (compareFailed) return;
-    compareOneSize(1, raw("\x99\0\1") + data, '[' + expected + ']');
+    compareOneSize(1, raw("\x99\0\1") + data, "[_1 " + expected + ']');
     if (compareFailed) return;
-    compareOneSize(1, raw("\x9a\0\0\0\1") + data, '[' + expected + ']');
+    compareOneSize(1, raw("\x9a\0\0\0\1") + data, "[_2 " + expected + ']');
     if (compareFailed) return;
-    compareOneSize(1, raw("\x9b\0\0\0\0\0\0\0\1") + data, '[' + expected + ']');
+    compareOneSize(1, raw("\x9b\0\0\0\0\0\0\0\1") + data, "[_3 " + expected + ']');
     if (compareFailed) return;
 
     // medium-sized array: 32 elements (1 << 5)
@@ -690,19 +697,19 @@ void tst_Parser::nestedMaps()
 void addMapMixedData()
 {
     QTest::newRow("map-0-24") << raw("\xa1\0\x18\x18") << "{0: 24}" << 1;
-    QTest::newRow("map-0*1-24") << raw("\xa1\x18\0\x18\x18") << "{0: 24}" << 1;
-    QTest::newRow("map-0*1-24*2") << raw("\xa1\x18\0\x19\0\x18") << "{0: 24}" << 1;
-    QTest::newRow("map-0*4-24*2") << raw("\xa1\x1a\0\0\0\0\x19\0\x18") << "{0: 24}" << 1;
+    QTest::newRow("map-0*1-24") << raw("\xa1\x18\0\x18\x18") << "{0_0: 24}" << 1;
+    QTest::newRow("map-0*1-24*2") << raw("\xa1\x18\0\x19\0\x18") << "{0_0: 24_1}" << 1;
+    QTest::newRow("map-0*4-24*2") << raw("\xa1\x1a\0\0\0\0\x19\0\x18") << "{0_2: 24_1}" << 1;
     QTest::newRow("map-24-0") << raw("\xa1\x18\x18\0") << "{24: 0}" << 1;
-    QTest::newRow("map-24-0*1") << raw("\xa1\x18\x18\0") << "{24: 0}" << 1;
+    QTest::newRow("map-24-0*1") << raw("\xa1\x18\x18\x18\0") << "{24: 0_0}" << 1;
     QTest::newRow("map-255-65535") << raw("\xa1\x18\xff\x19\xff\xff") << "{255: 65535}" << 1;
 
     QTest::newRow("_map-0-24") << raw("\xbf\0\x18\x18\xff") << "{_ 0: 24}" << 1;
-    QTest::newRow("_map-0*1-24") << raw("\xbf\x18\0\x18\x18\xff") << "{_ 0: 24}" << 1;
-    QTest::newRow("_map-0*1-24*2") << raw("\xbf\x18\0\x19\0\x18\xff") << "{_ 0: 24}" << 1;
-    QTest::newRow("_map-0*4-24*2") << raw("\xbf\x1a\0\0\0\0\x19\0\x18\xff") << "{_ 0: 24}" << 1;
+    QTest::newRow("_map-0*1-24") << raw("\xbf\x18\0\x18\x18\xff") << "{_ 0_0: 24}" << 1;
+    QTest::newRow("_map-0*1-24*2") << raw("\xbf\x18\0\x19\0\x18\xff") << "{_ 0_0: 24_1}" << 1;
+    QTest::newRow("_map-0*4-24*2") << raw("\xbf\x1a\0\0\0\0\x19\0\x18\xff") << "{_ 0_2: 24_1}" << 1;
     QTest::newRow("_map-24-0") << raw("\xbf\x18\x18\0\xff") << "{_ 24: 0}" << 1;
-    QTest::newRow("_map-24-0*1") << raw("\xbf\x18\x18\0\xff") << "{_ 24: 0}" << 1;
+    QTest::newRow("_map-24-0*1") << raw("\xbf\x18\x18\x18\0\xff") << "{_ 24: 0_0}" << 1;
     QTest::newRow("_map-255-65535") << raw("\xbf\x18\xff\x19\xff\xff\xff") << "{_ 255: 65535}" << 1;
 }
 
