@@ -105,11 +105,32 @@
  *      A dot is always present.
  * \par Arrays:
  *      Comma-separated list of elements, enclosed in square brackets ("[" and "]").
- *     If the array length is indeterminate, an underscore ("_") appears immediately after the opening bracket.
  * \par Maps:
  *      Comma-separated list of key-value pairs, with the key and value separated
  *      by a colon (":"), enclosed in curly braces ("{" and "}").
- *      If the map length is indeterminate, an underscore ("_") appears immediately after the opening brace.
+ *
+ * The CborPrettyFlags enumerator contains flags to control some aspects of the
+ * encoding:
+ * \par String fragmentation
+ *      When the CborPrettyShowStringFragments option is active, text and byte
+ *      strings that are transmitted in fragments are shown instead inside
+ *      parentheses ("(" and ")") with no preceding number and each fragment is
+ *      displayed individually. If a tag precedes the string, then the output
+ *      will contain a double set of parentheses. If the option is not active,
+ *      the fragments are merged together and the display will not show any
+ *      difference from a string transmitted with determinate length.
+ * \par Encoding indicators
+ *      Numbers and lengths in CBOR can be encoded in multiple representations.
+ *      If the CborPrettyIndicateOverlongNumbers option is active, numbers
+ *      and lengths that are transmitted in a longer encoding than necessary
+ *      will be indicated, by appending an underscore ("_") to either the
+ *      number or the opening bracket or brace, followed by a number
+ *      indicating the CBOR additional information: 0 for 1 byte, 1 for 2
+ *      bytes, 2 for 4 bytes and 3 for 8 bytes.
+ *      If the CborPrettyIndicateIndetermineLength option is active, maps,
+ *      arrays and strings encoded with indeterminate length will be marked by
+ *      an underscore after the opening bracket or brace or the string (if not
+ *      showing fragments), without a number after it.
  */
 
 /**
@@ -118,6 +139,8 @@
  *
  * \value CborPrettyNumericEncodingIndicators   Use numeric encoding indicators instead of textual for float and half-float.
  * \value CborPrettyTextualEncodingIndicators   Use textual encoding indicators for float ("f") and half-float ("f16").
+ * \value CborPrettyIndicateIndetermineLength   Indicate when a map or array has indeterminate length.
+ * \value CborPrettyIndicateOverlongNumbers     Indicate when a number or length was encoded with more bytes than needed.
  * \value CborPrettyShowStringFragments         If the byte or text string is transmitted in chunks, show each individually.
  * \value CborPrettyMergeStringFragment         Merge all chunked byte or text strings and display them in a single entry.
  * \value CborPrettyDefaultFlags       Default conversion flags.
@@ -253,6 +276,56 @@ print_utf16:
     return CborNoError;
 }
 
+static const char *resolve_indicator(const uint8_t *ptr, const uint8_t *end, int flags)
+{
+    static const char indicators[8][3] = {
+        "_0", "_1", "_2", "_3",
+        "", "", "",             /* these are not possible */
+        "_"
+    };
+    const char *no_indicator = indicators[5];   /* empty string */
+    uint8_t additional_information;
+    uint8_t expected_information;
+    uint64_t value;
+    CborError err;
+
+    if (ptr == end)
+        return NULL;    /* CborErrorUnexpectedEOF */
+
+    additional_information = (*ptr & SmallValueMask);
+    if (additional_information < Value8Bit)
+        return no_indicator;
+
+    /* determine whether to show anything */
+    if ((flags & CborPrettyIndicateIndetermineLength) &&
+            additional_information == IndefiniteLength)
+        return indicators[IndefiniteLength - Value8Bit];
+    if ((flags & CborPrettyIndicateOverlongNumbers) == 0)
+        return no_indicator;
+
+    err = _cbor_value_extract_number(&ptr, end, &value);
+    if (err)
+        return NULL;    /* CborErrorUnexpectedEOF */
+
+    expected_information = Value8Bit - 1;
+    if (value >= Value8Bit)
+        ++expected_information;
+    if (value > 0xffU)
+        ++expected_information;
+    if (value > 0xffffU)
+        ++expected_information;
+    if (value > 0xffffffffU)
+        ++expected_information;
+    return expected_information == additional_information ?
+                no_indicator :
+                indicators[additional_information - Value8Bit];
+}
+
+static const char *get_indicator(const CborValue *it, int flags)
+{
+    return resolve_indicator(it->ptr, it->parser->end, flags);
+}
+
 static CborError value_to_pretty(FILE *out, CborValue *it, int flags);
 static CborError container_to_pretty(FILE *out, CborValue *it, CborType containerType, int flags)
 {
@@ -288,13 +361,11 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
     case CborMapType: {
         /* recursive type */
         CborValue recursed;
+        const char *indicator = get_indicator(it, flags);
+        const char *space = *indicator ? " " : indicator;
 
-        if (fprintf(out, type == CborArrayType ? "[" : "{") < 0)
+        if (fprintf(out, "%c%s%s", type == CborArrayType ? '[' : '{', indicator, space) < 0)
             return CborErrorIO;
-        if (!cbor_value_is_length_known(it)) {
-            if (fprintf(out, "_ ") < 0)
-                return CborErrorIO;
-        }
 
         err = cbor_value_enter_container(it, &recursed);
         if (err) {
@@ -336,6 +407,8 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
                     return CborErrorIO;
             }
         }
+        if (fprintf(out, "%s", get_indicator(it, flags)) < 0)
+            return CborErrorIO;
         break;
     }
 
@@ -347,16 +420,30 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
         const char *separator = "";
         char close = '\'';
         char open[3] = "h'";
+        const char *indicator = NULL;
 
         if (type == CborTextStringType) {
             close = open[0] = '"';
             open[1] = '\0';
         }
 
-        if (fputs(showingFragments ? "(_ " : open, out) < 0)
-            return CborErrorIO;
+        if (showingFragments) {
+            if (fputs("(_ ", out) < 0)
+                return CborErrorIO;
+            err = _cbor_value_prepare_string_iteration(it);
+            if (err)
+                return err;
+        } else {
+            if (fputs(open, out) < 0)
+                return CborErrorIO;
+        }
 
         while (1) {
+            if (showingFragments || indicator == NULL) {
+                /* any iteration, except the second for a non-chunked string */
+                indicator = resolve_indicator(it->ptr, it->parser->end, flags);
+            }
+
             err = _cbor_value_get_string_chunk(it, &ptr, &n, it);
             if (err)
                 return err;
@@ -369,13 +456,15 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
             if (err)
                 return err;
             if (showingFragments) {
-                if (fputc(close, out) < 0)
+                if (fprintf(out, "%c%s", close, indicator) < 0)
                     return CborErrorIO;
                 separator = ", ";
             }
         }
 
-        if (fputc(showingFragments ? ')' : close, out) < 0)
+        if (showingFragments && fputc(')', out) < 0)
+            return CborErrorIO;
+        if (!showingFragments && fprintf(out, "%c%s", close, indicator) < 0)
             return CborErrorIO;
         return CborNoError;
     }
@@ -383,7 +472,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
     case CborTagType: {
         CborTag tag;
         cbor_value_get_tag(it, &tag);       /* can't fail */
-        if (fprintf(out, "%" PRIu64 "(", tag) < 0)
+        if (fprintf(out, "%" PRIu64 "%s(", tag, get_indicator(it, flags)) < 0)
             return CborErrorIO;
         err = cbor_value_advance_fixed(it);
         if (err)
@@ -397,8 +486,9 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
     }
 
     case CborSimpleType: {
+        /* simple types can't fail and can't have overlong encoding */
         uint8_t simple_type;
-        cbor_value_get_simple_type(it, &simple_type);  /* can't fail */
+        cbor_value_get_simple_type(it, &simple_type);
         if (fprintf(out, "simple(%" PRIu8 ")", simple_type) < 0)
             return CborErrorIO;
         break;

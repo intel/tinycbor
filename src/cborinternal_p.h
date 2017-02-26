@@ -80,5 +80,6 @@ enum {
 };
 
 CBOR_INTERNAL_API CBOR_INTERNAL_API_CC CborError _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len);
+CBOR_INTERNAL_API CBOR_INTERNAL_API_CC CborError _cbor_value_prepare_string_iteration(CborValue *it);
 
 #endif /* CBORINTERNAL_P_H */

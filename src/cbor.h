@@ -487,10 +487,13 @@ enum CborPrettyFlags {
     CborPrettyNumericEncodingIndicators     = 0x01,
     CborPrettyTextualEncodingIndicators     = 0,
 
+    CborPrettyIndicateIndetermineLength     = 0x02,
+    CborPrettyIndicateOverlongNumbers       = 0x04,
+
     CborPrettyShowStringFragments           = 0x100,
     CborPrettyMergeStringFragments          = 0,
 
-    CborPrettyDefaultFlags          = 0
+    CborPrettyDefaultFlags          = CborPrettyIndicateIndetermineLength
 };
 
 CBOR_API CborError cbor_value_to_pretty_advance_flags(FILE *out, CborValue *value, int flags);

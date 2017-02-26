@@ -940,6 +940,27 @@ CborError cbor_value_calculate_string_length(const CborValue *value, size_t *len
     return _cbor_value_copy_string(value, NULL, len, NULL);
 }
 
+static inline void prepare_string_iteration(CborValue *it)
+{
+    if (!cbor_value_is_length_known(it)) {
+        /* chunked string: we're before the first chunk;
+         * advance to the first chunk */
+        ++it->ptr;
+        it->flags |= CborIteratorFlag_IteratingStringChunks;
+    }
+}
+
+CBOR_INTERNAL_API_CC CborError _cbor_value_prepare_string_iteration(CborValue *it)
+{
+    cbor_assert((it->flags & CborIteratorFlag_IteratingStringChunks) == 0);
+    prepare_string_iteration(it);
+
+    /* are we at the end? */
+    if (it->ptr == it->parser->end)
+        return CborErrorUnexpectedEOF;
+    return CborNoError;
+}
+
 static CborError get_string_chunk(CborValue *it, const void **bufferptr, size_t *len)
 {
     CborError err;
@@ -957,9 +978,8 @@ static CborError get_string_chunk(CborValue *it, const void **bufferptr, size_t 
             /* if the length was known, it wasn't chunked, so finish iteration */
             goto last_chunk;
         }
-    } else if (!cbor_value_is_length_known(it)) {
-        /* chunked string, we're before the first chunk */
-        ++it->ptr;
+    } else {
+        prepare_string_iteration(it);
     }
 
     /* are we at the end? */
