@@ -140,6 +140,10 @@ typedef enum CborError {
     CborErrorInappropriateTagForType,
     CborErrorDuplicateObjectKeys,
     CborErrorInvalidUtf8TextString,
+    CborErrorExcludedType,
+    CborErrorExcludedValue,
+    CborErrorImproperValue,
+    CborErrorOverlongEncoding,
 
     /* encoder errors */
     CborErrorTooManyItems = 768,
@@ -482,6 +486,51 @@ CBOR_INLINE_API CborError cbor_value_get_double(const CborValue *value, double *
     memcpy(result, &data, sizeof(*result));
     return CborNoError;
 }
+
+/* Validation API */
+
+enum CborValidationFlags {
+    /* Bit mapping:
+     *  bits 0-7 (8 bits):      canonical format
+     *  bits 8-11 (4 bits):     canonical format & strict mode
+     *  bits 12-20 (8 bits):    strict mode
+     *  bits 21-31 (10 bits):   other
+     */
+
+    CborValidateShortestIntegrals           = 0x0001,
+    CborValidateShortestFloatingPoint       = 0x0002,
+    CborValidateShortestNumbers             = CborValidateShortestIntegrals | CborValidateShortestFloatingPoint,
+    CborValidateNoIndeterminateLength       = 0x0100,
+    CborValidateMapIsSorted                 = 0x0200 | CborValidateNoIndeterminateLength,
+
+    CborValidateCanonicalFormat             = 0x0fff,
+
+    CborValidateMapKeysAreUnique            = 0x1000 | CborValidateMapIsSorted,
+    CborValidateTagUse                      = 0x2000,
+    CborValidateUtf8                        = 0x4000,
+
+    CborValidateStrictMode                  = 0xfff00,
+
+    CborValidateMapKeysAreString            = 0x100000,
+    CborValidateNoUndefined                 = 0x200000,
+    CborValidateNoTags                      = 0x400000,
+    CborValidateFiniteFloatingPoint         = 0x800000,
+    /* unused                               = 0x1000000, */
+    /* unused                               = 0x2000000, */
+
+    CborValidateNoUnknownSimpleTypesSA      = 0x4000000,
+    CborValidateNoUnknownSimpleTypes        = 0x8000000 | CborValidateNoUnknownSimpleTypesSA,
+    CborValidateNoUnknownTagsSA             = 0x10000000,
+    CborValidateNoUnknownTagsSR             = 0x20000000 | CborValidateNoUnknownTagsSA,
+    CborValidateNoUnknownTags               = 0x40000000 | CborValidateNoUnknownTagsSR,
+
+    CborValidateCompleteData                = (int)0x80000000,
+
+    CborValidateStrictest                   = (int)~0U,
+    CborValidateBasic                       = 0
+};
+
+CBOR_API CborError cbor_value_validate(const CborValue *it, int flags);
 
 /* Human-readable (dump) API */
 

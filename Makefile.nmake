@@ -7,7 +7,8 @@ TINYCBOR_SOURCES = \
 	src\cborencoder_close_container_checked.c \
 	src\cborparser.c \
 	src\cborparser_dup_string.c \
-	src\cborpretty.c
+	src\cborpretty.c \
+	src/cborvalidation.c
 TINYCBOR_OBJS = \
 	src\cborerrorstrings.obj \
 	src\cborencoder.obj \

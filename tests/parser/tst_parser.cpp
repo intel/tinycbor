@@ -87,6 +87,8 @@ private slots:
     void checkedIntegers();
     void validation_data();
     void validation();
+    void strictValidation_data();
+    void strictValidation();
     void resumeParsing_data();
     void resumeParsing();
     void endPointer_data();
@@ -1303,6 +1305,10 @@ static void addValidationData()
     QTest::newRow("illegal-number-in-map-length-1") << raw("\x81\xbc") << 0 << CborErrorIllegalNumber;
     QTest::newRow("illegal-number-in-map-length-2") << raw("\x81\xbd") << 0 << CborErrorIllegalNumber;
     QTest::newRow("illegal-number-in-map-length-3") << raw("\x81\xbe") << 0 << CborErrorIllegalNumber;
+    QTest::newRow("illegal-number-in-tag-1") << raw("\x81\xdc") << 0 << CborErrorIllegalNumber;
+    QTest::newRow("illegal-number-in-tag-2") << raw("\x81\xdd") << 0 << CborErrorIllegalNumber;
+    QTest::newRow("illegal-number-in-tag-3") << raw("\x81\xde") << 0 << CborErrorIllegalNumber;
+    QTest::newRow("illegal-number-in-tag-4") << raw("\x81\xdf") << 0 << CborErrorIllegalNumber;
 
     QTest::newRow("unsigned-too-short-1-0") << raw("\x81\x18") << 0 << CborErrorUnexpectedEOF;   // requires 1 byte, 0 given
     QTest::newRow("unsigned-too-short-2-0") << raw("\x81\x19") << 0 << CborErrorUnexpectedEOF;   // requires 2 bytes, 0 given
@@ -1526,10 +1532,160 @@ void tst_Parser::validation()
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
     CborError err2 = cbor_value_validate_basic(&first);
+    CborError err3 = cbor_value_validate(&first, CborValidateBasic);
     err = parseOne(&first, &decoded);
     QCOMPARE(int(err), int(expectedError));
-    if (!QByteArray(QTest::currentDataTag()).contains("utf8"))
+    if (!QByteArray(QTest::currentDataTag()).contains("utf8")) {
         QCOMPARE(int(err2), int(expectedError));
+        QCOMPARE(int(err3), int(expectedError));
+    }
+}
+
+void tst_Parser::strictValidation_data()
+{
+    addValidationColumns();
+
+    // Canonical validation - fixed types
+    QTest::newRow("unsigned-0") << raw("\x00") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("unsigned-24") << raw("\x18\x18") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("unsigned-256") << raw("\x19\1\0") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("unsigned-65526") << raw("\x1a\0\1\0\0") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("unsigned-4294967296") << raw("\x1b\0\0\0\1\0\0\0\0") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("negative-1") << raw("\x20") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("negative-25") << raw("\x38\x38") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("negative-257") << raw("\x39\1\0") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("negative-65527") << raw("\x3a\0\1\0\0") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("negative-4294967297") << raw("\x3b\0\0\0\1\0\0\0\0") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("simple-0") << raw("\xe0") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("false") << raw("\xf4") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("true") << raw("\xf5") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("null") << raw("\xf6") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("undefined") << raw("\xf7") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("simple-32") << raw("\xf8\x20") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("fp-nan") << raw("\xf9\x7e\00") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("fp--inf") << raw("\xf9\xfc\00") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("fp-+inf") << raw("\xf9\x7c\00") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("overlong-fp-nan_f") << raw("\xfa\x7f\xc0\0\0") << int(CborValidateCanonicalFormat) << CborErrorOverlongEncoding;
+    QTest::newRow("overlong-fp--inf_f") << raw("\xfa\xff\x80\0\0") << int(CborValidateCanonicalFormat) << CborErrorOverlongEncoding;
+    QTest::newRow("overlong-fp-+inf_f") << raw("\xfa\x7f\x80\0\0") << int(CborValidateCanonicalFormat) << CborErrorOverlongEncoding;
+    QTest::newRow("overlong-fp-nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << int(CborValidateCanonicalFormat) << CborErrorOverlongEncoding;
+    QTest::newRow("overlong-fp--inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << int(CborValidateCanonicalFormat) << CborErrorOverlongEncoding;
+    QTest::newRow("overlong-fp-+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << int(CborValidateCanonicalFormat) << CborErrorOverlongEncoding;
+
+    // canonical - lengths
+    QByteArray data24(24, 0x20);    // also decodes as -1
+    QByteArray data256(256, 0x40);  // also decodes as h''
+    QByteArray data65536(65536, 0x60);// also decodes as ""
+    QTest::newRow("bytearray-0") << raw("\x40") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("bytearray-24") << (raw("\x58\x18") + data24) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("bytearray-256") << (raw("\x59\1\0") + data256) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("bytearray-65536") << (raw("\x5a\0\1\0\0") + data65536) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("_bytearray-0") << raw("\x5f\xff") << int(CborValidateCanonicalFormat) << CborErrorUnknownLength;
+    QTest::newRow("string-0") << raw("\x60") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("string-24") << (raw("\x78\x18") + data24) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("string-256") << (raw("\x79\1\0") + data256) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("string-65536") << (raw("\x7a\0\1\0\0") + data65536) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("_string-0") << raw("\x7f\xff") << int(CborValidateCanonicalFormat) << CborErrorUnknownLength;
+    QTest::newRow("array-0") << raw("\x80") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("array-24") << (raw("\x98\x18") + data24) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("array-256") << (raw("\x99\1\0") + data256) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("array-65536") << (raw("\x9a\0\1\0\0") + data65536) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("_array-0") << raw("\x9f\xff") << int(CborValidateCanonicalFormat) << CborErrorUnknownLength;
+
+    // we need unique, sorted, string keys for map
+    // we'll make all key-value pairs a total of 4 bytes
+    char mapentry[] = { 0x62, 0, 0, 0x20 };
+    QByteArray mapdata24(24 * sizeof(mapentry), Qt::Uninitialized);
+    QByteArray mapdata256(256 * sizeof(mapentry), Qt::Uninitialized);
+    char *mapdata24ptr = mapdata24.data();
+    char *mapdata256ptr = mapdata256.data();
+    for (int i = 0; i < 256; ++i) {
+        mapentry[1] = 'A' + (i >> 4);
+        mapentry[2] = 'a' + (i & 0xf);
+        memcpy(mapdata256ptr + i * sizeof(mapentry), mapentry, sizeof(mapentry));
+        if (i < 24)
+            memcpy(mapdata24ptr + i * sizeof(mapentry), mapentry, sizeof(mapentry));
+    }
+    QTest::newRow("map-0") << raw("\xa0") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("map-24") << (raw("\xb8\x18") + mapdata24) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("map-256") << (raw("\xb9\1\0") + mapdata256) << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("_map-0") << raw("\xbf\xff") << int(CborValidateCanonicalFormat) << CborErrorUnknownLength;
+
+    QTest::newRow("tag-0") << raw("\xc0\x60") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("tag-24") << raw("\xd8\x18\x40") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("tag-55799") << raw("\xd9\xd9\xf7\x60") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("tag-65536") << raw("\xda\0\1\0\0\x60") << int(CborValidateCanonicalFormat) << CborNoError;
+    QTest::newRow("tag-4294967296") << raw("\xdb\0\0\0\1\0\0\0\0\x60") << int(CborValidateCanonicalFormat) << CborNoError;
+
+    // excluded non-finite
+    QTest::newRow("excluded-fp-nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp-nan_f") << raw("\xfa\x7f\xc0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp--inf_f") << raw("\xfa\xff\x80\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp--inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp-+inf_f") << raw("\xfa\x7f\x80\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp-+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+
+    // excluded undefined
+    QTest::newRow("no-undefined") << raw("\xf7") << int(CborValidateNoUndefined) << CborErrorExcludedType;
+
+    // exclude non-finite
+    QTest::newRow("excluded-fp-nan_f16") << raw("\xf9\x7e\00") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp--inf_f16") << raw("\xf9\xfc\00") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp-+inf_f16") << raw("\xf9\x7c\00") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp-nan_f") << raw("\xfa\x7f\xc0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp--inf_f") << raw("\xfa\xff\x80\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp-+inf_f") << raw("\xfa\x7f\x80\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp-nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp--inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+    QTest::newRow("excluded-fp-+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+
+    // unknown simple types
+    QTest::newRow("unknown-simple-type-0") << raw("\xe0") << int(CborValidateNoUnknownSimpleTypes) << CborErrorUnknownSimpleType;
+    QTest::newRow("unknown-simple-type-32") << raw("\xf8\x20") << int(CborValidateNoUnknownSimpleTypes) << CborErrorUnknownSimpleType;
+    QTest::newRow("allowed-simple-type-32") << raw("\xf8\x20") << int(CborValidateNoUnknownSimpleTypesSA) << CborNoError;
+
+    // unknown tags
+    QTest::newRow("unknown-tag-6") << raw("\xc6\x60") << int(CborValidateNoUnknownTags) << CborErrorUnknownTag;
+    QTest::newRow("unknown-tag-31") << raw("\xd8\x1f\x60") << int(CborValidateNoUnknownTags) << CborErrorUnknownTag;
+    QTest::newRow("unknown-tag-256") << raw("\xd9\1\0\x60") << int(CborValidateNoUnknownTags) << CborErrorUnknownTag;
+    QTest::newRow("unknown-tag-65536") << raw("\xda\0\1\0\0\x60") << int(CborValidateNoUnknownTags) << CborErrorUnknownTag;
+    QTest::newRow("unknown-tag-4294967296") << raw("\xdb\0\0\0\1\0\0\0\0\x60") << int(CborValidateNoUnknownTags) << CborErrorUnknownTag;
+//    QTest::newRow("allowed-tag-31") << raw("\xd8\x1f\x60") << int(CborValidateNoUnknownTagsSA) << CborNoError;
+//    QTest::newRow("allowed-tag-256") << raw("\xd8\x1f\x60") << int(CborValidateNoUnknownTagsSR) << CborNoError;
+
+    // excluded tags
+    QTest::newRow("excluded-tag-0") << raw("\xc0\x60") << int(CborValidateNoTags) << CborErrorExcludedType;
+    QTest::newRow("excluded-tag-24") << raw("\xd8\x18\x40") << int(CborValidateNoTags) << CborErrorExcludedType;
+    QTest::newRow("excluded-tag-55799") << raw("\xd9\xd9\xf7\x60") << int(CborValidateNoTags) << CborErrorExcludedType;
+
+    // complete data
+    QTest::newRow("garbage-data-0") << raw("\0\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-1") << raw("\x20\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-2") << raw("\x40\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-3") << raw("\x60\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-4") << raw("\x80\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-5") << raw("\xa0\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-6") << raw("\xc0\x60\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-7") << raw("\xf4\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-f16") << raw("\xf9\0\0\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-f32") << raw("\xfa\0\0\0\0\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+    QTest::newRow("garbage-data-f64") << raw("\xfb\0\0\0\0\0\0\0\0\1") << int(CborValidateCompleteData) << CborErrorGarbageAtEnd;
+}
+
+void tst_Parser::strictValidation()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(int, flags);
+    QFETCH(CborError, expectedError);
+
+    QString decoded;
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    err = cbor_value_validate(&first, flags);
+    QCOMPARE(int(err), int(expectedError));
 }
 
 void tst_Parser::resumeParsing_data()

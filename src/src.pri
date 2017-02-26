@@ -6,6 +6,7 @@ SOURCES += \
     $$PWD/cborparser_dup_string.c \
     $$PWD/cborpretty.c \
     $$PWD/cbortojson.c \
+    $$PWD/cborvalidation.c \
 
 HEADERS += $$PWD/cbor.h $$PWD/tinycbor-version.h
 

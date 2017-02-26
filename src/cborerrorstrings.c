@@ -134,6 +134,16 @@ const char *cbor_error_string(CborError error)
     case CborErrorInvalidUtf8TextString:
         return _("invalid UTF-8 content in string");
 
+    case CborErrorExcludedType:
+        return _("excluded type found");
+
+    case CborErrorExcludedValue:
+        return _("excluded value found");
+
+    case CborErrorImproperValue:
+    case CborErrorOverlongEncoding:
+        return _("value encoded in non-canonical form");
+
     case CborErrorTooManyItems:
         return _("too many items added to encoder");
 

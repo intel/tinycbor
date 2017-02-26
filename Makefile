@@ -29,6 +29,7 @@ TINYCBOR_SOURCES = \
 	src/cborparser_dup_string.c \
 	src/cborpretty.c \
 	src/cbortojson.c \
+	src/cborvalidation.c \
 #
 CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 
