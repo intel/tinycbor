@@ -36,7 +36,6 @@
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 /**
@@ -122,20 +121,22 @@
  * \value CborPrettyDefaultFlags       Default conversion flags.
  */
 
-static int hexDump(FILE *out, const uint8_t *buffer, size_t n)
+static CborError hexDump(FILE *out, const void *ptr, size_t n)
 {
+    const uint8_t *buffer = (const uint8_t *)ptr;
     while (n--) {
         int r = fprintf(out, "%02" PRIx8, *buffer++);
         if (r < 0)
-            return r;
+            return CborErrorIO;
     }
-    return 0;   /* should be n * 2, but we don't have the original n anymore */
+    return CborNoError;
 }
 
 /* This function decodes buffer as UTF-8 and prints as escaped UTF-16.
  * On UTF-8 decoding error, it returns CborErrorInvalidUtf8TextString */
-static int utf8EscapedDump(FILE *out, const char *buffer, size_t n)
+static CborError utf8EscapedDump(FILE *out, const void *ptr, size_t n)
 {
+    const char *buffer = (const char *)ptr;
     uint32_t uc;
     while (n--) {
         uc = (uint8_t)*buffer++;
@@ -336,32 +337,36 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
         break;
     }
 
-    case CborByteStringType:{
-        size_t n = 0;
-        uint8_t *buffer;
-        err = cbor_value_dup_byte_string(it, &buffer, &n, it);
-        if (err)
-            return err;
-
-        bool failed = fprintf(out, "h'") < 0 || hexDump(out, buffer, n) < 0 || fprintf(out, "'") < 0;
-        free(buffer);
-        return failed ? CborErrorIO : CborNoError;
-    }
-
+    case CborByteStringType:
     case CborTextStringType: {
         size_t n = 0;
-        char *buffer;
-        err = cbor_value_dup_text_string(it, &buffer, &n, it);
-        if (err)
-            return err;
+        const void *ptr;
+        char close = '\'';
+        char open[3] = "h'";
 
-        err = CborNoError;
-        bool failed = fprintf(out, "\"") < 0
-                      || (err = utf8EscapedDump(out, buffer, n)) != CborNoError
-                      || fprintf(out, "\"") < 0;
-        free(buffer);
-        return err != CborNoError ? err :
-                                    failed ? CborErrorIO : CborNoError;
+        if (type == CborTextStringType) {
+            close = open[0] = '"';
+            open[1] = '\0';
+        }
+
+        if (fputs(open, out) < 0)
+            return CborErrorIO;
+
+        while (1) {
+            err = _cbor_value_get_string_chunk(it, &ptr, &n, it);
+            if (err)
+                return err;
+            if (!ptr)
+                break;
+
+            err = (type == CborByteStringType ? hexDump(out, ptr, n) : utf8EscapedDump(out, ptr, n));
+            if (err)
+                return err;
+        }
+
+        if (fputc(close, out) < 0)
+            return CborErrorIO;
+        return CborNoError;
     }
 
     case CborTagType: {
