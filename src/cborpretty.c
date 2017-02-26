@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Intel Corporation
+** Copyright (C) 2017 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -108,6 +108,13 @@
  *      Comma-separated list of key-value pairs, with the key and value separated
  *      by a colon (":"), enclosed in curly braces ("{" and "}").
  *      If the map length is indeterminate, an underscore ("_") appears immediately after the opening brace.
+ */
+
+/**
+ * \enum CborPrettyFlags
+ * The CborPrettyFlags enum contains flags that control the conversion of CBOR to text format.
+ *
+ * \value CborPrettyDefaultFlags       Default conversion flags.
  */
 
 static int hexDump(FILE *out, const uint8_t *buffer, size_t n)
@@ -238,8 +245,8 @@ print_utf16:
     return CborNoError;
 }
 
-static CborError value_to_pretty(FILE *out, CborValue *it);
-static CborError container_to_pretty(FILE *out, CborValue *it, CborType containerType)
+static CborError value_to_pretty(FILE *out, CborValue *it, int flags);
+static CborError container_to_pretty(FILE *out, CborValue *it, CborType containerType, int flags)
 {
     const char *comma = "";
     while (!cbor_value_at_end(it)) {
@@ -247,7 +254,7 @@ static CborError container_to_pretty(FILE *out, CborValue *it, CborType containe
             return CborErrorIO;
         comma = ", ";
 
-        CborError err = value_to_pretty(out, it);
+        CborError err = value_to_pretty(out, it, flags);
         if (err)
             return err;
 
@@ -257,14 +264,14 @@ static CborError container_to_pretty(FILE *out, CborValue *it, CborType containe
         /* map: that was the key, so get the value */
         if (fprintf(out, ": ") < 0)
             return CborErrorIO;
-        err = value_to_pretty(out, it);
+        err = value_to_pretty(out, it, flags);
         if (err)
             return err;
     }
     return CborNoError;
 }
 
-static CborError value_to_pretty(FILE *out, CborValue *it)
+static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
 {
     CborError err;
     CborType type = cbor_value_get_type(it);
@@ -286,7 +293,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
             it->ptr = recursed.ptr;
             return err;       /* parse error */
         }
-        err = container_to_pretty(out, &recursed, type);
+        err = container_to_pretty(out, &recursed, type, flags);
         if (err) {
             it->ptr = recursed.ptr;
             return err;       /* parse error */
@@ -360,7 +367,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
         err = cbor_value_advance_fixed(it);
         if (err)
             return err;
-        err = value_to_pretty(out, it);
+        err = value_to_pretty(out, it, flags);
         if (err)
             return err;
         if (fprintf(out, ")") < 0)
@@ -465,7 +472,26 @@ static CborError value_to_pretty(FILE *out, CborValue *it)
  */
 CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value)
 {
-    return value_to_pretty(out, value);
+    return value_to_pretty(out, value, CborPrettyDefaultFlags);
+}
+
+/**
+ * Converts the current CBOR type pointed by \a value to its textual
+ * representation and writes it to the \a out stream. If an error occurs, this
+ * function returns an error code similar to CborParsing.
+ *
+ * The textual representation can be controlled by the \a flags parameter (see
+ * CborPrettyFlags for more information).
+ *
+ * If no error ocurred, this function advances \a value to the next element.
+ * Often, concatenating the text representation of multiple elements can be
+ * done by appending a comma to the output stream.
+ *
+ * \sa cbor_value_to_pretty(), cbor_value_to_json_advance()
+ */
+CborError cbor_value_to_pretty_advance_flags(FILE *out, CborValue *value, int flags)
+{
+    return value_to_pretty(out, value, flags);
 }
 
 /** @} */
