@@ -399,18 +399,71 @@ static inline CborError validate_floating_point(CborValue *it, CborType type, in
 static CborError validate_container(CborValue *it, int containerType, int flags, int recursionLeft)
 {
     CborError err;
+    const uint8_t *previous = NULL;
+    const uint8_t *previous_end;
+
     if (!recursionLeft)
         return CborErrorNestingTooDeep;
 
     while (!cbor_value_at_end(it)) {
+        const uint8_t *current;
+
+        if (containerType == CborMapType) {
+            current = it->ptr;
+            if (flags & CborValidateMapKeysAreString) {
+                CborType type = cbor_value_get_type(it);
+                if (type == CborTagType) {
+                    /* skip the tags */
+                    CborValue copy = *it;
+                    err = cbor_value_skip_tag(&copy);
+                    if (err)
+                        return err;
+                    type = cbor_value_get_type(&copy);
+                }
+                if (type != CborTextStringType)
+                    return CborErrorMapKeyNotString;
+            }
+        }
+
         err = validate_value(it, flags, recursionLeft);
         if (err)
             return err;
 
-        if (containerType == CborArrayType)
+        if (containerType != CborMapType)
             continue;
 
-        /* map: that was the key, so get he value */
+        if (flags & CborValidateMapIsSorted) {
+            if (previous) {
+                uint64_t len1, len2;
+                const uint8_t *ptr;
+
+                /* extract the two lengths */
+                ptr = previous;
+                _cbor_value_extract_number(&ptr, it->parser->end, &len1);
+                ptr = current;
+                _cbor_value_extract_number(&ptr, it->parser->end, &len2);
+
+                if (len1 > len2)
+                    return CborErrorMapNotSorted;
+                if (len1 == len2) {
+                    size_t bytelen1 = (size_t)(previous_end - previous);
+                    size_t bytelen2 = (size_t)(it->ptr - current);
+                    int r = memcmp(previous, current, bytelen1 <= bytelen2 ? bytelen1 : bytelen2);
+
+                    if (r == 0 && bytelen1 != bytelen2)
+                        r = bytelen1 < bytelen2 ? -1 : +1;
+                    if (r > 0)
+                        return CborErrorMapNotSorted;
+                    if (r == 0 && (flags & CborValidateMapKeysAreUnique) == CborValidateMapKeysAreUnique)
+                        return CborErrorMapKeysNotUnique;
+                }
+            }
+
+            previous = current;
+            previous_end = it->ptr;
+        }
+
+        /* map: that was the key, so get the value */
         err = validate_value(it, flags, recursionLeft);
         if (err)
             return err;

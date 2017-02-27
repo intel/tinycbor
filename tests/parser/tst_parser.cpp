@@ -1669,6 +1669,14 @@ void tst_Parser::strictValidation_data()
     QTest::newRow("overlong-map-24*8") << (raw("\xbb\0\0\0\0\0\0\0\x18") + mapdata24) << int(CborValidateCanonicalFormat) << CborErrorOverlongEncoding;
     QTest::newRow("overlong-map-256*4") << (raw("\xba\0\0\1\0") + mapdata256) << int(CborValidateCanonicalFormat) << CborErrorOverlongEncoding;
     QTest::newRow("overlong-map-256*8") << (raw("\xbb\0\0\0\0\0\0\1\0") + mapdata256) << int(CborValidateCanonicalFormat) << CborErrorOverlongEncoding;
+    QTest::newRow("unsorted-length-map-UU") << raw("\xa2\1\1\0\0") << int(CborValidateCanonicalFormat) << CborErrorMapNotSorted;
+    QTest::newRow("unsorted-length-map-UUU") << raw("\xa3\1\1\1\1\0\0") << int(CborValidateCanonicalFormat) << CborErrorMapNotSorted;
+    QTest::newRow("unsorted-length-map-SS") << raw("\xa2\x61z\1\x60\0") << int(CborValidateCanonicalFormat) << CborErrorMapNotSorted;
+    QTest::newRow("unsorted-length-map-SSS") << raw("\xa3\x61z\1\x61z\2\x60\0") << int(CborValidateCanonicalFormat) << CborErrorMapNotSorted;
+    QTest::newRow("unsorted-length-map-SB") << raw("\xa2\x61z\1\x40\0") << int(CborValidateCanonicalFormat) << CborErrorMapNotSorted;
+    QTest::newRow("unsorted-length-map-AS") << raw("\xa2\x83\0\x20\x45Hello\1\x60\0") << int(CborValidateCanonicalFormat) << CborErrorMapNotSorted;
+    QTest::newRow("unsorted-content-map-SS") << raw("\xa2\x61z\1\x61y\0") << int(CborValidateCanonicalFormat) << CborErrorMapNotSorted;
+    QTest::newRow("unsorted-content-map-AS") << raw("\xa2\x81\x21\1\x61\x21\0") << int(CborValidateCanonicalFormat) << CborErrorMapNotSorted;
 
     QTest::newRow("tag-0") << raw("\xc0\x60") << int(CborValidateCanonicalFormat) << CborNoError;
     QTest::newRow("tag-24") << raw("\xd8\x18\x40") << int(CborValidateCanonicalFormat) << CborNoError;
@@ -1749,6 +1757,10 @@ void tst_Parser::strictValidation_data()
     QTest::newRow("invalid-utf8-overlong-4-5") << raw("\x65\xf8\x80\x84\x80\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
     QTest::newRow("invalid-utf8-overlong-4-6") << raw("\x66\xfc\x80\x80\x84\x80\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
 
+    QTest::newRow("nonunique-content-map-UU") << raw("\xa2\0\1\0\2") << int(CborValidateStrictMode) << CborErrorMapKeysNotUnique;
+    QTest::newRow("nonunique-content-map-SS") << raw("\xa2\x61z\1\x61z\2") << int(CborValidateStrictMode) << CborErrorMapKeysNotUnique;
+    QTest::newRow("nonunique-content-map-AA") << raw("\xa2\x81\x65Hello\1\x81\x65Hello\2") << int(CborValidateStrictMode) << CborErrorMapKeysNotUnique;
+
     QTest::newRow("tag-0-unsigned") << raw("\xc0\x00") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
     QTest::newRow("tag-0-bytearray") << raw("\xc0\x40") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
     QTest::newRow("tag-0-string") << raw("\xc0\x60") << int(CborValidateStrictMode) << CborNoError;
@@ -1827,6 +1839,23 @@ void tst_Parser::strictValidation_data()
     QTest::newRow("excluded-fp-nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
     QTest::newRow("excluded-fp--inf") << raw("\xfb\xff\xf0\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
     QTest::newRow("excluded-fp-+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;
+
+    // exclude non-string keys in maps
+    QTest::newRow("excluded-map-unsigned") << raw("\xa1\x00\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-negative") << raw("\xa1\x20\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-bytearray") << raw("\xa1\x40\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("map-string") << raw("\xa1\x60\1") << int(CborValidateMapKeysAreString) << CborNoError;
+    QTest::newRow("map-tag-0-string") << raw("\xa1\xc0\x60\1") << int(CborValidateMapKeysAreString) << CborNoError;
+    QTest::newRow("excluded-map-array") << raw("\xa1\x80\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-map") << raw("\xa1\xa0\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-simple-0") << raw("\xa1\xe0\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-false") << raw("\xa1\xf4\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-true") << raw("\xa1\xf5\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-null") << raw("\xa1\xf6\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-undefined") << raw("\xa1\xf7\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-half") << raw("\xa1\xf9\0\0\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-float") << raw("\xa1\xfa\0\0\0\0\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
+    QTest::newRow("excluded-map-double") << raw("\xa1\xfb\0\0\0\0\0\0\0\0\1") << int(CborValidateMapKeysAreString) << CborErrorMapKeyNotString;
 
     // unknown simple types
     QTest::newRow("unknown-simple-type-0") << raw("\xe0") << int(CborValidateNoUnknownSimpleTypes) << CborErrorUnknownSimpleType;

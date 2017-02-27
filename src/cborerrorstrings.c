@@ -144,6 +144,16 @@ const char *cbor_error_string(CborError error)
     case CborErrorOverlongEncoding:
         return _("value encoded in non-canonical form");
 
+    case CborErrorMapKeyNotString:
+    case CborErrorJsonObjectKeyNotString:
+        return _("key in map is not a string");
+
+    case CborErrorMapNotSorted:
+        return _("map is not sorted");
+
+    case CborErrorMapKeysNotUnique:
+        return _("map keys are not unique");
+
     case CborErrorTooManyItems:
         return _("too many items added to encoder");
 
@@ -161,9 +171,6 @@ const char *cbor_error_string(CborError error)
 
     case CborErrorJsonObjectKeyIsAggregate:
         return _("conversion to JSON failed: key in object is an array or map");
-
-    case CborErrorJsonObjectKeyNotString:
-        return _("conversion to JSON failed: key in object is not a string");
 
     case CborErrorJsonNotImplemented:
         return _("conversion to JSON failed: open_memstream unavailable");

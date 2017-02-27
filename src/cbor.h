@@ -145,6 +145,9 @@ typedef enum CborError {
     CborErrorExcludedValue,
     CborErrorImproperValue,
     CborErrorOverlongEncoding,
+    CborErrorMapKeyNotString,
+    CborErrorMapNotSorted,
+    CborErrorMapKeysNotUnique,
 
     /* encoder errors */
     CborErrorTooManyItems = 768,
