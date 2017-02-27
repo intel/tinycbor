@@ -251,6 +251,36 @@ static inline CborError validate_simple_type(uint8_t simple_type, int flags)
                 CborErrorUnknownSimpleType : CborNoError;
 }
 
+static inline CborError validate_number(const CborValue *it, CborType type, int flags)
+{
+    CborError err = CborNoError;
+    const uint8_t *ptr = it->ptr;
+    uint64_t value;
+
+    if ((flags & CborValidateShortestIntegrals) == 0)
+        return err;
+    if (type >= CborHalfFloatType && type <= CborDoubleType)
+        return err;     /* checked elsewhere */
+
+    err = _cbor_value_extract_number(&ptr, it->parser->end, &value);
+    if (err)
+        return err;
+
+    size_t bytesUsed = (size_t)(ptr - it->ptr - 1);
+    size_t bytesNeeded = 0;
+    if (value >= Value8Bit)
+        ++bytesNeeded;
+    if (value > 0xffU)
+        ++bytesNeeded;
+    if (value > 0xffffU)
+        bytesNeeded += 2;
+    if (value > 0xffffffffU)
+        bytesNeeded += 4;
+    if (bytesNeeded < bytesUsed)
+        return CborErrorOverlongEncoding;
+    return CborNoError;
+}
+
 static inline CborError validate_tag(CborValue *it, CborTag tag, int flags, int recursionLeft)
 {
     CborType type = cbor_value_get_type(it);
@@ -391,12 +421,17 @@ static CborError validate_container(CborValue *it, int containerType, int flags,
 static CborError validate_value(CborValue *it, int flags, int recursionLeft)
 {
     CborError err;
-    if (flags & CborValidateNoIndeterminateLength) {
-        if (!cbor_value_is_length_known(it))
+    CborType type = cbor_value_get_type(it);
+
+    if (cbor_value_is_length_known(it)) {
+        err = validate_number(it, type, flags);
+        if (err)
+            return err;
+    } else {
+        if (flags & CborValidateNoIndeterminateLength)
             return CborErrorUnknownLength;
     }
 
-    CborType type = cbor_value_get_type(it);
     switch (type) {
     case CborArrayType:
     case CborMapType: {
@@ -428,7 +463,15 @@ static CborError validate_value(CborValue *it, int flags, int recursionLeft)
         size_t n = 0;
         const void *ptr;
 
+        err = _cbor_value_prepare_string_iteration(it);
+        if (err)
+            return err;
+
         while (1) {
+            err = validate_number(it, type, flags);
+            if (err)
+                return err;
+
             err = _cbor_value_get_string_chunk(it, &ptr, &n, it);
             if (err)
                 return err;
