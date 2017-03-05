@@ -6,7 +6,7 @@ env:
   - CFLAGS="-O0 -g" QMAKEFLAGS="-config debug" PATH=/opt/qt56/bin:/usr/local/opt/qt5/bin:$PATH
 install:
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-        sudo apt-add-repository -y ppa:beineri/opt-qt561;
+        sudo apt-add-repository -y ppa:beineri/opt-qt562;
         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test;
         sudo apt-get update -qq;
         sudo apt-get install -y qt56base valgrind g++-5;
