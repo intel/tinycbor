@@ -29,7 +29,7 @@
 #endif
 
 #include "cbor.h"
-#include "cborconstants_p.h"
+#include "cborinternal_p.h"
 #include "compilersupport_p.h"
 
 #include <assert.h>
