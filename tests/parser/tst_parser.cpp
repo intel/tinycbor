@@ -25,6 +25,8 @@
 #define _XOPEN_SOURCE 700
 #include <QtTest>
 #include "cbor.h"
+#include "alloc.h"
+
 #include <locale.h>
 #include <stdio.h>
 
@@ -44,7 +46,7 @@ private slots:
     void fixed_data();
     void fixed();
     void strings_data();
-    void strings() { fixed(); }
+    void strings();
     void tags_data();
     void tags() { fixed(); }
     void tagTags_data() { tags_data(); }
@@ -88,6 +90,13 @@ private slots:
     void recursionLimit_data();
     void recursionLimit();
 };
+
+static size_t my_alloc_count = 0;
+void *my_alloc(size_t size)
+{
+    ++my_alloc_count;
+    return malloc(size);
+}
 
 CborError parseOne(CborValue *it, QString *parsed)
 {
@@ -377,6 +386,13 @@ void tst_Parser::strings_data()
 {
     addColumns();
     addStringsData();
+}
+
+void tst_Parser::strings()
+{
+    my_alloc_count = 0;
+    fixed();
+    QCOMPARE(my_alloc_count, size_t(1));
 }
 
 void addTagsData()
