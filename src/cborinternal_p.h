@@ -25,6 +25,12 @@
 #ifndef CBORINTERNAL_P_H
 #define CBORINTERNAL_P_H
 
+#include "compilersupport_p.h"
+
+#ifndef CBOR_INTERNAL_API
+#  define CBOR_INTERNAL_API
+#endif
+
 /*
  * CBOR Major types
  * Encoded in the high 3 bits of the descriptor byte
@@ -72,5 +78,7 @@ enum {
 
     BreakByte               = (unsigned)Break | (SimpleTypesType << MajorTypeShift)
 };
+
+CBOR_INTERNAL_API CBOR_INTERNAL_API_CC CborError _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len);
 
 #endif /* CBORINTERNAL_P_H */

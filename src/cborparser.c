@@ -31,7 +31,6 @@
 #include "cbor.h"
 #include "cborinternal_p.h"
 #include "compilersupport_p.h"
-#include "extract_number_p.h"
 
 #include <assert.h>
 #include <string.h>
@@ -146,10 +145,58 @@
  * \endif
  */
 
+static inline uint16_t get16(const uint8_t *ptr)
+{
+    uint16_t result;
+    memcpy(&result, ptr, sizeof(result));
+    return cbor_ntohs(result);
+}
+
+static inline uint32_t get32(const uint8_t *ptr)
+{
+    uint32_t result;
+    memcpy(&result, ptr, sizeof(result));
+    return cbor_ntohl(result);
+}
+
+static inline uint64_t get64(const uint8_t *ptr)
+{
+    uint64_t result;
+    memcpy(&result, ptr, sizeof(result));
+    return cbor_ntohll(result);
+}
+
+CborError _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
+{
+    uint8_t additional_information = **ptr & SmallValueMask;
+    ++*ptr;
+    if (additional_information < Value8Bit) {
+        *len = additional_information;
+        return CborNoError;
+    }
+    if (unlikely(additional_information > Value64Bit))
+        return CborErrorIllegalNumber;
+
+    size_t bytesNeeded = (size_t)(1 << (additional_information - Value8Bit));
+    if (unlikely(bytesNeeded > (size_t)(end - *ptr))) {
+        return CborErrorUnexpectedEOF;
+    } else if (bytesNeeded == 1) {
+        *len = (uint8_t)(*ptr)[0];
+    } else if (bytesNeeded == 2) {
+        *len = get16(*ptr);
+    } else if (bytesNeeded == 4) {
+        *len = get32(*ptr);
+    } else {
+        *len = get64(*ptr);
+    }
+    *ptr += bytesNeeded;
+    return CborNoError;
+}
+
 static CborError extract_length(const CborParser *parser, const uint8_t **ptr, size_t *len)
 {
     uint64_t v;
-    CborError err = extract_number(ptr, parser->end, &v);
+    CborError err = _cbor_value_extract_number(ptr, parser->end, &v);
     if (err) {
         *len = 0;
         return err;
@@ -275,7 +322,7 @@ static CborError preparse_next_value(CborValue *it)
 static CborError advance_internal(CborValue *it)
 {
     uint64_t length;
-    CborError err = extract_number(&it->ptr, it->parser->end, &length);
+    CborError err = _cbor_value_extract_number(&it->ptr, it->parser->end, &length);
     assert(err == CborNoError);
 
     if (it->type == CborByteStringType || it->type == CborTextStringType) {
@@ -519,7 +566,7 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
         ++recursed->ptr;
     } else {
         uint64_t len;
-        err = extract_number(&recursed->ptr, recursed->parser->end, &len);
+        err = _cbor_value_extract_number(&recursed->ptr, recursed->parser->end, &len);
         assert(err == CborNoError);
 
         recursed->remaining = (uint32_t)len;

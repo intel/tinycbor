@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2017 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -76,6 +76,14 @@
 #  define DBL_DECIMAL_DIG       17
 #endif
 #define DBL_DECIMAL_DIG_STR     STRINGIFY(DBL_DECIMAL_DIG)
+
+#if defined(__GNUC__) && defined(__i386__)
+#  define CBOR_INTERNAL_API_CC          __attribute__((regparm(3)))
+#elif defined(_MSC_VER) && defined(_M_IX86)
+#  define CBOR_INTERNAL_API_CC          __fastcall
+#else
+#  define CBOR_INTERNAL_API_CC
+#endif
 
 #ifndef __has_builtin
 #  define __has_builtin(x)  0
