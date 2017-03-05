@@ -32,10 +32,7 @@
 #include "cborinternal_p.h"
 #include "compilersupport_p.h"
 
-#include <assert.h>
 #include <string.h>
-
-#include "assert_p.h"       /* Always include last */
 
 #ifndef CBOR_PARSER_MAX_RECURSIONS
 #  define CBOR_PARSER_MAX_RECURSIONS 1024
@@ -281,7 +278,7 @@ static CborError preparse_value(CborValue *it)
         case 29:
         case 30:
         case Break:
-            assert(false);  /* these conditions can't be reached */
+            cbor_assert(false);  /* these conditions can't be reached */
             return CborErrorUnexpectedBreak;
         }
         return CborNoError;
@@ -323,11 +320,11 @@ static CborError advance_internal(CborValue *it)
 {
     uint64_t length;
     CborError err = _cbor_value_extract_number(&it->ptr, it->parser->end, &length);
-    assert(err == CborNoError);
+    cbor_assert(err == CborNoError);
 
     if (it->type == CborByteStringType || it->type == CborTextStringType) {
-        assert(length == (size_t)length);
-        assert((it->flags & CborIteratorFlag_UnknownLength) == 0);
+        cbor_assert(length == (size_t)length);
+        cbor_assert((it->flags & CborIteratorFlag_UnknownLength) == 0);
         it->ptr += length;
     }
 
@@ -346,16 +343,16 @@ static CborError advance_internal(CborValue *it)
  */
 uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
 {
-    assert(value->flags & CborIteratorFlag_IntegerValueTooLarge ||
-           value->type == CborFloatType || value->type == CborDoubleType);
+    cbor_assert(value->flags & CborIteratorFlag_IntegerValueTooLarge ||
+                value->type == CborFloatType || value->type == CborDoubleType);
 
     /* since the additional information can only be Value32Bit or Value64Bit,
      * we just need to test for the one bit those two options differ */
-    assert((*value->ptr & SmallValueMask) == Value32Bit || (*value->ptr & SmallValueMask) == Value64Bit);
+    cbor_assert((*value->ptr & SmallValueMask) == Value32Bit || (*value->ptr & SmallValueMask) == Value64Bit);
     if ((*value->ptr & 1) == (Value32Bit & 1))
         return get32(value->ptr + 1);
 
-    assert((*value->ptr & SmallValueMask) == Value64Bit);
+    cbor_assert((*value->ptr & SmallValueMask) == Value64Bit);
     return get64(value->ptr + 1);
 }
 
@@ -440,8 +437,8 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborPa
  */
 CborError cbor_value_advance_fixed(CborValue *it)
 {
-    assert(it->type != CborInvalidType);
-    assert(is_fixed_type(it->type));
+    cbor_assert(it->type != CborInvalidType);
+    cbor_assert(is_fixed_type(it->type));
     if (!it->remaining)
         return CborErrorAdvancePastEOF;
     return advance_internal(it);
@@ -488,7 +485,7 @@ static CborError advance_recursive(CborValue *it, int nestingLevel)
  */
 CborError cbor_value_advance(CborValue *it)
 {
-    assert(it->type != CborInvalidType);
+    cbor_assert(it->type != CborInvalidType);
     if (!it->remaining)
         return CborErrorAdvancePastEOF;
     return advance_recursive(it, 0);
@@ -552,7 +549,7 @@ CborError cbor_value_skip_tag(CborValue *it)
 CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
 {
     CborError err;
-    assert(cbor_value_is_container(it));
+    cbor_assert(cbor_value_is_container(it));
     *recursed = *it;
 
     if (it->flags & CborIteratorFlag_UnknownLength) {
@@ -567,7 +564,7 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
     } else {
         uint64_t len;
         err = _cbor_value_extract_number(&recursed->ptr, recursed->parser->end, &len);
-        assert(err == CborNoError);
+        cbor_assert(err == CborNoError);
 
         recursed->remaining = (uint32_t)len;
         if (recursed->remaining != len || len == UINT32_MAX) {
@@ -608,8 +605,8 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
  */
 CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
 {
-    assert(cbor_value_is_container(it));
-    assert(recursed->type == CborInvalidType);
+    cbor_assert(cbor_value_is_container(it));
+    cbor_assert(recursed->type == CborInvalidType);
     it->ptr = recursed->ptr;
     return preparse_next_value(it);
 }
@@ -790,7 +787,7 @@ CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
  */
 CborError cbor_value_get_int64_checked(const CborValue *value, int64_t *result)
 {
-    assert(cbor_value_is_integer(value));
+    cbor_assert(cbor_value_is_integer(value));
     uint64_t v = _cbor_value_extract_int64_helper(value);
 
     /* Check before converting, as the standard says (C11 6.3.1.3 paragraph 3):
@@ -829,7 +826,7 @@ CborError cbor_value_get_int64_checked(const CborValue *value, int64_t *result)
  */
 CborError cbor_value_get_int_checked(const CborValue *value, int *result)
 {
-    assert(cbor_value_is_integer(value));
+    cbor_assert(cbor_value_is_integer(value));
     uint64_t v = _cbor_value_extract_int64_helper(value);
 
     /* Check before converting, as the standard says (C11 6.3.1.3 paragraph 3):
@@ -965,7 +962,7 @@ static uintptr_t iterate_memcmp(char *s1, const uint8_t *s2, size_t len)
 static CborError iterate_string_chunks(const CborValue *value, char *buffer, size_t *buflen,
                                        bool *result, CborValue *next, IterateFunction func)
 {
-    assert(cbor_value_is_byte_string(value) || cbor_value_is_text_string(value));
+    cbor_assert(cbor_value_is_byte_string(value) || cbor_value_is_text_string(value));
 
     size_t total;
     CborError err;
@@ -1220,7 +1217,7 @@ CborError cbor_value_text_string_equals(const CborValue *value, const char *stri
  */
 CborError cbor_value_map_find_value(const CborValue *map, const char *string, CborValue *element)
 {
-    assert(cbor_value_is_map(map));
+    cbor_assert(cbor_value_is_map(map));
     size_t len = strlen(string);
     CborError err = cbor_value_enter_container(map, element);
     if (err)
@@ -1331,7 +1328,7 @@ error:
  */
 CborError cbor_value_get_half_float(const CborValue *value, void *result)
 {
-    assert(cbor_value_is_half_float(value));
+    cbor_assert(cbor_value_is_half_float(value));
 
     /* size has been computed already */
     uint16_t v = get16(value->ptr + 1);

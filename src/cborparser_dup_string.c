@@ -29,6 +29,7 @@
 #endif
 
 #include "cbor.h"
+#include "compilersupport_p.h"
 #include <stdlib.h>
 
 /**
@@ -91,8 +92,8 @@
  */
 CborError _cbor_value_dup_string(const CborValue *value, void **buffer, size_t *buflen, CborValue *next)
 {
-    assert(buffer);
-    assert(buflen);
+    cbor_assert(buffer);
+    cbor_assert(buflen);
     *buflen = SIZE_MAX;
     CborError err = _cbor_value_copy_string(value, NULL, buflen, NULL);
     if (err)

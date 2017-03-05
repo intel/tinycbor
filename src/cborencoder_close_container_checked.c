@@ -32,10 +32,6 @@
 #include "cborinternal_p.h"
 #include "compilersupport_p.h"
 
-#include <assert.h>
-
-#include "assert_p.h"       /* Always include last */
-
 /**
  * \addtogroup CborEncoding
  * @{

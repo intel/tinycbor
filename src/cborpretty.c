@@ -31,7 +31,6 @@
 #include "cbor.h"
 #include "cborinternal_p.h"
 #include "compilersupport_p.h"
-#include "math_support_p.h"
 
 #include <float.h>
 #include <inttypes.h>
