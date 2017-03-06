@@ -87,7 +87,7 @@ for my $n (@tagnumbers) {
 print "\n} CborKnownTags;";
 
 print "\n==== search table ====\n";
-print "struct KnownTagData { uint32_t tag; };";
+print "struct KnownTagData { uint32_t tag; uint32_t types; };";
 printf "static const struct KnownTagData knownTagData[] = {";
 $comma = "";
 for my $n (@tagnumbers) {
@@ -95,8 +95,18 @@ for my $n (@tagnumbers) {
 
     my $typemask;
     my $shift = 0;
+    for my $type (@types) {
+        die("Too many match types for tag $n") if $shift == 32;
+        my $actualtype = "Cbor${type}Type";
+        $actualtype = "($actualtype+1)" if $type eq "Integer";
+        $typemask .= " | " if $typemask ne "";
+        $typemask .= "((uint8_t)$actualtype << $shift)" if $shift;
+        $typemask .= "(uint8_t)$actualtype" unless $shift;
+        $shift += 8;
+    }
+    $typemask = "0U" if $typemask eq "";
 
-    printf "%s\n    { %d }", $comma, $n;
+    printf "%s\n    { %d, %s }", $comma, $n, $typemask;
     $comma = ",";
 }
 print "\n};";

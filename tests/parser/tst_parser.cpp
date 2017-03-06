@@ -1613,9 +1613,66 @@ void tst_Parser::strictValidation_data()
 
     QTest::newRow("tag-0") << raw("\xc0\x60") << int(CborValidateCanonicalFormat) << CborNoError;
     QTest::newRow("tag-24") << raw("\xd8\x18\x40") << int(CborValidateCanonicalFormat) << CborNoError;
-    QTest::newRow("tag-55799") << raw("\xd9\xd9\xf7\x60") << int(CborValidateCanonicalFormat) << CborNoError;
     QTest::newRow("tag-65536") << raw("\xda\0\1\0\0\x60") << int(CborValidateCanonicalFormat) << CborNoError;
     QTest::newRow("tag-4294967296") << raw("\xdb\0\0\0\1\0\0\0\0\x60") << int(CborValidateCanonicalFormat) << CborNoError;
+
+    // strict mode
+    QTest::newRow("tag-0-unsigned") << raw("\xc0\x00") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-0-bytearray") << raw("\xc0\x40") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-0-string") << raw("\xc0\x60") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-0-tag-0-string") << raw("\xc0\xc0\x60") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-1-unsigned") << raw("\xc1\x00") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-1-negative") << raw("\xc1\x20") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-1-bytearray") << raw("\xc1\x40") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-2-bytearray") << raw("\xc2\x40") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-2-string") << raw("\xc2\x60") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-3-bytearray") << raw("\xc3\x40") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-3-string") << raw("\xc3\x60") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-4-string") << raw("\xc4\x60") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-4-array") << raw("\xc4\x82\0\1") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-5-string") << raw("\xc5\x60") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-5-array") << raw("\xc5\x82\0\1") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-21-bytearray") << raw("\xd5\x40") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-21-string") << raw("\xd5\x60") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-21-array") << raw("\xd5\x80") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-21-map") << raw("\xd5\xa0") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-22-bytearray") << raw("\xd6\x40") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-22-string") << raw("\xd6\x60") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-22-array") << raw("\xd6\x80") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-22-map") << raw("\xd6\xa0") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-23-bytearray") << raw("\xd7\x40") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-23-string") << raw("\xd7\x60") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-23-array") << raw("\xd7\x80") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-23-map") << raw("\xd7\xa0") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-24-bytearray") << raw("\xd8\x18\x40") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-24-string") << raw("\xd8\x18\x60") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-32-bytearray") << raw("\xd8\x20\x40") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-32-string") << raw("\xd8\x20\x60") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-33-bytearray") << raw("\xd8\x21\x40") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-33-string") << raw("\xd8\x21\x60") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-34-bytearray") << raw("\xd8\x22\x40") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-34-string") << raw("\xd8\x22\x60") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-35-bytearray") << raw("\xd8\x23\x40") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-35-string") << raw("\xd8\x23\x60") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-36-bytearray") << raw("\xd8\x24\x40") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-36-string") << raw("\xd8\x24\x60") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-unsigned") << raw("\xd9\xd9\xf7\x00") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-negative") << raw("\xd9\xd9\xf7\x20") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-bytearray") << raw("\xd9\xd9\xf7\x40") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-string") << raw("\xd9\xd9\xf7\x60") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-array") << raw("\xd9\xd9\xf7\x80") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-map") << raw("\xd9\xd9\xf7\xa0") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-tag-0-unsigned") << raw("\xd9\xd9\xf7\xc0\x00") << int(CborValidateStrictMode) << CborErrorInappropriateTagForType;
+    QTest::newRow("tag-55799-tag-0-string") << raw("\xd9\xd9\xf7\xc0\x60") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-simple0") << raw("\xd9\xd9\xf7\xe0") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-false") << raw("\xd9\xd9\xf7\xf4") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-true") << raw("\xd9\xd9\xf7\xf5") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-null") << raw("\xd9\xd9\xf7\xf6") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-undefined") << raw("\xd9\xd9\xf7\xf7") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-simple32") << raw("\xd9\xd9\xf7\xf8\x20") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-half") << raw("\xd9\xd9\xf7\xf9\0\0") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-float") << raw("\xd9\xd9\xf7\xfa\0\0\0\0") << int(CborValidateStrictMode) << CborNoError;
+    QTest::newRow("tag-55799-double") << raw("\xd9\xd9\xf7\xfb\0\0\0\0\0\0\0\0") << int(CborValidateStrictMode) << CborNoError;
 
     // excluded non-finite
     QTest::newRow("excluded-fp-nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << int(CborValidateFiniteFloatingPoint) << CborErrorExcludedValue;

@@ -205,24 +205,24 @@
 </table>
  */
 
-struct KnownTagData { uint32_t tag; };
+struct KnownTagData { uint32_t tag; uint32_t types; };
 static const struct KnownTagData knownTagData[] = {
-    { 0 },
-    { 1 },
-    { 2 },
-    { 3 },
-    { 4 },
-    { 5 },
-    { 21 },
-    { 22 },
-    { 23 },
-    { 24 },
-    { 32 },
-    { 33 },
-    { 34 },
-    { 35 },
-    { 36 },
-    { 55799 }
+    { 0, (uint8_t)CborTextStringType },
+    { 1, (uint8_t)(CborIntegerType+1) },
+    { 2, (uint8_t)CborByteStringType },
+    { 3, (uint8_t)CborByteStringType },
+    { 4, (uint8_t)CborArrayType },
+    { 5, (uint8_t)CborArrayType },
+    { 21, (uint8_t)CborByteStringType | ((uint8_t)CborArrayType << 8) | ((uint8_t)CborMapType << 16) },
+    { 22, (uint8_t)CborByteStringType | ((uint8_t)CborArrayType << 8) | ((uint8_t)CborMapType << 16) },
+    { 23, (uint8_t)CborByteStringType | ((uint8_t)CborArrayType << 8) | ((uint8_t)CborMapType << 16) },
+    { 24, (uint8_t)CborByteStringType },
+    { 32, (uint8_t)CborTextStringType },
+    { 33, (uint8_t)CborTextStringType },
+    { 34, (uint8_t)CborTextStringType },
+    { 35, (uint8_t)CborTextStringType },
+    { 36, (uint8_t)CborTextStringType },
+    { 55799, 0U }
 };
 
 static CborError validate_value(CborValue *it, int flags, int recursionLeft);
@@ -269,6 +269,22 @@ static inline CborError validate_tag(CborValue *it, CborTag tag, int flags, int 
             return CborErrorUnknownTag;
         if ((flags & CborValidateNoUnknownTags) == CborValidateNoUnknownTags)
             return CborErrorUnknownTag;
+    }
+
+    if (flags & CborValidateTagUse && tagData && tagData->types) {
+        uint32_t allowedTypes = tagData->types;
+
+        /* correct Integer so it's not zero */
+        if (type == CborIntegerType)
+            ++type;
+
+        while (allowedTypes) {
+            if ((uint8_t)(allowedTypes & 0xff) == type)
+                break;
+            allowedTypes >>= 8;
+        }
+        if (!allowedTypes)
+            return CborErrorInappropriateTagForType;
     }
 
     return validate_value(it, flags, recursionLeft);
