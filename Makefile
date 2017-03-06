@@ -115,7 +115,7 @@ bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) lib/libtinycbor.a
 
 bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) lib/libtinycbor.a
 	@$(MKDIR) -p bin
-	$(CC) -o $@ $(LDFLAGS) $(LDFLAGS_CJSON) $^ $(LDLIBS) -lm
+	$(CC) -o $@ $(LDFLAGS) $^ $(LDFLAGS_CJSON) $(LDLIBS) -lm
 
 tinycbor.pc: tinycbor.pc.in
 	$(SED) > $@ < $< \
