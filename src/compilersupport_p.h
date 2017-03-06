@@ -84,7 +84,7 @@
 #endif
 #define DBL_DECIMAL_DIG_STR     STRINGIFY(DBL_DECIMAL_DIG)
 
-#if defined(__GNUC__) && defined(__i386__)
+#if defined(__GNUC__) && defined(__i386__) && !defined(__iamcu__)
 #  define CBOR_INTERNAL_API_CC          __attribute__((regparm(3)))
 #elif defined(_MSC_VER) && defined(_M_IX86)
 #  define CBOR_INTERNAL_API_CC          __fastcall

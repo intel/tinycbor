@@ -163,7 +163,7 @@ static inline uint64_t get64(const uint8_t *ptr)
     return cbor_ntohll(result);
 }
 
-CborError _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
+CBOR_INTERNAL_API_CC CborError _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
 {
     uint8_t additional_information = **ptr & SmallValueMask;
     ++*ptr;
