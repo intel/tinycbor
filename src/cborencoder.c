@@ -29,14 +29,11 @@
 #endif
 
 #include "cbor.h"
-#include "cborconstants_p.h"
+#include "cborinternal_p.h"
 #include "compilersupport_p.h"
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "assert_p.h"       /* Always include last */
 
 /**
  * \defgroup CborEncoding Encoding to CBOR
@@ -136,7 +133,7 @@
  * Finally, the example below illustrates expands on the one above and also
  * deals with dynamically growing the buffer if the initial allocation wasn't
  * big enough. Note the two places where the error checking was replaced with
- * an assertion, showing where the author assumes no error can occur.
+ * an cbor_assertion, showing where the author assumes no error can occur.
  *
  * \code
  * uint8_t *encode_string_array(const char **strings, int n, size_t *bufsize)
@@ -156,7 +153,7 @@
  *
  *         cbor_encoder_init(&encoder, &buf, size, 0);
  *         err = cbor_encoder_create_array(&encoder, &arrayEncoder, n);
- *         assert(err);         // can't fail, the buffer is always big enough
+ *         cbor_assert(err);         // can't fail, the buffer is always big enough
  *
  *         for (i = 0; i < n; ++i) {
  *             err = cbor_encode_text_stringz(&arrayEncoder, strings[i]);
@@ -165,7 +162,7 @@
  *         }
  *
  *         err = cbor_encoder_close_container_checked(&encoder, &arrayEncoder);
- *         assert(err);         // shouldn't fail!
+ *         cbor_assert(err);         // shouldn't fail!
  *
  *         more_bytes = cbor_encoder_get_extra_bytes_needed(encoder);
  *         if (more_size) {
@@ -378,7 +375,7 @@ CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value)
 CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value)
 {
     uint8_t buf[1 + sizeof(uint64_t)];
-    assert(fpType == CborHalfFloatType || fpType == CborFloatType || fpType == CborDoubleType);
+    cbor_assert(fpType == CborHalfFloatType || fpType == CborFloatType || fpType == CborDoubleType);
     buf[0] = fpType;
 
     unsigned size = 2U << (fpType - CborHalfFloatType);

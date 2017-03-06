@@ -33,7 +33,6 @@
 #include "cbor.h"
 #include "cborjson.h"
 #include "compilersupport_p.h"
-#include "math_support_p.h"
 
 #include <float.h>
 #include <inttypes.h>
@@ -186,7 +185,7 @@ static CborError dump_bytestring_base16(char **result, CborValue *it)
     /* let cbor_value_copy_byte_string know we have an extra byte for the terminating NUL */
     ++n;
     err = cbor_value_copy_byte_string(it, buffer + n - 1, &n, it);
-    assert(err == CborNoError);
+    cbor_assert(err == CborNoError);
 
     for (i = 0; i < n; ++i) {
         uint8_t byte = buffer[n + i];
@@ -216,7 +215,7 @@ static CborError generic_dump_base64(char **result, CborValue *it, const char al
     /* let cbor_value_copy_byte_string know we have an extra byte for the terminating NUL */
     ++n;
     err = cbor_value_copy_byte_string(it, in, &n, it);
-    assert(err == CborNoError);
+    cbor_assert(err == CborNoError);
 
     uint_least32_t val = 0;
     for (i = 0; n - i >= 3; i += 3) {

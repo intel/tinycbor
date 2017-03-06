@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2017 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,7 @@
 #endif
 #include <assert.h>
 #include <float.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -61,6 +62,12 @@
 #  define inline    CBOR_INLINE
 #endif
 
+#ifdef NDEBUG
+#  define cbor_assert(cond)     do { if (!(cond)) unreachable(); } while (0)
+#else
+#  define cbor_assert(cond)     assert(cond)
+#endif
+
 #ifndef STRINGIFY
 #define STRINGIFY(x)            STRINGIFY2(x)
 #endif
@@ -76,6 +83,14 @@
 #  define DBL_DECIMAL_DIG       17
 #endif
 #define DBL_DECIMAL_DIG_STR     STRINGIFY(DBL_DECIMAL_DIG)
+
+#if defined(__GNUC__) && defined(__i386__)
+#  define CBOR_INTERNAL_API_CC          __attribute__((regparm(3)))
+#elif defined(_MSC_VER) && defined(_M_IX86)
+#  define CBOR_INTERNAL_API_CC          __fastcall
+#else
+#  define CBOR_INTERNAL_API_CC
+#endif
 
 #ifndef __has_builtin
 #  define __has_builtin(x)  0
@@ -219,6 +234,22 @@ static inline unsigned short encode_half(double val)
 
     /* safe cast here as bit operations above guarantee not to overflow */
     return (unsigned short)(sign | ((exp + 15) << 10) | mant);
+#endif
+}
+
+/* this function was copied & adapted from RFC 7049 Appendix D */
+static inline double decode_half(unsigned short half)
+{
+#ifdef __F16C__
+    return _cvtsh_ss(half);
+#else
+    int exp = (half >> 10) & 0x1f;
+    int mant = half & 0x3ff;
+    double val;
+    if (exp == 0) val = ldexp(mant, -24);
+    else if (exp != 31) val = ldexp(mant + 1024, exp - 25);
+    else val = mant == 0 ? INFINITY : NAN;
+    return half & 0x8000 ? -val : val;
 #endif
 }
 

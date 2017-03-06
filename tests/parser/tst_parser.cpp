@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Intel Corporation
+** Copyright (C) 2017 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -68,6 +68,12 @@ private slots:
     void mapsAndArrays_data() { arrays_data(); }
     void mapsAndArrays();
 
+    // chunked string API
+    void chunkedString_data();
+    void chunkedString();
+    void chunkedStringInUndefArray_data() { chunkedString_data(); }
+    void chunkedStringInUndefArray();
+
     // convenience API
     void stringLength_data();
     void stringLength();
@@ -81,6 +87,8 @@ private slots:
     void checkedIntegers();
     void validation_data();
     void validation();
+    void chunkedStringValidation_data();
+    void chunkedStringValidation();
     void resumeParsing_data();
     void resumeParsing();
     void endPointer_data();
@@ -119,6 +127,38 @@ CborError parseOne(CborValue *it, QString *parsed)
 
     *parsed = QString::fromLatin1(buffer, int(size));
     free(buffer);
+    return err;
+}
+
+CborError parseOneChunk(CborValue *it, QString *parsed)
+{
+    // we can't use the cborpretty.c API here because it uses
+    // cbor_value_advance_fixed and cbor_value_dup_xxxx_string
+    CborError err;
+    CborType ourType = cbor_value_get_type(it);
+    if (ourType == CborByteStringType) {
+        const uint8_t *bytes;
+        size_t len;
+        err = cbor_value_get_byte_string_chunk(it, &bytes, &len, it);
+        if (err)
+            return err;
+
+        if (bytes)
+            *parsed = QString::fromLatin1("h'" +
+                                          QByteArray::fromRawData(reinterpret_cast<const char *>(bytes), len).toHex() +
+                                          '\'');
+    } else if (ourType == CborTextStringType) {
+        const char *text;
+        size_t len;
+        err = cbor_value_get_text_string_chunk(it, &text, &len, it);
+        if (err)
+            return err;
+
+        if (text)
+            *parsed = '"' + QString::fromUtf8(text, len) + '"';
+    } else {
+        Q_ASSERT(false);
+    }
     return err;
 }
 
@@ -728,6 +768,109 @@ void tst_Parser::mapsAndArrays()
                    "{_ 1: [_ " + expected + "], \"Hello\": {_ " + expected + ": \"\"}}");
 }
 
+void tst_Parser::chunkedString_data()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<QStringList>("chunks");
+
+    // non-chunked:
+    QTest::newRow("emptybytestring") << raw("\x40") << QStringList{"h''"};
+    QTest::newRow("bytestring1") << raw("\x41 ") << QStringList{"h'20'"};
+    QTest::newRow("emptytextstring") << raw("\x60") << QStringList{"\"\""};
+    QTest::newRow("textstring1") << raw("\x61 ") << QStringList{"\" \""};
+
+    // empty chunked:
+    QTest::newRow("_emptybytestring") << raw("\x5f\xff") << QStringList{};
+    QTest::newRow("_emptytextstring") << raw("\x7f\xff") << QStringList{};
+    QTest::newRow("_emptybytestring2") << raw("\x5f\x40\xff") << QStringList{"h''"};
+    QTest::newRow("_emptytextstring2") << raw("\x7f\x60\xff") << QStringList{"\"\""};
+    QTest::newRow("_emptybytestring3") << raw("\x5f\x40\x40\xff") << QStringList{"h''", "h''"};
+    QTest::newRow("_emptytextstring3") << raw("\x7f\x60\x60\xff") << QStringList{"\"\"", "\"\""};
+
+    // regular chunks
+    QTest::newRow("_bytestring1") << raw("\x5f\x41 \xff") << QStringList{"h'20'"};
+    QTest::newRow("_bytestring2") << raw("\x5f\x41 \x41z\xff") << QStringList{"h'20'", "h'7a'"};
+    QTest::newRow("_bytestring3") << raw("\x5f\x41 \x58\x18""123456789012345678901234\x41z\xff")
+                                  << QStringList{"h'20'", "h'313233343536373839303132333435363738393031323334'", "h'7a'"};
+
+    QTest::newRow("_textstring1") << raw("\x7f\x61 \xff") << QStringList{"\" \""};
+    QTest::newRow("_textstring2") << raw("\x7f\x61 \x61z\xff") << QStringList{"\" \"", "\"z\""};
+    QTest::newRow("_textstring3") << raw("\x7f\x61 \x78\x18""123456789012345678901234\x61z\xff")
+                                  << QStringList{"\" \"", "\"123456789012345678901234\"", "\"z\""};
+}
+
+static void chunkedStringTest(const QByteArray &data, QStringList &chunks, CborType ourType)
+{
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    CborValue value;
+    QVERIFY(cbor_value_is_array(&first));
+    err = cbor_value_enter_container(&first, &value);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    forever {
+        QString decoded;
+        err = parseOneChunk(&value, &decoded);
+        QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+        if (decoded.isEmpty())
+            break;          // last chunk
+
+        QVERIFY2(!chunks.isEmpty(), "Too many chunks");
+        QString expected = chunks.takeFirst();
+        QCOMPARE(decoded, expected);
+    }
+    QVERIFY2(chunks.isEmpty(), "Too few chunks");
+
+    // confirm that the extra string we appended is still here
+    QVERIFY(!cbor_value_at_end(&value));
+    QCOMPARE(cbor_value_get_type(&value), ourType);
+    size_t len;
+    err = cbor_value_get_string_length(&value, &len);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+    QCOMPARE(len, size_t(0));
+
+    err = cbor_value_advance(&value);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    // confirm EOF
+    QVERIFY(cbor_value_at_end(&value));
+
+    err = cbor_value_leave_container(&first, &value);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+    QCOMPARE((void*)cbor_value_get_next_byte(&first), (void*)data.constEnd());
+}
+
+void tst_Parser::chunkedString()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QStringList, chunks);
+
+    // Make this an array of two entries, with the second an empty byte or text string
+    CborType ourType = CborType(data.at(0) & 0xe0);
+    data.prepend(char(0x82));
+    data.append(ourType);
+
+    chunkedStringTest(data, chunks, ourType);
+}
+
+void tst_Parser::chunkedStringInUndefArray()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QStringList, chunks);
+
+    // Make this an array of undefined length entries, with the second entry an empty byte or text string
+    CborType ourType = CborType(data.at(0) & 0xe0);
+    data.prepend(char(0x9f));
+    data.append(ourType);
+    data.append(char(0xff));
+
+    chunkedStringTest(data, chunks, ourType);
+}
+
 void tst_Parser::stringLength_data()
 {
     QTest::addColumn<QByteArray>("data");
@@ -1087,13 +1230,16 @@ void tst_Parser::checkedIntegers()
     }
 }
 
-void tst_Parser::validation_data()
+static void addValidationColumns()
 {
     QTest::addColumn<QByteArray>("data");
     QTest::addColumn<int>("flags");     // future
     QTest::addColumn<CborError>("expectedError");
     QTest::addColumn<int>("offset");
+}
 
+static void addValidationData()
+{
     // illegal numbers are future extension points
     QTest::newRow("illegal-number-in-unsigned-1") << raw("\x81\x1c") << 0 << CborErrorIllegalNumber << 1;
     QTest::newRow("illegal-number-in-unsigned-2") << raw("\x81\x1d") << 0 << CborErrorIllegalNumber << 1;
@@ -1230,18 +1376,41 @@ void tst_Parser::validation_data()
 
     QTest::newRow("no-break-for-array0") << raw("\x81\x9f") << 0 << CborErrorUnexpectedEOF << 2;
     QTest::newRow("no-break-for-array1") << raw("\x81\x9f\x01") << 0 << CborErrorUnexpectedEOF << 3;
-    QTest::newRow("no-break-string0") << raw("\x81\x7f") << 0 << CborErrorUnexpectedEOF << 1;
-    QTest::newRow("no-break-string1") << raw("\x81\x7f\x61Z") << 0 << CborErrorUnexpectedEOF << 1;
+}
 
-    QTest::newRow("nested-indefinite-length-bytearrays") << raw("\x81\x5f\x5f\xff\xff") << 0 << CborErrorIllegalNumber << 1;
-    QTest::newRow("nested-indefinite-length-strings") << raw("\x81\x5f\x5f\xff\xff") << 0 << CborErrorIllegalNumber << 1;
+static void addChunkedStringValidationData()
+{
+    // add an extra column, for the failure offset when doing chunked string decoding
+    QTest::addColumn<int>("chunkedOffset");
 
-    QTest::newRow("string-chunk-unsigned") << raw("\x81\x7f\0\xff") << 0 << CborErrorIllegalType << 1;
-    QTest::newRow("string-chunk-bytearray") << raw("\x81\x7f\x40\xff") << 0 << CborErrorIllegalType << 1;
-    QTest::newRow("string-chunk-array") << raw("\x81\x7f\x80\xff") << 0 << CborErrorIllegalType << 1;
-    QTest::newRow("bytearray-chunk-unsigned") << raw("\x81\x5f\0\xff") << 0 << CborErrorIllegalType << 1;
-    QTest::newRow("bytearray-chunk-string") << raw("\x81\x5f\x60\xff") << 0 << CborErrorIllegalType << 1;
-    QTest::newRow("bytearray-chunk-array") << raw("\x81\x5f\x80\xff") << 0 << CborErrorIllegalType << 1;
+    QTest::newRow("no-break-string0") << raw("\x81\x7f") << 0 << CborErrorUnexpectedEOF << 1 << 2;
+    QTest::newRow("no-break-string1") << raw("\x81\x7f\x61Z") << 0 << CborErrorUnexpectedEOF << 1 << 4;
+
+    QTest::newRow("nested-indefinite-length-bytearrays") << raw("\x81\x5f\x5f\xff\xff") << 0 << CborErrorIllegalNumber << 1 << 3;
+    QTest::newRow("nested-indefinite-length-strings") << raw("\x81\x7f\x7f\xff\xff") << 0 << CborErrorIllegalNumber << 1 << 3;
+
+    QTest::newRow("string-chunk-unsigned") << raw("\x81\x7f\0\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-negative") << raw("\x81\x7f\x20\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-bytearray") << raw("\x81\x7f\x40\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-array") << raw("\x81\x7f\x80\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-map") << raw("\x81\x7f\xa0\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-tag") << raw("\x81\x7f\xc0\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-tagged-string") << raw("\x81\x7f\xc0\x60\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-simple0") << raw("\x81\x7f\xe0\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-false") << raw("\x81\x7f\xf4\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-true") << raw("\x81\x7f\xf5\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-null") << raw("\x81\x7f\xf6\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("string-chunk-undefined") << raw("\x81\x7f\xf7\xff") << 0 << CborErrorIllegalType << 1 << 2;
+
+    QTest::newRow("bytearray-chunk-string") << raw("\x81\x5f\x60\xff") << 0 << CborErrorIllegalType << 1 << 2;
+    QTest::newRow("bytearray-chunk-tagged-bytearray") << raw("\x81\x7f\xc0\x40\xff") << 0 << CborErrorIllegalType << 1 << 2;
+}
+
+void tst_Parser::validation_data()
+{
+    addValidationColumns();
+    addValidationData();
+    addChunkedStringValidationData();
 }
 
 void tst_Parser::validation()
@@ -1260,6 +1429,43 @@ void tst_Parser::validation()
     err = parseOne(&first, &decoded);
     QCOMPARE(int(err), int(expectedError));
     QCOMPARE(int(cbor_value_get_next_byte(&first) - reinterpret_cast<const quint8 *>(data.constBegin())), offset);
+}
+
+void tst_Parser::chunkedStringValidation_data()
+{
+    addValidationColumns();
+    addChunkedStringValidationData();
+}
+
+void tst_Parser::chunkedStringValidation()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(int, flags);
+    QFETCH(CborError, expectedError);
+    QFETCH(int, chunkedOffset);
+
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), flags, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    CborValue value;
+    QVERIFY(cbor_value_is_array(&first));
+    err = cbor_value_enter_container(&first, &value);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    forever {
+        QString decoded;
+        err = parseOneChunk(&value, &decoded);
+        if (err)
+            break;
+
+        if (decoded.isEmpty())
+            break;          // last chunk
+    }
+
+    QCOMPARE(int(err), int(expectedError));
+    QCOMPARE(int(cbor_value_get_next_byte(&value) - reinterpret_cast<const quint8 *>(data.constBegin())), chunkedOffset);
 }
 
 void tst_Parser::resumeParsing_data()

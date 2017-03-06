@@ -29,13 +29,8 @@
 #endif
 
 #include "cbor.h"
-#include "cborconstants_p.h"
+#include "cborinternal_p.h"
 #include "compilersupport_p.h"
-#include "extract_number_p.h"
-
-#include <assert.h>
-
-#include "assert_p.h"       /* Always include last */
 
 /**
  * \addtogroup CborEncoding
@@ -66,7 +61,7 @@ CborError cbor_encoder_close_container_checked(CborEncoder *encoder, const CborE
 
     /* check what the original length was */
     uint64_t actually_added;
-    err = extract_number(&ptr, encoder->data.ptr, &actually_added);
+    err = _cbor_value_extract_number(&ptr, encoder->data.ptr, &actually_added);
     if (err)
         return err;
 

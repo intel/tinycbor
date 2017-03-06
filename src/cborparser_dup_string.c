@@ -29,6 +29,7 @@
 #endif
 
 #include "cbor.h"
+#include "compilersupport_p.h"
 #include <stdlib.h>
 
 /**
@@ -59,7 +60,7 @@
  * \note This function does not perform UTF-8 validation on the incoming text
  * string.
  *
- * \sa cbor_value_copy_text_string(), cbor_value_dup_byte_string()
+ * \sa cbor_value_get_text_string_chunk(), cbor_value_copy_text_string(), cbor_value_dup_byte_string()
  */
 
 /**
@@ -87,12 +88,12 @@
  * number of chunks). It requires constant memory (O(1)) in addition to the
  * malloc'ed block.
  *
- * \sa cbor_value_copy_byte_string(), cbor_value_dup_text_string()
+ * \sa cbor_value_get_text_string_chunk(), cbor_value_copy_byte_string(), cbor_value_dup_text_string()
  */
 CborError _cbor_value_dup_string(const CborValue *value, void **buffer, size_t *buflen, CborValue *next)
 {
-    assert(buffer);
-    assert(buflen);
+    cbor_assert(buffer);
+    cbor_assert(buflen);
     *buflen = SIZE_MAX;
     CborError err = _cbor_value_copy_string(value, NULL, buflen, NULL);
     if (err)
