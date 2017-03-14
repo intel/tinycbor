@@ -12,6 +12,7 @@ TINYCBOR_OBJS = \
 	src\cborerrorstrings.obj \
 	src\cborencoder.obj \
 	src\cborencoder_close_container_checked.obj \
+	src\cborparser.obj \
 	src\cborparser_dup_string.obj \
 	src\cborpretty.obj
 
