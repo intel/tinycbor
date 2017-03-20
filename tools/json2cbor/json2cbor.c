@@ -149,12 +149,13 @@ uint8_t *decode_base64url(const char *string, size_t *len)
 
 uint8_t *decode_base16(const char *string, size_t *len)
 {
+    size_t i;
     *len = strlen(string) / 2;
     uint8_t *buffer = malloc(*len);
     if (buffer == NULL)
         return NULL;
 
-    for (size_t i = 0; i < *len; ++i) {
+    for (i = 0; i < *len; ++i) {
         char c = string[i * 2];
         if (c >= '0' && c <= '9') {
             buffer[i] = (c - '0') << 4;
