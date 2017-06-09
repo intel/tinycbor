@@ -463,6 +463,9 @@ CBOR_INLINE_API CborError cbor_value_get_double(const CborValue *value, double *
     return CborNoError;
 }
 
+/* The following API requires a hosted C implementation (uses FILE*) */
+#if !defined(__STDC_HOSTED__) || __STDC_HOSTED__-0 == 1
+
 /* Human-readable (dump) API */
 CBOR_API CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value);
 CBOR_INLINE_API CborError cbor_value_to_pretty(FILE *out, const CborValue *value)
@@ -470,6 +473,8 @@ CBOR_INLINE_API CborError cbor_value_to_pretty(FILE *out, const CborValue *value
     CborValue copy = *value;
     return cbor_value_to_pretty_advance(out, &copy);
 }
+
+#endif /* __STDC_HOSTED__ check */
 
 #ifdef __cplusplus
 }
