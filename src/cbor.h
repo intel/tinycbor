@@ -536,6 +536,9 @@ enum CborValidationFlags {
 
 CBOR_API CborError cbor_value_validate(const CborValue *it, int flags);
 
+/* The following API requires a hosted C implementation (uses FILE*) */
+#if !defined(__STDC_HOSTED__) || __STDC_HOSTED__-0 == 1
+
 /* Human-readable (dump) API */
 
 enum CborPrettyFlags {
@@ -558,6 +561,8 @@ CBOR_INLINE_API CborError cbor_value_to_pretty(FILE *out, const CborValue *value
     CborValue copy = *value;
     return cbor_value_to_pretty_advance_flags(out, &copy, CborPrettyDefaultFlags);
 }
+
+#endif /* __STDC_HOSTED__ check */
 
 #ifdef __cplusplus
 }
