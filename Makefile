@@ -34,6 +34,9 @@ CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 
 INSTALL_TARGETS += $(bindir)/cbordump
 INSTALL_TARGETS += $(libdir)/libtinycbor.a
+INSTALL_TARGETS += $(libdir)/libtinycbor.so
+INSTALL_TARGETS += $(libdir)/libtinycbor.so.0
+INSTALL_TARGETS += $(libdir)/libtinycbor.so.$(VERSION)
 INSTALL_TARGETS += $(pkgconfigdir)/tinycbor.pc
 INSTALL_TARGETS += $(TINYCBOR_HEADERS:src/%=$(includedir)/tinycbor/%)
 
@@ -95,7 +98,7 @@ ifneq ($(cjson-pass)$(system-cjson-pass),)
 endif
 
 # Rules
-all: .config lib/libtinycbor.a bin/cbordump tinycbor.pc
+all: .config lib/libtinycbor.a lib/libtinycbor.so bin/cbordump tinycbor.pc
 all: $(if $(JSON2CBOR_SOURCES),bin/json2cbor)
 check: tests/Makefile | lib/libtinycbor.a
 	$(MAKE) -C tests check
@@ -108,6 +111,10 @@ configure: .config
 lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o)
 	@$(MKDIR) -p lib
 	$(AR) cqs $@ $^
+
+lib/libtinycbor.so: $(TINYCBOR_SOURCES:.c=.pic.o)
+	$(CC) -shared -Wl,-soname,libtinycbor.so.0 -o lib/libtinycbor.so.$(VERSION) $(LDFLAGS) $^
+	cd lib ; ln -s libtinycbor.so.$(VERSION) libtinycbor.so ; ln -s libtinycbor.so.$(VERSION) libtinycbor.so.0
 
 bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) lib/libtinycbor.a
 	@$(MKDIR) -p bin
@@ -162,6 +169,7 @@ clean: mostlyclean
 	$(RM) bin/json2cbor
 	$(RM) lib/libtinycbor.a
 	$(RM) tinycbor.pc
+	$(RM) lib/libtinycbor.so*
 	test -e tests/Makefile && $(MAKE) -C tests clean || :
 
 distclean: clean
@@ -191,5 +199,8 @@ cflags += -std=c99 $(CFLAGS)
 %.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
 	$(CC) $(cflags) $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
+%.pic.o: %.c
+	@test -d $(@D) || $(MKDIR) $(@D)
+	$(CC) $(cflags) -fPIC $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
 
 -include src/*.d
