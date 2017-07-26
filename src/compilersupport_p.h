@@ -171,7 +171,7 @@
 #endif
 
 #if defined(__GNUC__) && !defined(__INTEL_COMPILER) && !defined(__clang__) && \
-    (__GNUC__ * 100 + __GNUC_MINOR__ >= 404)
+    (__GNUC__ * 100 + __GNUC_MINOR__ >= 404) && (__GNUC__ < 7)
 #  pragma GCC optimize("-ffunction-sections")
 #endif
 
