@@ -85,6 +85,10 @@ for my $n (@tagnumbers) {
     $comma = ",";
 }
 print "\n} CborKnownTags;";
+print "\n/* #define the constants so we can check with #ifdef */";
+for my $n (@tagnumbers) {
+    printf "#define Cbor%sTag Cbor%sTag\n", $tags{$n}{id}, $tags{$n}{id};
+}
 
 print "\n==== search table ====\n";
 print "struct KnownTagData { uint32_t tag; uint32_t types; };";

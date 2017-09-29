@@ -154,6 +154,21 @@
     <td>Bigfloat</td>
   </td>
   <tr>
+    <td>16</td>
+    <td>array</td>
+    <td>COSE Single Recipient Encrypted Data Object (RFC 8152)</td>
+  </td>
+  <tr>
+    <td>17</td>
+    <td>array</td>
+    <td>COSE Mac w/o Recipients Object (RFC 8152)</td>
+  </td>
+  <tr>
+    <td>18</td>
+    <td>array</td>
+    <td>COSE Single Signer Data Object (RFC 8162)</td>
+  </td>
+  <tr>
     <td>21</td>
     <td>byte string, array, map</td>
     <td>Expected conversion to base64url encoding</td>
@@ -199,6 +214,21 @@
     <td>MIME message</td>
   </td>
   <tr>
+    <td>96</td>
+    <td>array</td>
+    <td>COSE Encrypted Data Object (RFC 8152)</td>
+  </td>
+  <tr>
+    <td>97</td>
+    <td>array</td>
+    <td>COSE MACed Data Object (RFC 8152)</td>
+  </td>
+  <tr>
+    <td>98</td>
+    <td>array</td>
+    <td>COSE Signed Data Object (RFC 8152)</td>
+  </td>
+  <tr>
     <td>55799</td>
     <td>any</td>
     <td>Self-describe CBOR</td>
@@ -214,6 +244,9 @@ static const struct KnownTagData knownTagData[] = {
     { 3, (uint8_t)CborByteStringType },
     { 4, (uint8_t)CborArrayType },
     { 5, (uint8_t)CborArrayType },
+    { 16, (uint8_t)CborArrayType },
+    { 17, (uint8_t)CborArrayType },
+    { 18, (uint8_t)CborArrayType },
     { 21, (uint8_t)CborByteStringType | ((uint8_t)CborArrayType << 8) | ((uint8_t)CborMapType << 16) },
     { 22, (uint8_t)CborByteStringType | ((uint8_t)CborArrayType << 8) | ((uint8_t)CborMapType << 16) },
     { 23, (uint8_t)CborByteStringType | ((uint8_t)CborArrayType << 8) | ((uint8_t)CborMapType << 16) },
@@ -223,6 +256,9 @@ static const struct KnownTagData knownTagData[] = {
     { 34, (uint8_t)CborTextStringType },
     { 35, (uint8_t)CborTextStringType },
     { 36, (uint8_t)CborTextStringType },
+    { 96, (uint8_t)CborArrayType },
+    { 97, (uint8_t)CborArrayType },
+    { 98, (uint8_t)CborArrayType },
     { 55799, 0U }
 };
 
