@@ -1149,6 +1149,11 @@ static uintptr_t iterate_memcmp(char *s1, const uint8_t *s2, size_t len)
     return memcmp(s1, (const char *)s2, len) == 0;
 }
 
+static uintptr_t iterate_memcpy(char *dest, const uint8_t *src, size_t len)
+{
+    return (uintptr_t)memcpy(dest, src, len);
+}
+
 static CborError iterate_string_chunks(const CborValue *value, char *buffer, size_t *buflen,
                                        bool *result, CborValue *next, IterateFunction func)
 {
@@ -1263,7 +1268,7 @@ CborError _cbor_value_copy_string(const CborValue *value, void *buffer,
 {
     bool copied_all;
     CborError err = iterate_string_chunks(value, (char*)buffer, buflen, &copied_all, next,
-                                          buffer ? (IterateFunction)memcpy : iterate_noop);
+                                          buffer ? iterate_memcpy : iterate_noop);
     return err ? err :
                  copied_all ? CborNoError : CborErrorOutOfMemory;
 }
