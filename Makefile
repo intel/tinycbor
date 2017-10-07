@@ -35,9 +35,11 @@ CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 
 INSTALL_TARGETS += $(bindir)/cbordump
 INSTALL_TARGETS += $(libdir)/libtinycbor.a
+ifneq ($(shell uname -s), Linux)
 INSTALL_TARGETS += $(libdir)/libtinycbor.so
 INSTALL_TARGETS += $(libdir)/libtinycbor.so.0
 INSTALL_TARGETS += $(libdir)/libtinycbor.so.$(VERSION)
+endif
 INSTALL_TARGETS += $(pkgconfigdir)/tinycbor.pc
 INSTALL_TARGETS += $(TINYCBOR_HEADERS:src/%=$(includedir)/tinycbor/%)
 
