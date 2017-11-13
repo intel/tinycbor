@@ -125,6 +125,7 @@
 #  include <sys/byteorder.h>
 #elif defined(_MSC_VER)
 /* MSVC, which implies Windows, which implies little-endian and sizeof(long) == 4 */
+#  include <stdlib.h>
 #  define cbor_ntohll       _byteswap_uint64
 #  define cbor_htonll       _byteswap_uint64
 #  define cbor_ntohl        _byteswap_ulong
