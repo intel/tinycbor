@@ -70,10 +70,21 @@ print VERSION "$v\n";
 close VERSION;
 
 open VERSION, ">", "src/tinycbor-version.h" or die("Cannot open src/tinycbor-version.h: $!");
-print VERSION, "#define TINYCBOR_VERSION_MAJOR ", $v[0], "\n";
-print VERSION, "#define TINYCBOR_VERSION_MINOR ", $v[1], "\n";
-print VERSION, "#define TINYCBOR_VERSION_PATCH ", $v[2], "\n";
+print VERSION "#define TINYCBOR_VERSION_MAJOR      ", $v[0], "\n";
+print VERSION "#define TINYCBOR_VERSION_MINOR      ", $v[1], "\n";
+print VERSION "#define TINYCBOR_VERSION_PATCH      ", $v[2], "\n";
 close VERSION;
+
+if (open APPVEYORYML, "<", ".appveyor.yml") {
+    my @contents = map {
+        s/^version:.*/version: $v[0].$v[1].$v[2]-build-{build}/;
+        $_;
+    } <APPVEYORYML>;
+    close APPVEYORYML;
+    open APPVEYORYML, ">", ".appveyor.yml";
+    print APPVEYORYML join('', @contents);
+    close APPVEYORYML;
+}
 
 # Print summary
 print "Tag created and next versions updated.\n";
