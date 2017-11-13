@@ -534,6 +534,8 @@ CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *
     encoder->end = containerEncoder->end;
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
         return append_byte_to_buffer(encoder, BreakByte);
+    if (encoder->end)
+        return CborErrorOutOfMemory;    /* keep the state */
     return CborNoError;
 }
 
