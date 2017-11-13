@@ -38,7 +38,7 @@ my %typedescriptions = (
     "Undefined" => "undefined",
     "HalfFloat" => "IEEE 754 half-precision floating point",
     "Float" => "IEEE 754 single-precision floating point",
-    "Dobule" => "IEEE 754 double-precision floating point"
+    "Double" => "IEEE 754 double-precision floating point"
 );
 
 my %tags;
