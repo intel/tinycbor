@@ -194,7 +194,7 @@ typedef enum CborError {
     CborErrorJsonNotImplemented,
 
     CborErrorOutOfMemory = (int) (~0U / 2 + 1),
-    CborErrorInternalError = (int) ~0U
+    CborErrorInternalError = (int) (~0U / 2)    /* INT_MAX on two's complement machines */
 } CborError;
 
 CBOR_API const char *cbor_error_string(CborError error);
