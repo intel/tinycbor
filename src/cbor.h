@@ -245,6 +245,11 @@ CBOR_API CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *ma
 CBOR_API CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder);
 CBOR_API CborError cbor_encoder_close_container_checked(CborEncoder *encoder, const CborEncoder *containerEncoder);
 
+CBOR_INLINE_API uint8_t *_cbor_encoder_get_buffer_pointer(const CborEncoder *encoder)
+{
+    return encoder->data.ptr;
+}
+
 CBOR_INLINE_API size_t cbor_encoder_get_buffer_size(const CborEncoder *encoder, const uint8_t *buffer)
 {
     return (size_t)(encoder->data.ptr - buffer);
