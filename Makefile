@@ -169,6 +169,7 @@ uninstall:
 
 mostlyclean:
 	$(RM) $(TINYCBOR_SOURCES:.c=.o)
+	$(RM) $(TINYCBOR_SOURCES:.c=.pic.o)
 	$(RM) $(CBORDUMP_SOURCES:.c=.o)
 
 clean: mostlyclean
