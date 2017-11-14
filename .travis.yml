@@ -12,6 +12,7 @@ addons:
       - qt56base valgrind
 install:
   - if [ "${TRAVIS_OS_NAME}" != "linux" ]; then
+        brew update;
         brew install qt5;
     fi
 script:
