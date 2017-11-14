@@ -33,9 +33,11 @@ TINYCBOR_SOURCES = \
 #
 CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 
+BUILD_SHARED = $(shell file -L /bin/sh 2>/dev/null | grep -q ELF && echo 1)
+
 INSTALL_TARGETS += $(bindir)/cbordump
 INSTALL_TARGETS += $(libdir)/libtinycbor.a
-ifneq ($(shell uname -s), Linux)
+ifeq ($(BUILD_SHARED),1)
 INSTALL_TARGETS += $(libdir)/libtinycbor.so
 INSTALL_TARGETS += $(libdir)/libtinycbor.so.0
 INSTALL_TARGETS += $(libdir)/libtinycbor.so.$(VERSION)
@@ -101,7 +103,9 @@ ifneq ($(cjson-pass)$(system-cjson-pass),)
 endif
 
 # Rules
-all: .config lib/libtinycbor.a lib/libtinycbor.so bin/cbordump tinycbor.pc
+all: .config lib/libtinycbor.a \
+	$(if $(subst 0,,$(BUILD_SHARED)),lib/libtinycbor.so) \
+	bin/cbordump tinycbor.pc
 all: $(if $(JSON2CBOR_SOURCES),bin/json2cbor)
 check: tests/Makefile | lib/libtinycbor.a
 	$(MAKE) -C tests check
