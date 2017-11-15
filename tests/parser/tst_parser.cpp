@@ -25,6 +25,7 @@
 #define _XOPEN_SOURCE 700
 #include <QtTest>
 #include "cbor.h"
+#include "cbor_buf_reader.h"
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -122,7 +123,7 @@ CborError parseOne(CborValue *it, QString *parsed)
 
 CborError parseOneChunk(CborValue *it, QString *parsed)
 {
-    CborError err;
+    CborError err = CborNoError;
     CborType ourType = cbor_value_get_type(it);
     if (ourType == CborByteStringType) {
         const uint8_t *bytes;
@@ -223,7 +224,7 @@ void compareOne_real(const QByteArray &data, const QString &expected, int line, 
     QCOMPARE(err2, err);
 
     // check that we consumed everything
-    QCOMPARE((void*)cbor_value_get_next_byte(&first), (void*)data.constEnd());
+    QCOMPARE(cbor_value_at_end(&first), true);
 
     compareFailed = false;
 }
@@ -963,7 +964,7 @@ static void chunkedStringTest(const QByteArray &data, const QString &concatenate
 
     err = cbor_value_leave_container(&first, &value);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
-    QCOMPARE((void*)cbor_value_get_next_byte(&first), (void*)data.constEnd());
+    QCOMPARE(cbor_value_at_end(&first), true);
 }
 
 void tst_Parser::chunkedString()
@@ -2041,7 +2042,7 @@ void tst_Parser::endPointer()
 
     err = parseOne(&first, &decoded);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
-    QCOMPARE(int(first.ptr - reinterpret_cast<const quint8 *>(data.constBegin())), offset);
+    QCOMPARE(first.offset, offset);
 }
 
 void tst_Parser::recursionLimit_data()
