@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2016 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,39 @@
 **
 ****************************************************************************/
 
-#include "../../src/cbor_buf_writer.c"
-#include "../../src/cbor_buf_reader.c"
-#include "../../src/cborencoder.c"
-#include "../../src/cborerrorstrings.c"
-#include "../../src/cborparser.c"
-#include "../../src/cborparser_dup_string.c"
-#include "../../src/cborvalidation.c"
+#ifndef CBOR_DECODER_WRITER_H
+#define CBOR_DECODER_WRITER_H
 
-#include <QtTest>
+#include <stdint.h>
+#include <stddef.h>
 
-// This is a compilation-only test.
-// All it does is verify that the four source files above
-// compile as C++ without errors.
-class tst_Cpp : public QObject
-{
-    Q_OBJECT
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct cbor_decoder_reader;
+
+typedef uint8_t (cbor_reader_get8)(struct cbor_decoder_reader *d, int offset);
+typedef uint16_t (cbor_reader_get16)(struct cbor_decoder_reader *d, int offset);
+typedef uint32_t (cbor_reader_get32)(struct cbor_decoder_reader *d, int offset);
+typedef uint64_t (cbor_reader_get64)(struct cbor_decoder_reader *d, int offset);
+typedef uintptr_t (cbor_memcmp)(struct cbor_decoder_reader *d, char *buf, int offset, size_t len);
+typedef uintptr_t (cbor_memcpy)(struct cbor_decoder_reader *d, char *buf, int offset, size_t len);
+typedef uintptr_t (cbor_get_string_chunk)(struct cbor_decoder_reader *d, int offset, size_t *len);
+
+struct cbor_decoder_reader {
+    cbor_reader_get8  *get8;
+    cbor_reader_get16 *get16;
+    cbor_reader_get32 *get32;
+    cbor_reader_get64 *get64;
+    cbor_memcmp       *cmp;
+    cbor_memcpy       *cpy;
+    cbor_get_string_chunk *get_string_chunk;
+    size_t             message_size;
 };
 
-QTEST_MAIN(tst_Cpp)
-#include "tst_cpp.moc"
+#ifdef __cplusplus
+}
+#endif
+
+#endif

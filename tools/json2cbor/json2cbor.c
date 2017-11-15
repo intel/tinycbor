@@ -484,7 +484,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    fwrite(buffer, 1, encoder.data.ptr - buffer, stdout);
+    fwrite(buffer, 1, cb.ptr - buffer, stdout);
     free(buffer);
     return EXIT_SUCCESS;
 }

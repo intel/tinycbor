@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2016 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,42 @@
 **
 ****************************************************************************/
 
-#include "../../src/cbor_buf_writer.c"
-#include "../../src/cbor_buf_reader.c"
-#include "../../src/cborencoder.c"
-#include "../../src/cborerrorstrings.c"
-#include "../../src/cborparser.c"
-#include "../../src/cborparser_dup_string.c"
-#include "../../src/cborvalidation.c"
+#ifndef CBOR_CNT_WRITER_H
+#define CBOR_CNT_WRITER_H
 
-#include <QtTest>
+#include "cbor.h"
 
-// This is a compilation-only test.
-// All it does is verify that the four source files above
-// compile as C++ without errors.
-class tst_Cpp : public QObject
-{
-    Q_OBJECT
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+    /* use this count writer if you want to try out a cbor encoding to see
+     * how long it would be (before allocating memory). This replaced the
+     * code in tinycbor.h that would try to do this once the encoding failed
+     * in a buffer.  Its much easier to understand this way (for me)
+     */
+
+struct CborCntWriter {
+    struct cbor_encoder_writer enc;
 };
 
-QTEST_MAIN(tst_Cpp)
-#include "tst_cpp.moc"
+static inline int
+cbor_cnt_writer(struct cbor_encoder_writer *arg, const char *data, int len) {
+    struct CborCntWriter *cb = (struct CborCntWriter *) arg;
+    cb->enc.bytes_written += len;
+    return CborNoError;
+}
+
+static inline void
+cbor_cnt_writer_init(struct CborCntWriter *cb) {
+    cb->enc.bytes_written = 0;
+    cb->enc.write = &cbor_cnt_writer;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CBOR_CNT_WRITER_H */
+

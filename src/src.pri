@@ -7,6 +7,8 @@ SOURCES += \
     $$PWD/cborpretty.c \
     $$PWD/cbortojson.c \
     $$PWD/cborvalidation.c \
+    $$PWD/cbor_buf_reader.c \
+    $$PWD/cbor_buf_writer.c
 
 HEADERS += $$PWD/cbor.h $$PWD/tinycbor-version.h
 

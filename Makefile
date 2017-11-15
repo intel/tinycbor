@@ -20,7 +20,11 @@ RMDIR = rmdir
 SED = sed
 
 # Our sources
-TINYCBOR_HEADERS = src/cbor.h src/cborjson.h
+TINYCBOR_HEADERS = \
+	src/cbor.h \
+ 	src/cborjson.h \
+	src/cbor_enocoder_writer.h \
+	src/cbor_decoder_reader.h
 TINYCBOR_SOURCES = \
 	src/cborerrorstrings.c \
 	src/cborencoder.c \
@@ -31,6 +35,8 @@ TINYCBOR_SOURCES = \
 	src/cborpretty_stdio.c \
 	src/cbortojson.c \
 	src/cborvalidation.c \
+	src/cbor_buf_reader.c \
+	src/cbor_buf_writer.c
 #
 CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 

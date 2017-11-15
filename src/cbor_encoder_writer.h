@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2015 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,24 @@
 **
 ****************************************************************************/
 
-#include "../../src/cbor_buf_writer.c"
-#include "../../src/cbor_buf_reader.c"
-#include "../../src/cborencoder.c"
-#include "../../src/cborerrorstrings.c"
-#include "../../src/cborparser.c"
-#include "../../src/cborparser_dup_string.c"
-#include "../../src/cborvalidation.c"
+#ifndef CBOR_ENCODER_H
+#define CBOR_ENCODER_H
 
-#include <QtTest>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// This is a compilation-only test.
-// All it does is verify that the four source files above
-// compile as C++ without errors.
-class tst_Cpp : public QObject
-{
-    Q_OBJECT
-};
+struct cbor_encoder_writer;
 
-QTEST_MAIN(tst_Cpp)
-#include "tst_cpp.moc"
+typedef int (cbor_encoder_write)(struct cbor_encoder_writer *, const char *data, int len);
+
+typedef struct cbor_encoder_writer {
+    cbor_encoder_write *write;
+    int                 bytes_written;
+} cbor_encoder_writer;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CBOR_ENCODER_WRITER_H */

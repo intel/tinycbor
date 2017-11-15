@@ -6,7 +6,7 @@ all: ../bin ../bin/cbordump
 ../bin:
 	@-mkdir ../bin
 
-../bin/cbordump: cbordump.o cborparser.o cborparser_dup_string.o cbortojson.o cborerrorstrings.o cborpretty.o
+../bin/cbordump: cbordump.o cborparser.o cborparser_dup_string.o cbortojson.o cborerrorstrings.o cborpretty.o cbor_buf_reader.o cbor_buf_writer.o
 	$(CC) -o $@ $^
 	$(RM) $^
 
