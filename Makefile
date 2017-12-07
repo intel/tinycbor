@@ -34,13 +34,24 @@ TINYCBOR_SOURCES = \
 CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 
 BUILD_SHARED = $(shell file -L /bin/sh 2>/dev/null | grep -q ELF && echo 1)
+BUILD_STATIC = 1
+
+ifneq ($(BUILD_STATIC),1)
+ifneq ($(BUILD_SHARED),1)
+  $(error error: BUILD_STATIC and BUILD_SHARED can not be both disabled)
+endif
+endif
 
 INSTALL_TARGETS += $(bindir)/cbordump
-INSTALL_TARGETS += $(libdir)/libtinycbor.a
 ifeq ($(BUILD_SHARED),1)
+BINLIBRARY=lib/libtinycbor.so
 INSTALL_TARGETS += $(libdir)/libtinycbor.so
 INSTALL_TARGETS += $(libdir)/libtinycbor.so.0
 INSTALL_TARGETS += $(libdir)/libtinycbor.so.$(VERSION)
+endif
+ifeq ($(BUILD_STATIC),1)
+BINLIBRARY=lib/libtinycbor.a
+INSTALL_TARGETS += $(libdir)/libtinycbor.a
 endif
 INSTALL_TARGETS += $(pkgconfigdir)/tinycbor.pc
 INSTALL_TARGETS += $(TINYCBOR_HEADERS:src/%=$(includedir)/tinycbor/%)
@@ -103,13 +114,14 @@ ifneq ($(cjson-pass)$(system-cjson-pass),)
 endif
 
 # Rules
-all: .config lib/libtinycbor.a \
+all: .config \
+	$(if $(subst 0,,$(BUILD_STATIC)),lib/libtinycbor.a) \
 	$(if $(subst 0,,$(BUILD_SHARED)),lib/libtinycbor.so) \
 	bin/cbordump tinycbor.pc
 all: $(if $(JSON2CBOR_SOURCES),bin/json2cbor)
-check: tests/Makefile | lib/libtinycbor.a
+check: tests/Makefile | $(BINLIBRARY)
 	$(MAKE) -C tests check
-silentcheck: | lib/libtinycbor.a
+silentcheck: | $(BINLIBRARY)
 	TESTARGS=-silent $(MAKE) -f $(MAKEFILE) -s check
 configure: .config
 .config: Makefile.configure
@@ -120,14 +132,15 @@ lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o)
 	$(AR) cqs $@ $^
 
 lib/libtinycbor.so: $(TINYCBOR_SOURCES:.c=.pic.o)
+	@$(MKDIR) -p lib
 	$(CC) -shared -Wl,-soname,libtinycbor.so.0 -o lib/libtinycbor.so.$(VERSION) $(LDFLAGS) $^
 	cd lib ; ln -s libtinycbor.so.$(VERSION) libtinycbor.so ; ln -s libtinycbor.so.$(VERSION) libtinycbor.so.0
 
-bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) lib/libtinycbor.a
+bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) $(BINLIBRARY)
 	@$(MKDIR) -p bin
 	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS) -lm
 
-bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) lib/libtinycbor.a
+bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) $(BINLIBRARY)
 	@$(MKDIR) -p bin
 	$(CC) -o $@ $(LDFLAGS) $^ $(LDFLAGS_CJSON) $(LDLIBS) -lm
 
