@@ -22,8 +22,12 @@
 **
 ****************************************************************************/
 
+#ifndef _BSD_SOURCE
 #define _BSD_SOURCE 1
+#endif
+#ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE 1
+#endif
 #ifndef __STDC_LIMIT_MACROS
 #  define __STDC_LIMIT_MACROS 1
 #endif
