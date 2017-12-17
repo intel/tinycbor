@@ -200,7 +200,7 @@ static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
 static inline unsigned short encode_half(double val)
 {
 #ifdef __F16C__
-    return _cvtss_sh(val, 3);
+    return _cvtss_sh((float)val, 3);
 #else
     uint64_t v;
     memcpy(&v, &val, sizeof(v));
