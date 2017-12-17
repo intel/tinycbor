@@ -25,6 +25,10 @@
 #include <QtTest>
 #include "cbor.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
+#include <qfloat16.h>
+#endif
+
 Q_DECLARE_METATYPE(CborError)
 
 class tst_Encoder : public QObject
@@ -201,8 +205,13 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
     default:
         if (type == qMetaTypeId<SimpleType>())
             return cbor_encode_simple_value(encoder, v.value<SimpleType>().type);
+#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
         if (type == qMetaTypeId<Float16Standin>())
             return cbor_encode_half_float(encoder, v.constData());
+#else
+        if (type == qMetaTypeId<qfloat16>())
+            return cbor_encode_half_float(encoder, v.constData());
+#endif
         if (type == qMetaTypeId<Tag>()) {
             CborError err = cbor_encode_tag(encoder, v.value<Tag>().tag);
             if (err && !isOomError(err))
@@ -328,7 +337,16 @@ void addFixedData()
     QTest::newRow("simple255") << raw("\xf8\xff") << QVariant::fromValue(SimpleType{255});
 
     // floating point
-    QTest::newRow("0f16") << raw("\xf9\0\0") << QVariant::fromValue(Float16Standin{0x0000});
+#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
+    QTest::newRow("0.f16") << raw("\xf9\0\0") << QVariant::fromValue(Float16Standin{0x0000});
+#else
+    QTest::newRow("0.f16") << raw("\xf9\0\0") << QVariant::fromValue(qfloat16(0));
+    QTest::newRow("-1.f16") << raw("\xf9\xbc\0") << QVariant::fromValue(qfloat16(-1));
+    QTest::newRow("1.5f16") << raw("\xf9\x3e\0") << QVariant::fromValue(qfloat16(1.5));
+    QTest::newRow("nan_f16") << raw("\xf9\x7e\0") << QVariant::fromValue<qfloat16>(myNaNf());
+    QTest::newRow("-inf_f16") << raw("\xf9\xfc\0") << QVariant::fromValue<qfloat16>(myNInff());
+    QTest::newRow("+inf_f16") << raw("\xf9\x7c\0") << QVariant::fromValue<qfloat16>(myInff());
+#endif
 
     QTest::newRow("0.f") << raw("\xfa\0\0\0\0") << QVariant::fromValue(0.f);
     QTest::newRow("0.")  << raw("\xfb\0\0\0\0\0\0\0\0") << QVariant(0.);
