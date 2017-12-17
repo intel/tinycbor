@@ -486,7 +486,7 @@ static CborError advance_recursive(CborValue *it, int nestingLevel)
     }
 
     /* map or array */
-    if (nestingLevel == CBOR_PARSER_MAX_RECURSIONS)
+    if (nestingLevel == 0)
         return CborErrorNestingTooDeep;
 
     CborError err;
@@ -495,7 +495,7 @@ static CborError advance_recursive(CborValue *it, int nestingLevel)
     if (err)
         return err;
     while (!cbor_value_at_end(&recursed)) {
-        err = advance_recursive(&recursed, nestingLevel + 1);
+        err = advance_recursive(&recursed, nestingLevel - 1);
         if (err)
             return err;
     }
@@ -522,7 +522,7 @@ CborError cbor_value_advance(CborValue *it)
     cbor_assert(it->type != CborInvalidType);
     if (!it->remaining)
         return CborErrorAdvancePastEOF;
-    return advance_recursive(it, 0);
+    return advance_recursive(it, CBOR_PARSER_MAX_RECURSIONS);
 }
 
 /**
