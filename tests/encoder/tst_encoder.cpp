@@ -61,6 +61,10 @@ private slots:
     void maps_data() { tags_data(); }
     void maps();
 
+    void writerApi_data() { tags_data(); }
+    void writerApi();
+    void writerApiFail_data() { tags_data(); }
+    void writerApiFail();
     void shortBuffer_data() { tags_data(); }
     void shortBuffer();
     void tooShortArrays_data() { tags_data(); }
@@ -782,6 +786,47 @@ void tst_Encoder::maps()
 
     compare(make_map({{1, make_map({{2, input}})}, {input, false}}), "\xa2\1\xa1\2" + output + output + "\xf4");
     if (QTest::currentTestFailed()) return;
+}
+
+void tst_Encoder::writerApi()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+
+    // instead of writing to a QByteArray like all other tests, write to a QBuffer
+    QBuffer buffer;
+    buffer.open(QIODevice::ReadWrite);
+    auto callback = [](void *token, const void *data, size_t len, CborEncoderAppendType) {
+        auto buffer = static_cast<QBuffer *>(token);
+        buffer->write(static_cast<const char *>(data), len);
+        return CborNoError;
+    };
+
+    CborEncoder encoder;
+    cbor_encoder_init_writer(&encoder, callback, &buffer);
+    QCOMPARE(encodeVariant(&encoder, input), CborNoError);
+
+    buffer.reset();
+    QCOMPARE(buffer.readAll(), output);
+}
+
+void tst_Encoder::writerApiFail()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+
+    // same as above, but we'll produce an error during writing and we expect
+    // it to be returned
+    int callCount = 0;
+    auto callback = [](void *token, const void *, size_t, CborEncoderAppendType) {
+        ++*static_cast<int *>(token);
+        return CborErrorIO;
+    };
+
+    CborEncoder encoder;
+    cbor_encoder_init_writer(&encoder, callback, &callCount);
+    QCOMPARE(encodeVariant(&encoder, input), CborErrorIO);
+    QCOMPARE(callCount, 1);
 }
 
 void tst_Encoder::shortBuffer()

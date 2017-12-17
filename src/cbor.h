@@ -203,13 +203,29 @@ typedef enum CborError {
 CBOR_API const char *cbor_error_string(CborError error);
 
 /* Encoder API */
+
+typedef enum CborEncoderAppendType
+{
+    CborEncoderAppendCborData = 0,
+    CborEncoderAppendStringData = 1
+} CborEncoderAppendType;
+
+typedef CborError (*CborEncoderWriteFunction)(void *, const void *, size_t, CborEncoderAppendType);
+
+enum CborEncoderFlags
+{
+    CborIteratorFlag_WriterFunction         = 0x01,
+    CborIteratorFlag_ContainerIsMap_        = 0x20
+};
+
 struct CborEncoder
 {
     union {
         uint8_t *ptr;
         ptrdiff_t bytes_needed;
+        CborEncoderWriteFunction writer;
     } data;
-    const uint8_t *end;
+    uint8_t *end;
     size_t remaining;
     int flags;
 };
@@ -219,6 +235,7 @@ static const size_t CborIndefiniteLength = SIZE_MAX;
 
 #ifndef CBOR_NO_ENCODER_API
 CBOR_API void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags);
+CBOR_API void cbor_encoder_init_writer(CborEncoder *encoder, CborEncoderWriteFunction writer, void *);
 CBOR_API CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value);
 CBOR_API CborError cbor_encode_int(CborEncoder *encoder, int64_t value);
 CBOR_API CborError cbor_encode_negative_int(CborEncoder *encoder, uint64_t absolute_value);

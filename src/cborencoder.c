@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Intel Corporation
+** Copyright (C) 2021 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -208,6 +208,18 @@ void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int f
     encoder->flags = flags;
 }
 
+void cbor_encoder_init_writer(CborEncoder *encoder, CborEncoderWriteFunction writer, void *token)
+{
+#ifdef CBOR_ENCODER_WRITE_FUNCTION
+    (void) writer;
+#else
+    encoder->data.writer = writer;
+#endif
+    encoder->end = (uint8_t *)token;
+    encoder->remaining = 2;
+    encoder->flags = CborIteratorFlag_WriterFunction;
+}
+
 static inline void put16(void *where, uint16_t v)
 {
     uint16_t v_be = cbor_htons(v);
@@ -221,8 +233,12 @@ static inline void put16(void *where, uint16_t v)
  * being created in the tinycbor output */
 static inline bool isOomError(CborError err)
 {
-    (void) err;
-    return true;
+    if (CBOR_ENCODER_WRITER_CONTROL < 0)
+        return true;
+
+    /* CborErrorOutOfMemory is the only negative error code, intentionally
+     * so we can write the test like this */
+    return (int)err < 0;
 }
 
 static inline void put32(void *where, uint32_t v)
@@ -253,8 +269,20 @@ static inline void advance_ptr(CborEncoder *encoder, size_t n)
         encoder->data.bytes_needed += n;
 }
 
-static inline CborError append_to_buffer(CborEncoder *encoder, const void *data, size_t len)
+static inline CborError append_to_buffer(CborEncoder *encoder, const void *data, size_t len,
+                                         CborEncoderAppendType appendType)
 {
+    if (CBOR_ENCODER_WRITER_CONTROL >= 0) {
+        if (encoder->flags & CborIteratorFlag_WriterFunction || CBOR_ENCODER_WRITER_CONTROL != 0) {
+#  ifdef CBOR_ENCODER_WRITE_FUNCTION
+            return CBOR_ENCODER_WRITE_FUNCTION(encoder->end, data, len, appendType);
+#  else
+            return encoder->data.writer(encoder->end, data, len, appendType);
+#  endif
+        }
+    }
+
+#if CBOR_ENCODER_WRITER_CONTROL <= 0
     if (would_overflow(encoder, len)) {
         if (encoder->end != NULL) {
             len -= encoder->end - encoder->data.ptr;
@@ -268,12 +296,13 @@ static inline CborError append_to_buffer(CborEncoder *encoder, const void *data,
 
     memcpy(encoder->data.ptr, data, len);
     encoder->data.ptr += len;
+#endif
     return CborNoError;
 }
 
 static inline CborError append_byte_to_buffer(CborEncoder *encoder, uint8_t byte)
 {
-    return append_to_buffer(encoder, &byte, 1);
+    return append_to_buffer(encoder, &byte, 1, CborEncoderAppendCborData);
 }
 
 static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
@@ -302,7 +331,7 @@ static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t u
         *bufstart = shiftedMajorType + Value8Bit + more;
     }
 
-    return append_to_buffer(encoder, bufstart, bufend - bufstart);
+    return append_to_buffer(encoder, bufstart, bufend - bufstart, CborEncoderAppendCborData);
 }
 
 static inline void saturated_decrement(CborEncoder *encoder)
@@ -399,7 +428,7 @@ CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, cons
     else
         put16(buf + 1, *(const uint16_t*)value);
     saturated_decrement(encoder);
-    return append_to_buffer(encoder, buf, size + 1);
+    return append_to_buffer(encoder, buf, size + 1, CborEncoderAppendCborData);
 }
 
 /**
@@ -418,7 +447,7 @@ static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shif
     CborError err = encode_number(encoder, length, shiftedMajorType);
     if (err && !isOomError(err))
         return err;
-    return append_to_buffer(encoder, string, length);
+    return append_to_buffer(encoder, string, length, CborEncoderAppendStringData);
 }
 
 /**
@@ -466,9 +495,12 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
     saturated_decrement(encoder);
     container->remaining = length + 1;      /* overflow ok on CborIndefiniteLength */
 
+    cbor_static_assert((int)CborIteratorFlag_ContainerIsMap_ == (int)CborIteratorFlag_ContainerIsMap);
     cbor_static_assert(((MapType << MajorTypeShift) & CborIteratorFlag_ContainerIsMap) == CborIteratorFlag_ContainerIsMap);
     cbor_static_assert(((ArrayType << MajorTypeShift) & CborIteratorFlag_ContainerIsMap) == 0);
     container->flags = shiftedMajorType & CborIteratorFlag_ContainerIsMap;
+    if (CBOR_ENCODER_WRITER_CONTROL == 0)
+        container->flags |= encoder->flags & CborIteratorFlag_WriterFunction;
 
     if (length == CborIndefiniteLength) {
         container->flags |= CborIteratorFlag_UnknownLength;

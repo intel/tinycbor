@@ -106,9 +106,13 @@ static inline double decode_half(unsigned short half)
 #  define CBOR_PARSER_MAX_RECURSIONS 1024
 #endif
 
+#ifndef CBOR_ENCODER_WRITER_CONTROL
+#  define CBOR_ENCODER_WRITER_CONTROL   0
+#endif
 #ifndef CBOR_PARSER_READER_CONTROL
 #  define CBOR_PARSER_READER_CONTROL    0
 #endif
+
 /*
  * CBOR Major types
  * Encoded in the high 3 bits of the descriptor byte
