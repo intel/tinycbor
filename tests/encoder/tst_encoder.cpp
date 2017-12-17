@@ -225,7 +225,7 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 if (err && !isOomError(err))
                     return err;
             }
-            return static_cast<CborError>(err | cbor_encoder_close_container_checked(encoder, &sub));
+            return cbor_encoder_close_container_checked(encoder, &sub);
         }
         if (type == qMetaTypeId<Map>() || type == qMetaTypeId<IndeterminateLengthMap>()) {
             CborEncoder sub;
@@ -246,7 +246,7 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 if (err && !isOomError(err))
                     return err;
             }
-            return (CborError)(err | cbor_encoder_close_container_checked(encoder, &sub));
+            return cbor_encoder_close_container_checked(encoder, &sub);
         }
     }
     return CborErrorUnknownType;
