@@ -156,6 +156,11 @@ enum {
 
 CBOR_INTERNAL_API CborError CBOR_INTERNAL_API_CC _cbor_value_prepare_string_iteration(CborValue *it);
 
+static inline void copy_current_position(CborValue *dst, const CborValue *src)
+{
+    dst->ptr = src->ptr;
+}
+
 static inline bool can_read_bytes(const CborValue *it, size_t n)
 {
     /* Convert the pointer subtraction to size_t since end >= ptr

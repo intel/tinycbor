@@ -566,14 +566,14 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
         recursed->remaining = (uint32_t)len;
         if (recursed->remaining != len || len == UINT32_MAX) {
             /* back track the pointer to indicate where the error occurred */
-            recursed->ptr = it->ptr;
+            copy_current_position(recursed, it);
             return CborErrorDataTooLarge;
         }
         if (recursed->type == CborMapType) {
             /* maps have keys and values, so we need to multiply by 2 */
             if (recursed->remaining > UINT32_MAX / 2) {
                 /* back track the pointer to indicate where the error occurred */
-                recursed->ptr = it->ptr;
+                copy_current_position(recursed, it);
                 return CborErrorDataTooLarge;
             }
             recursed->remaining *= 2;
@@ -604,7 +604,7 @@ CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
 {
     cbor_assert(cbor_value_is_container(it));
     cbor_assert(recursed->type == CborInvalidType);
-    it->ptr = recursed->ptr;
+    copy_current_position(it, recursed);
     return preparse_next_value(it);
 }
 

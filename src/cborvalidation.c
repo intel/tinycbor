@@ -473,7 +473,7 @@ static CborError validate_container(CborValue *it, int containerType, uint32_t f
         if (flags & CborValidateMapIsSorted) {
             if (previous) {
                 size_t bytelen1 = (size_t)(previous_end - previous);
-                size_t bytelen2 = (size_t)(it->ptr - current);
+                size_t bytelen2 = (size_t)(cbor_value_get_next_byte(it) - current);
                 int r = memcmp(previous, current, bytelen1 <= bytelen2 ? bytelen1 : bytelen2);
 
                 if (r == 0 && bytelen1 != bytelen2)
@@ -485,7 +485,7 @@ static CborError validate_container(CborValue *it, int containerType, uint32_t f
             }
 
             previous = current;
-            previous_end = it->ptr;
+            previous_end = cbor_value_get_next_byte(it);
         }
 
         /* map: that was the key, so get the value */
@@ -519,7 +519,7 @@ static CborError validate_value(CborValue *it, uint32_t flags, int recursionLeft
         if (!err)
             err = validate_container(&recursed, type, flags, recursionLeft - 1);
         if (err) {
-            it->ptr = recursed.ptr;
+            copy_current_position(it, &recursed);
             return err;
         }
         err = cbor_value_leave_container(it, &recursed);

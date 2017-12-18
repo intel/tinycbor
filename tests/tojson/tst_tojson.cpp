@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2021 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -225,7 +225,7 @@ void compareOne_real(const QByteArray &data, const QString &expected, int flags,
     QCOMPARE(decoded, expected);
 
     // check that we consumed everything
-    QCOMPARE((void*)first.ptr, (void*)data.constEnd());
+    QCOMPARE((void*)cbor_value_get_next_byte(&first), (void*)data.constEnd());
 
     compareFailed = false;
 }
@@ -665,7 +665,7 @@ void compareMetaData(QByteArray data, const QString &expected, int otherFlags = 
                  "\"; decoded stream:\n" + decoded.toLatin1());
 
         // check that we consumed everything
-        QCOMPARE((void*)first.ptr, (void*)data.constEnd());
+        QCOMPARE((void*)cbor_value_get_next_byte(&first), (void*)data.constEnd());
     }
 
     QVERIFY(decoded.startsWith("{\"v\":"));

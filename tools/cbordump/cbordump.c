@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2021 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -79,7 +79,7 @@ void dumpFile(FILE *in, const char *fname, bool printJosn, int flags)
         if (!err)
             puts("");
     }
-    if (!err && value.ptr != buffer + buflen)
+    if (!err && cbor_value_get_next_byte(&value) != buffer + buflen)
         err = CborErrorGarbageAtEnd;
     if (err)
         printerror(err, fname);

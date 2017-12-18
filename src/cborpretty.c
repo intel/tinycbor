@@ -354,12 +354,12 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
 
         err = cbor_value_enter_container(it, &recursed);
         if (err) {
-            it->ptr = recursed.ptr;
+            copy_current_position(it, &recursed);
             return err;       /* parse error */
         }
         err = container_to_pretty(stream, out, &recursed, type, flags, recursionsLeft - 1);
         if (err) {
-            it->ptr = recursed.ptr;
+            copy_current_position(it, &recursed);
             return err;       /* parse error */
         }
         err = cbor_value_leave_container(it, &recursed);
