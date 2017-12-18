@@ -134,7 +134,7 @@ lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o)
 lib/libtinycbor.so: $(TINYCBOR_SOURCES:.c=.pic.o)
 	@$(MKDIR) -p lib
 	$(CC) -shared -Wl,-soname,libtinycbor.so.0 -o lib/libtinycbor.so.$(VERSION) $(LDFLAGS) $^
-	cd lib ; ln -s libtinycbor.so.$(VERSION) libtinycbor.so ; ln -s libtinycbor.so.$(VERSION) libtinycbor.so.0
+	cd lib ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so.0
 
 bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) $(BINLIBRARY)
 	@$(MKDIR) -p bin
