@@ -626,7 +626,7 @@ void tst_Encoder::shortBuffer()
     for (int len = 0; len < output.length(); ++len) {
         CborEncoder encoder;
         cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), len, 0);
-        QCOMPARE(int(encodeVariant(&encoder, input)), int(CborErrorOutOfMemory));
+        QCOMPARE(encodeVariant(&encoder, input), CborErrorOutOfMemory);
         QVERIFY(cbor_encoder_get_extra_bytes_needed(&encoder) != 0);
         QCOMPARE(len + cbor_encoder_get_extra_bytes_needed(&encoder), size_t(output.length()));
     }
@@ -710,7 +710,7 @@ void tst_Encoder::illegalSimpleType()
     quint8 buf[2];
     CborEncoder encoder;
     cbor_encoder_init(&encoder, buf, sizeof(buf), 0);
-    QCOMPARE(int(cbor_encode_simple_value(&encoder, type)), int(CborErrorIllegalSimpleType));
+    QCOMPARE(cbor_encode_simple_value(&encoder, type), CborErrorIllegalSimpleType);
 }
 
 QTEST_MAIN(tst_Encoder)
