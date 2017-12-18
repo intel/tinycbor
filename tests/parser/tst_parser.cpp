@@ -33,6 +33,12 @@ extern "C" FILE *open_memstream(char **bufptr, size_t *sizeptr);
 #endif
 
 Q_DECLARE_METATYPE(CborError)
+namespace QTest {
+template<> char *toString<CborError>(const CborError &err)
+{
+    return qstrdup(cbor_error_string(err));
+}
+}
 
 class tst_Parser : public QObject
 {
@@ -233,7 +239,7 @@ void compareOne_real(const QByteArray &data, const QString &expected, int line, 
     QCOMPARE(decoded, expected);
 
     // check that the errors are the same
-    QCOMPARE(int(err2), int(err));
+    QCOMPARE(err2, err);
 
     // check that we consumed everything
     QCOMPARE((void*)cbor_value_get_next_byte(&first), (void*)data.constEnd());
@@ -1261,7 +1267,7 @@ void tst_Parser::checkedIntegers()
     int64_t v;
     err = cbor_value_get_int64_checked(&value, &v);
     if (result.isNull()) {
-        QCOMPARE(int(err), int(CborErrorDataTooLarge));
+        QCOMPARE(err, CborErrorDataTooLarge);
     } else {
         QCOMPARE(v, expected);
     }
@@ -1269,7 +1275,7 @@ void tst_Parser::checkedIntegers()
     int v2;
     err = cbor_value_get_int_checked(&value, &v2);
     if (result.isNull() || expected < std::numeric_limits<int>::min() || expected > std::numeric_limits<int>::max()) {
-        QCOMPARE(int(err), int(CborErrorDataTooLarge));
+        QCOMPARE(err, CborErrorDataTooLarge);
     } else {
         QCOMPARE(int64_t(v2), expected);
     }
@@ -1534,10 +1540,10 @@ void tst_Parser::validation()
     CborError err2 = cbor_value_validate_basic(&first);
     CborError err3 = cbor_value_validate(&first, CborValidateBasic);
     err = parseOne(&first, &decoded);
-    QCOMPARE(int(err), int(expectedError));
+    QCOMPARE(err, expectedError);
     if (!QByteArray(QTest::currentDataTag()).contains("utf8")) {
-        QCOMPARE(int(err2), int(expectedError));
-        QCOMPARE(int(err3), int(expectedError));
+        QCOMPARE(err2, expectedError);
+        QCOMPARE(err3, expectedError);
     }
 }
 
@@ -1903,7 +1909,7 @@ void tst_Parser::strictValidation()
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
     err = cbor_value_validate(&first, flags);
-    QCOMPARE(int(err), int(expectedError));
+    QCOMPARE(err, expectedError);
 }
 
 void tst_Parser::resumeParsing_data()
@@ -1930,7 +1936,7 @@ void tst_Parser::resumeParsing()
         }
         if (err != CborErrorUnexpectedEOF)
             qDebug() << "Length is" << len;
-        QCOMPARE(int(err), int(CborErrorUnexpectedEOF));
+        QCOMPARE(err, CborErrorUnexpectedEOF);
     }
 }
 
@@ -2025,13 +2031,13 @@ void tst_Parser::recursionLimit()
 
     it = first;
     err = cbor_value_advance(&it);
-    QCOMPARE(int(err), int(CborErrorNestingTooDeep));
+    QCOMPARE(err, CborErrorNestingTooDeep);
 
     it = first;
     if (cbor_value_is_map(&it)) {
         CborValue dummy;
         err = cbor_value_map_find_value(&it, "foo", &dummy);
-        QCOMPARE(int(err), int(CborErrorNestingTooDeep));
+        QCOMPARE(err, CborErrorNestingTooDeep);
     }
 }
 
