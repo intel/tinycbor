@@ -106,6 +106,9 @@ static inline double decode_half(unsigned short half)
 #  define CBOR_PARSER_MAX_RECURSIONS 1024
 #endif
 
+#ifndef CBOR_PARSER_READER_CONTROL
+#  define CBOR_PARSER_READER_CONTROL    0
+#endif
 /*
  * CBOR Major types
  * Encoded in the high 3 bits of the descriptor byte
@@ -158,25 +161,82 @@ CBOR_INTERNAL_API CborError CBOR_INTERNAL_API_CC _cbor_value_prepare_string_iter
 
 static inline void copy_current_position(CborValue *dst, const CborValue *src)
 {
-    dst->ptr = src->ptr;
+    /* This "if" is here for pedantry only: the two branches should perform
+     * the same memory operation. */
+    if (src->parser->flags & CborParserFlag_ExternalSource)
+        dst->source.token = src->source.token;
+    else
+        dst->source.ptr = src->source.ptr;
 }
 
 static inline bool can_read_bytes(const CborValue *it, size_t n)
 {
+    if (CBOR_PARSER_READER_CONTROL >= 0) {
+        if (it->parser->flags & CborParserFlag_ExternalSource || CBOR_PARSER_READER_CONTROL != 0) {
+#ifdef CBOR_PARSER_CAN_READ_BYTES_FUNCTION
+            return CBOR_PARSER_CAN_READ_BYTES_FUNCTION(it->source.token, n);
+#else
+            return it->parser->source.ops->can_read_bytes(it->source.token, n);
+#endif
+        }
+    }
+
     /* Convert the pointer subtraction to size_t since end >= ptr
      * (this prevents issues with (ptrdiff_t)n becoming negative).
      */
-    return (size_t)(it->parser->end - it->ptr) >= n;
+    return (size_t)(it->parser->source.end - it->source.ptr) >= n;
 }
 
 static inline void advance_bytes(CborValue *it, size_t n)
 {
-    it->ptr += n;
+    if (CBOR_PARSER_READER_CONTROL >= 0) {
+        if (it->parser->flags & CborParserFlag_ExternalSource || CBOR_PARSER_READER_CONTROL != 0) {
+#ifdef CBOR_PARSER_ADVANCE_BYTES_FUNCTION
+            CBOR_PARSER_ADVANCE_BYTES_FUNCTION(it->source.token, n);
+#else
+            it->parser->source.ops->advance_bytes(it->source.token, n);
+#endif
+            return;
+        }
+    }
+
+    it->source.ptr += n;
+}
+
+static inline CborError transfer_string(CborValue *it, const void **ptr, size_t offset, size_t len)
+{
+    if (CBOR_PARSER_READER_CONTROL >= 0) {
+        if (it->parser->flags & CborParserFlag_ExternalSource || CBOR_PARSER_READER_CONTROL != 0) {
+#ifdef CBOR_PARSER_TRANSFER_STRING_FUNCTION
+            return CBOR_PARSER_TRANSFER_STRING_FUNCTION(it->source.token, ptr, offset, len);
+#else
+            return it->parser->source.ops->transfer_string(it->source.token, ptr, offset, len);
+#endif
+        }
+    }
+
+    it->source.ptr += offset;
+    if (can_read_bytes(it, len)) {
+        *CONST_CAST(const void **, ptr) = it->source.ptr;
+        it->source.ptr += len;
+        return CborNoError;
+    }
+    return CborErrorUnexpectedEOF;
 }
 
 static inline void *read_bytes_unchecked(const CborValue *it, void *dst, size_t offset, size_t n)
 {
-    return memcpy(dst, it->ptr + offset, n);
+    if (CBOR_PARSER_READER_CONTROL >= 0) {
+        if (it->parser->flags & CborParserFlag_ExternalSource || CBOR_PARSER_READER_CONTROL != 0) {
+#ifdef CBOR_PARSER_READ_BYTES_FUNCTION
+            return CBOR_PARSER_READ_BYTES_FUNCTION(it->source.token, dst, offset, n);
+#else
+            return it->parser->source.ops->read_bytes(it->source.token, dst, offset, n);
+#endif
+        }
+    }
+
+    return memcpy(dst, it->source.ptr + offset, n);
 }
 
 #ifdef __GNUC__

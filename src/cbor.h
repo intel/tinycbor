@@ -189,6 +189,7 @@ typedef enum CborError {
     CborErrorDataTooLarge = 1024,
     CborErrorNestingTooDeep,
     CborErrorUnsupportedType,
+    CborErrorUnimplementedValidation,
 
     /* errors in converting to JSON */
     CborErrorJsonObjectKeyIsAggregate = 1280,
@@ -267,6 +268,11 @@ CBOR_INLINE_API size_t cbor_encoder_get_extra_bytes_needed(const CborEncoder *en
 
 /* Parser API */
 
+enum CborParserGlobalFlags
+{
+    CborParserFlag_ExternalSource           = 0x01
+};
+
 enum CborParserIteratorFlags
 {
     CborIteratorFlag_IntegerValueIs64Bit    = 0x01,
@@ -278,17 +284,32 @@ enum CborParserIteratorFlags
     CborIteratorFlag_NextIsMapKey           = 0x40
 };
 
+struct CborValue;
+struct CborParserOperations
+{
+    bool (*can_read_bytes)(void *token, size_t len);
+    void *(*read_bytes)(void *token, void *dst, size_t offset, size_t len);
+    void (*advance_bytes)(void *token, size_t len);
+    CborError (*transfer_string)(void *token, const void **userptr, size_t offset, size_t len);
+};
+
 struct CborParser
 {
-    const uint8_t *end;
-    uint32_t flags;
+    union {
+        const uint8_t *end;
+        const struct CborParserOperations *ops;
+    } source;
+    enum CborParserGlobalFlags flags;
 };
 typedef struct CborParser CborParser;
 
 struct CborValue
 {
     const CborParser *parser;
-    const uint8_t *ptr;
+    union {
+        const uint8_t *ptr;
+        void *token;
+    } source;
     uint32_t remaining;
     uint16_t extra;
     uint8_t type;
@@ -298,13 +319,14 @@ typedef struct CborValue CborValue;
 
 #ifndef CBOR_NO_PARSER_API
 CBOR_API CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, CborParser *parser, CborValue *it);
+CBOR_API CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *token);
 
 CBOR_API CborError cbor_value_validate_basic(const CborValue *it);
 
 CBOR_INLINE_API bool cbor_value_at_end(const CborValue *it)
 { return it->remaining == 0; }
 CBOR_INLINE_API const uint8_t *cbor_value_get_next_byte(const CborValue *it)
-{ return it->ptr; }
+{ return it->source.ptr; }
 CBOR_API CborError cbor_value_advance_fixed(CborValue *it);
 CBOR_API CborError cbor_value_advance(CborValue *it);
 CBOR_INLINE_API bool cbor_value_is_container(const CborValue *it)

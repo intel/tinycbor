@@ -75,7 +75,7 @@ script:
   - make -s -f Makefile.configure configure | tee .config
   - make -k
         CFLAGS="$CFLAGS -march=native -g1 -Wall -Wextra -Werror"
-        CPPFLAGS="-DNDEBUG"
+        CPPFLAGS="-DNDEBUG -DCBOR_PARSER_READER_CONTROL=-1"
         lib/libtinycbor.a
   - size lib/libtinycbor.a | tee sizes
   - make -s clean

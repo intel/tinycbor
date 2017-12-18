@@ -471,6 +471,8 @@ static CborError validate_container(CborValue *it, int containerType, uint32_t f
             continue;
 
         if (flags & CborValidateMapIsSorted) {
+            if (it->parser->flags & CborParserFlag_ExternalSource)
+                return CborErrorUnimplementedValidation;
             if (previous) {
                 size_t bytelen1 = (size_t)(previous_end - previous);
                 size_t bytelen2 = (size_t)(cbor_value_get_next_byte(it) - current);

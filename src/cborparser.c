@@ -343,12 +343,23 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
 CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, CborParser *parser, CborValue *it)
 {
     memset(parser, 0, sizeof(*parser));
-    parser->end = buffer + size;
-    parser->flags = flags;
+    parser->source.end = buffer + size;
+    parser->flags = (enum CborParserGlobalFlags)flags;
     it->parser = parser;
-    it->ptr = buffer;
+    it->source.ptr = buffer;
     it->remaining = 1;      /* there's one type altogether, usually an array or map */
     it->flags = 0;
+    return preparse_value(it);
+}
+
+CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *token)
+{
+    memset(parser, 0, sizeof(*parser));
+    parser->source.ops = ops;
+    parser->flags = CborParserFlag_ExternalSource;
+    it->parser = parser;
+    it->source.token = token;
+    it->remaining = 1;
     return preparse_value(it);
 }
 
@@ -381,6 +392,11 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, C
  * then this function returns a pointer to where the parsing error occurred.
  * Note that the error recovery is not precise and the pointer may not indicate
  * the exact byte containing bad data.
+ *
+ * This function makes sense only when using a linear buffer (that is, when the
+ * parser is initialize by cbor_parser_init()). If using an external source,
+ * this function may return garbage; instead, consult the external source itself
+ * to find out more details about the presence of more data.
  *
  * \sa cbor_value_at_end()
  */
@@ -1029,17 +1045,12 @@ last_chunk:
             ++bytesNeeded;
         }
 
-        *bufferptr = it->ptr + bytesNeeded;
         if (*len != (size_t)*len)
             return CborErrorDataTooLarge;
 
-        if (add_check_overflow(bytesNeeded, *len, &bytesNeeded))
-            return CborErrorUnexpectedEOF;
-
-        if (!can_read_bytes(it, bytesNeeded))
-            return CborErrorUnexpectedEOF;
-
-        advance_bytes(it, bytesNeeded);
+        CborError err = transfer_string(it, bufferptr, bytesNeeded, *len);
+        if (err)
+            return err;
     } else {
         return CborErrorIllegalType;
     }

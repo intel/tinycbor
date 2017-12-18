@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Intel Corporation
+** Copyright (C) 2021 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -168,6 +168,9 @@ const char *cbor_error_string(CborError error)
 
     case CborErrorUnsupportedType:
         return _("unsupported type");
+
+    case CborErrorUnimplementedValidation:
+        return _("validation not implemented for the current parser state");
 
     case CborErrorJsonObjectKeyIsAggregate:
         return _("conversion to JSON failed: key in object is an array or map");
