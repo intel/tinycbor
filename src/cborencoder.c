@@ -204,7 +204,7 @@ void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int f
 {
     encoder->data.ptr = buffer;
     encoder->end = buffer + size;
-    encoder->added = 0;
+    encoder->remaining = 2;
     encoder->flags = flags;
 }
 
@@ -305,9 +305,15 @@ static inline CborError encode_number_no_update(CborEncoder *encoder, uint64_t u
     return append_to_buffer(encoder, bufstart, bufend - bufstart);
 }
 
+static inline void saturated_decrement(CborEncoder *encoder)
+{
+    if (encoder->remaining)
+        --encoder->remaining;
+}
+
 static inline CborError encode_number(CborEncoder *encoder, uint64_t ui, uint8_t shiftedMajorType)
 {
-    ++encoder->added;
+    saturated_decrement(encoder);
     return encode_number_no_update(encoder, ui, shiftedMajorType);
 }
 
@@ -389,7 +395,7 @@ CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, cons
         put32(buf + 1, *(const uint32_t*)value);
     else
         put16(buf + 1, *(const uint16_t*)value);
-    ++encoder->added;
+    saturated_decrement(encoder);
     return append_to_buffer(encoder, buf, size + 1);
 }
 
@@ -454,8 +460,8 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
     CborError err;
     container->data.ptr = encoder->data.ptr;
     container->end = encoder->end;
-    ++encoder->added;
-    container->added = 0;
+    saturated_decrement(encoder);
+    container->remaining = length + 1;      /* overflow ok on CborIndefiniteLength */
 
     cbor_static_assert(((MapType << MajorTypeShift) & CborIteratorFlag_ContainerIsMap) == CborIteratorFlag_ContainerIsMap);
     cbor_static_assert(((ArrayType << MajorTypeShift) & CborIteratorFlag_ContainerIsMap) == 0);
@@ -465,6 +471,8 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
         container->flags |= CborIteratorFlag_UnknownLength;
         err = append_byte_to_buffer(container, shiftedMajorType + IndefiniteLength);
     } else {
+        if (shiftedMajorType & CborIteratorFlag_ContainerIsMap)
+            container->remaining += length;
         err = encode_number_no_update(container, length, shiftedMajorType);
     }
     return err;
@@ -520,8 +528,8 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
  * same as were passed to cbor_encoder_create_array() or
  * cbor_encoder_create_map().
  *
- * This function does not verify that the number of items (or pair of items, in
- * the case of a map) was correct. To execute that verification, call
+ * Since version 0.5, this function verifies that the number of items (or pair
+ * of items, in the case of a map) was correct. It is no longer needed to call
  * cbor_encoder_close_container_checked() instead.
  *
  * \sa cbor_encoder_create_array(), cbor_encoder_create_map()
@@ -535,6 +543,10 @@ CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *
     encoder->end = containerEncoder->end;
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
         return append_byte_to_buffer(encoder, BreakByte);
+
+    if (containerEncoder->remaining != 1)
+        return containerEncoder->remaining == 0 ? CborErrorTooManyItems : CborErrorTooFewItems;
+
     if (!encoder->end)
         return CborErrorOutOfMemory;    /* keep the state */
     return CborNoError;

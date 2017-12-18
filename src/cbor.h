@@ -209,7 +209,7 @@ struct CborEncoder
         ptrdiff_t bytes_needed;
     } data;
     const uint8_t *end;
-    size_t added;
+    size_t remaining;
     int flags;
 };
 typedef struct CborEncoder CborEncoder;
