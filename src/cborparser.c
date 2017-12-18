@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2021 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -218,17 +218,15 @@ static CborError preparse_value(CborValue *it)
         /* flags to keep */
         FlagsToKeep = CborIteratorFlag_ContainerIsMap | CborIteratorFlag_NextIsMapKey
     };
-    const CborParser *parser = it->parser;
-    it->type = CborInvalidType;
-
     /* are we at the end? */
-    if (it->ptr == parser->end)
+    it->type = CborInvalidType;
+    it->flags &= FlagsToKeep;
+    if (!can_read_bytes(it, 1))
         return CborErrorUnexpectedEOF;
 
     uint8_t descriptor = *it->ptr;
     uint8_t type = descriptor & MajorTypeMask;
     it->type = type;
-    it->flags &= FlagsToKeep;
     it->extra = (descriptor &= SmallValueMask);
 
     if (descriptor > Value64Bit) {
@@ -244,8 +242,11 @@ static CborError preparse_value(CborValue *it)
     }
 
     size_t bytesNeeded = descriptor < Value8Bit ? 0 : (1 << (descriptor - Value8Bit));
-    if (bytesNeeded + 1 > (size_t)(parser->end - it->ptr))
-        return CborErrorUnexpectedEOF;
+
+    if (bytesNeeded) {
+        if (!can_read_bytes(it, bytesNeeded + 1))
+            return CborErrorUnexpectedEOF;
+    }
 
     uint8_t majortype = type >> MajorTypeShift;
     if (majortype == NegativeIntegerType) {
@@ -304,7 +305,7 @@ static CborError preparse_value(CborValue *it)
 
 static CborError preparse_next_value_nodecrement(CborValue *it)
 {
-    if (it->remaining == UINT32_MAX && it->ptr != it->parser->end && *it->ptr == (uint8_t)BreakByte) {
+    if (it->remaining == UINT32_MAX && can_read_bytes(it, 1) && *it->ptr == (uint8_t)BreakByte) {
         /* end of map or array */
         if ((it->flags & CborIteratorFlag_ContainerIsMap && it->flags & CborIteratorFlag_NextIsMapKey)
                 || it->type == CborTagType) {
@@ -1007,7 +1008,7 @@ CborError CBOR_INTERNAL_API_CC _cbor_value_prepare_string_iteration(CborValue *i
     prepare_string_iteration(it);
 
     /* are we at the end? */
-    if (it->ptr == it->parser->end)
+    if (!can_read_bytes(it, 1))
         return CborErrorUnexpectedEOF;
     return CborNoError;
 }
@@ -1034,7 +1035,7 @@ static CborError get_string_chunk(CborValue *it, const void **bufferptr, size_t 
     }
 
     /* are we at the end? */
-    if (it->ptr == it->parser->end)
+    if (!can_read_bytes(it, 1))
         return CborErrorUnexpectedEOF;
 
     if (*it->ptr == BreakByte) {
@@ -1048,7 +1049,7 @@ last_chunk:
         err = extract_length(it->parser, &it->ptr, len);
         if (err)
             return err;
-        if (*len > (size_t)(it->parser->end - it->ptr))
+        if (!can_read_bytes(it, *len))
             return CborErrorUnexpectedEOF;
 
         *bufferptr = it->ptr;

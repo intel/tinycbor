@@ -647,7 +647,7 @@ CborError cbor_value_validate(const CborValue *it, uint32_t flags)
     CborError err = validate_value(&value, flags, CBOR_PARSER_MAX_RECURSIONS);
     if (err)
         return err;
-    if (flags & CborValidateCompleteData && it->ptr != it->parser->end)
+    if (flags & CborValidateCompleteData && can_read_bytes(it, 1))
         return CborErrorGarbageAtEnd;
     return CborNoError;
 }

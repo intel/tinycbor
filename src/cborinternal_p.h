@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2021 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -156,5 +156,13 @@ enum {
 
 CBOR_INTERNAL_API CborError CBOR_INTERNAL_API_CC _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len);
 CBOR_INTERNAL_API CborError CBOR_INTERNAL_API_CC _cbor_value_prepare_string_iteration(CborValue *it);
+
+static inline bool can_read_bytes(const CborValue *it, size_t n)
+{
+    /* Convert the pointer subtraction to size_t since end >= ptr
+     * (this prevents issues with (ptrdiff_t)n becoming negative).
+     */
+    return (size_t)(it->parser->end - it->ptr) >= n;
+}
 
 #endif /* CBORINTERNAL_P_H */
