@@ -191,52 +191,20 @@ CborError CBOR_INTERNAL_API_CC _cbor_value_extract_number(const uint8_t **ptr, c
     return CborNoError;
 }
 
-static CborError extract_number_and_advance(CborValue *it, uint64_t *len)
+static uint64_t extract_number_and_advance(CborValue *it)
 {
-    uint8_t additional_information;
-    size_t bytesNeeded = 0;
+    /* This function is only called after we've verified that the number
+     * here is valid, so we can just use _cbor_value_extract_int64_helper. */
+    uint8_t descriptor;
+    uint64_t v = _cbor_value_extract_int64_helper(it);
 
-    /* We've already verified that there's at least one byte to be read */
-    read_bytes_unchecked(it, &additional_information, 0, 1);
-    additional_information &= SmallValueMask;
-    if (additional_information < Value8Bit) {
-        *len = additional_information;
-    } else if (unlikely(additional_information > Value64Bit)) {
-        return CborErrorIllegalNumber;
-    } else {
-        bytesNeeded = (size_t)(1 << (additional_information - Value8Bit));
-        if (!can_read_bytes(it, 1 + bytesNeeded))
-            return CborErrorUnexpectedEOF;
-        if (additional_information <= Value16Bit) {
-            if (additional_information == Value16Bit)
-                *len = read_uint16(it, 1);
-            else
-                *len = read_uint8(it, 1);
-        } else {
-            if (additional_information == Value32Bit)
-                *len = read_uint32(it, 1);
-            else
-                *len = read_uint64(it, 1);
-        }
-    }
+    read_bytes_unchecked(it, &descriptor, 0, 1);
+    descriptor &= SmallValueMask;
 
+    size_t bytesNeeded = descriptor < Value8Bit ? 0 : (1 << (descriptor - Value8Bit));
     advance_bytes(it, bytesNeeded + 1);
-    return CborNoError;
-}
 
-static CborError extract_string_length(CborValue *it, size_t *len)
-{
-    uint64_t v;
-    CborError err = extract_number_and_advance(it, &v);
-    if (err) {
-        *len = 0;
-        return err;
-    }
-
-    *len = (size_t)v;
-    if (v != *len)
-        return CborErrorDataTooLarge;
-    return CborNoError;
+    return v;
 }
 
 static bool is_fixed_type(uint8_t type)
@@ -379,9 +347,7 @@ static CborError preparse_next_value(CborValue *it)
 
 static CborError advance_internal(CborValue *it)
 {
-    uint64_t length;
-    CborError err = extract_number_and_advance(it, &length);
-    cbor_assert(err == CborNoError);
+    uint64_t length = extract_number_and_advance(it);
 
     if (it->type == CborByteStringType || it->type == CborTextStringType) {
         cbor_assert(length == (size_t)length);
@@ -644,9 +610,7 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
         recursed->remaining = UINT32_MAX;
         advance_bytes(recursed, 1);
     } else {
-        uint64_t len;
-        CborError err = extract_number_and_advance(recursed, &len);
-        cbor_assert(err == CborNoError);
+        uint64_t len = extract_number_and_advance(recursed);
 
         recursed->remaining = (uint32_t)len;
         if (recursed->remaining != len || len == UINT32_MAX) {
@@ -1047,8 +1011,6 @@ CborError CBOR_INTERNAL_API_CC _cbor_value_prepare_string_iteration(CborValue *i
 
 static CborError get_string_chunk(CborValue *it, const void **bufferptr, size_t *len)
 {
-    CborError err;
-
     /* Possible states:
      * length known | iterating | meaning
      *     no       |    no     | before the first chunk of a chunked string
@@ -1079,14 +1041,50 @@ last_chunk:
         *len = 0;
         return preparse_next_value(it);
     } else if ((descriptor & MajorTypeMask) == it->type) {
-        err = extract_string_length(it, len);
-        if (err)
-            return err;
-        if (!can_read_bytes(it, *len))
+        /* find the string length */
+        size_t bytesNeeded = 1;
+
+        descriptor &= SmallValueMask;
+        if (descriptor < Value8Bit) {
+            *len = descriptor;
+        } else if (unlikely(descriptor > Value64Bit)) {
+            return CborErrorIllegalNumber;
+        } else {
+            uint64_t val;
+            bytesNeeded = (size_t)(1 << (descriptor - Value8Bit));
+            if (!can_read_bytes(it, 1 + bytesNeeded))
+                return CborErrorUnexpectedEOF;
+
+            if (descriptor <= Value16Bit) {
+                if (descriptor == Value16Bit)
+                    val = read_uint16(it, 1);
+                else
+                    val = read_uint8(it, 1);
+            } else {
+                if (descriptor == Value32Bit)
+                    val = read_uint32(it, 1);
+                else
+                    val = read_uint64(it, 1);
+            }
+
+            *len = val;
+            if (*len != val)
+                return CborErrorDataTooLarge;
+
+            ++bytesNeeded;
+        }
+
+        *bufferptr = it->ptr + bytesNeeded;
+        if (*len != (size_t)*len)
+            return CborErrorDataTooLarge;
+
+        if (add_check_overflow(bytesNeeded, *len, &bytesNeeded))
             return CborErrorUnexpectedEOF;
 
-        *bufferptr = it->ptr;
-        advance_bytes(it, *len);
+        if (!can_read_bytes(it, bytesNeeded))
+            return CborErrorUnexpectedEOF;
+
+        advance_bytes(it, bytesNeeded);
     } else {
         return CborErrorIllegalType;
     }
