@@ -165,4 +165,24 @@ static inline bool can_read_bytes(const CborValue *it, size_t n)
     return (size_t)(it->parser->end - it->ptr) >= n;
 }
 
+static inline void advance_bytes(CborValue *it, size_t n)
+{
+    it->ptr += n;
+}
+
+static inline void *read_bytes_unchecked(const CborValue *it, void *dst, size_t offset, size_t n)
+{
+    return memcpy(dst, it->ptr + offset, n);
+}
+
+#ifdef __GNUC__
+__attribute__((warn_unused_result))
+#endif
+static inline void *read_bytes(const CborValue *it, void *dst, size_t offset, size_t n)
+{
+    if (can_read_bytes(it, offset + n))
+        return read_bytes_unchecked(it, dst, offset, n);
+    return NULL;
+}
+
 #endif /* CBORINTERNAL_P_H */

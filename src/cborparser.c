@@ -218,13 +218,14 @@ static CborError preparse_value(CborValue *it)
         /* flags to keep */
         FlagsToKeep = CborIteratorFlag_ContainerIsMap | CborIteratorFlag_NextIsMapKey
     };
+    uint8_t descriptor;
+
     /* are we at the end? */
     it->type = CborInvalidType;
     it->flags &= FlagsToKeep;
-    if (!can_read_bytes(it, 1))
+    if (!read_bytes(it, &descriptor, 0, 1))
         return CborErrorUnexpectedEOF;
 
-    uint8_t descriptor = *it->ptr;
     uint8_t type = descriptor & MajorTypeMask;
     it->type = type;
     it->extra = (descriptor &= SmallValueMask);
@@ -246,6 +247,17 @@ static CborError preparse_value(CborValue *it)
     if (bytesNeeded) {
         if (!can_read_bytes(it, bytesNeeded + 1))
             return CborErrorUnexpectedEOF;
+
+        it->extra = 0;
+
+        /* read up to 16 bits into it->extra */
+        if (bytesNeeded <= 2) {
+            read_bytes_unchecked(it, &it->extra, 1, bytesNeeded);
+            if (bytesNeeded == 2)
+                it->extra = cbor_ntohs(it->extra);
+        } else {
+            it->flags |= CborIteratorFlag_IntegerValueTooLarge;     /* Value32Bit or Value64Bit */
+        }
     }
 
     uint8_t majortype = type >> MajorTypeShift;
@@ -267,11 +279,10 @@ static CborError preparse_value(CborValue *it)
         case NullValue:
         case UndefinedValue:
         case HalfPrecisionFloat:
-            it->type = *it->ptr;
+            read_bytes_unchecked(it, &it->type, 0, 1);
             break;
 
         case SimpleTypeInNextByte:
-            it->extra = (uint8_t)it->ptr[1];
 #ifndef CBOR_PARSER_NO_STRICT_CHECKS
             if (unlikely(it->extra < 32)) {
                 it->type = CborInvalidType;
@@ -287,32 +298,22 @@ static CborError preparse_value(CborValue *it)
             cbor_assert(false);  /* these conditions can't be reached */
             return CborErrorUnexpectedBreak;
         }
-        return CborNoError;
     }
 
-    /* try to decode up to 16 bits */
-    if (descriptor < Value8Bit)
-        return CborNoError;
-
-    if (descriptor == Value8Bit)
-        it->extra = (uint8_t)it->ptr[1];
-    else if (descriptor == Value16Bit)
-        it->extra = get16(it->ptr + 1);
-    else
-        it->flags |= CborIteratorFlag_IntegerValueTooLarge;     /* Value32Bit or Value64Bit */
     return CborNoError;
 }
 
 static CborError preparse_next_value_nodecrement(CborValue *it)
 {
-    if (it->remaining == UINT32_MAX && can_read_bytes(it, 1) && *it->ptr == (uint8_t)BreakByte) {
+    uint8_t byte;
+    if (it->remaining == UINT32_MAX && read_bytes(it, &byte, 0, 1) && byte == (uint8_t)BreakByte) {
         /* end of map or array */
         if ((it->flags & CborIteratorFlag_ContainerIsMap && it->flags & CborIteratorFlag_NextIsMapKey)
                 || it->type == CborTagType) {
             /* but we weren't expecting it! */
             return CborErrorUnexpectedBreak;
         }
-        ++it->ptr;
+        advance_bytes(it, 1);
         it->type = CborInvalidType;
         it->remaining = 0;
         return CborNoError;
@@ -349,7 +350,7 @@ static CborError advance_internal(CborValue *it)
     if (it->type == CborByteStringType || it->type == CborTextStringType) {
         cbor_assert(length == (size_t)length);
         cbor_assert((it->flags & CborIteratorFlag_UnknownLength) == 0);
-        it->ptr += length;
+        advance_bytes(it, length);
     }
 
     return preparse_next_value(it);
@@ -372,11 +373,13 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
 
     /* since the additional information can only be Value32Bit or Value64Bit,
      * we just need to test for the one bit those two options differ */
-    cbor_assert((*value->ptr & SmallValueMask) == Value32Bit || (*value->ptr & SmallValueMask) == Value64Bit);
-    if ((*value->ptr & 1) == (Value32Bit & 1))
+    uint8_t byte;
+    read_bytes_unchecked(value, &byte, 0, 1);
+    cbor_assert((byte & SmallValueMask) == Value32Bit || (byte & SmallValueMask) == Value64Bit);
+    if ((byte & 1) == (Value32Bit & 1))
         return get32(value->ptr + 1);
 
-    cbor_assert((*value->ptr & SmallValueMask) == Value64Bit);
+    cbor_assert((byte & SmallValueMask) == Value64Bit);
     return get64(value->ptr + 1);
 }
 
@@ -610,7 +613,7 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
 
     if (it->flags & CborIteratorFlag_UnknownLength) {
         recursed->remaining = UINT32_MAX;
-        ++recursed->ptr;
+        advance_bytes(recursed, 1);
     } else {
         uint64_t len;
         CborError err = _cbor_value_extract_number(&recursed->ptr, recursed->parser->end, &len);
@@ -997,7 +1000,7 @@ static inline void prepare_string_iteration(CborValue *it)
     if (!cbor_value_is_length_known(it)) {
         /* chunked string: we're before the first chunk;
          * advance to the first chunk */
-        ++it->ptr;
+        advance_bytes(it, 1);
         it->flags |= CborIteratorFlag_IteratingStringChunks;
     }
 }
@@ -1035,17 +1038,18 @@ static CborError get_string_chunk(CborValue *it, const void **bufferptr, size_t 
     }
 
     /* are we at the end? */
-    if (!can_read_bytes(it, 1))
+    uint8_t descriptor;
+    if (!read_bytes(it, &descriptor, 0, 1))
         return CborErrorUnexpectedEOF;
 
-    if (*it->ptr == BreakByte) {
+    if (descriptor == BreakByte) {
         /* last chunk */
-        ++it->ptr;
+        advance_bytes(it, 1);
 last_chunk:
         *bufferptr = NULL;
         *len = 0;
         return preparse_next_value(it);
-    } else if ((uint8_t)(*it->ptr & MajorTypeMask) == it->type) {
+    } else if ((descriptor & MajorTypeMask) == it->type) {
         err = extract_length(it->parser, &it->ptr, len);
         if (err)
             return err;
@@ -1053,7 +1057,7 @@ last_chunk:
             return CborErrorUnexpectedEOF;
 
         *bufferptr = it->ptr;
-        it->ptr += *len;
+        advance_bytes(it, *len);
     } else {
         return CborErrorIllegalType;
     }
