@@ -142,55 +142,6 @@
  * \endif
  */
 
-static inline uint16_t get16(const uint8_t *ptr)
-{
-    uint16_t result;
-    memcpy(&result, ptr, sizeof(result));
-    return cbor_ntohs(result);
-}
-
-static inline uint32_t get32(const uint8_t *ptr)
-{
-    uint32_t result;
-    memcpy(&result, ptr, sizeof(result));
-    return cbor_ntohl(result);
-}
-
-static inline uint64_t get64(const uint8_t *ptr)
-{
-    uint64_t result;
-    memcpy(&result, ptr, sizeof(result));
-    return cbor_ntohll(result);
-}
-
-CborError CBOR_INTERNAL_API_CC _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
-{
-    size_t bytesNeeded;
-    uint8_t additional_information = **ptr & SmallValueMask;
-    ++*ptr;
-    if (additional_information < Value8Bit) {
-        *len = additional_information;
-        return CborNoError;
-    }
-    if (unlikely(additional_information > Value64Bit))
-        return CborErrorIllegalNumber;
-
-    bytesNeeded = (size_t)(1 << (additional_information - Value8Bit));
-    if (unlikely(bytesNeeded > (size_t)(end - *ptr))) {
-        return CborErrorUnexpectedEOF;
-    } else if (bytesNeeded == 1) {
-        *len = (uint8_t)(*ptr)[0];
-    } else if (bytesNeeded == 2) {
-        *len = get16(*ptr);
-    } else if (bytesNeeded == 4) {
-        *len = get32(*ptr);
-    } else {
-        *len = get64(*ptr);
-    }
-    *ptr += bytesNeeded;
-    return CborNoError;
-}
-
 static uint64_t extract_number_and_advance(CborValue *it)
 {
     /* This function is only called after we've verified that the number

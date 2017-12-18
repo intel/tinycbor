@@ -154,7 +154,6 @@ enum {
     BreakByte               = (unsigned)Break | (SimpleTypesType << MajorTypeShift)
 };
 
-CBOR_INTERNAL_API CborError CBOR_INTERNAL_API_CC _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len);
 CBOR_INTERNAL_API CborError CBOR_INTERNAL_API_CC _cbor_value_prepare_string_iteration(CborValue *it);
 
 static inline bool can_read_bytes(const CborValue *it, size_t n)
@@ -211,6 +210,40 @@ static inline uint64_t read_uint64(const CborValue *it, size_t offset)
     uint64_t result;
     read_bytes_unchecked(it, &result, offset, sizeof(result));
     return cbor_ntohll(result);
+}
+
+static inline CborError extract_number_checked(const CborValue *it, uint64_t *value, size_t *bytesUsed)
+{
+    uint8_t descriptor;
+    size_t bytesNeeded = 0;
+
+    /* We've already verified that there's at least one byte to be read */
+    read_bytes_unchecked(it, &descriptor, 0, 1);
+    descriptor &= SmallValueMask;
+    if (descriptor < Value8Bit) {
+        *value = descriptor;
+    } else if (unlikely(descriptor > Value64Bit)) {
+        return CborErrorIllegalNumber;
+    } else {
+        bytesNeeded = (size_t)(1 << (descriptor - Value8Bit));
+        if (!can_read_bytes(it, 1 + bytesNeeded))
+            return CborErrorUnexpectedEOF;
+        if (descriptor <= Value16Bit) {
+            if (descriptor == Value16Bit)
+                *value = read_uint16(it, 1);
+            else
+                *value = read_uint8(it, 1);
+        } else {
+            if (descriptor == Value32Bit)
+                *value = read_uint32(it, 1);
+            else
+                *value = read_uint64(it, 1);
+        }
+    }
+
+    if (bytesUsed)
+        *bytesUsed = bytesNeeded;
+    return CborNoError;
 }
 
 #endif /* CBORINTERNAL_P_H */

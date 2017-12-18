@@ -293,7 +293,6 @@ static inline CborError validate_simple_type(uint8_t simple_type, uint32_t flags
 static inline CborError validate_number(const CborValue *it, CborType type, uint32_t flags)
 {
     CborError err = CborNoError;
-    const uint8_t *ptr = it->ptr;
     size_t bytesUsed, bytesNeeded;
     uint64_t value;
 
@@ -302,11 +301,10 @@ static inline CborError validate_number(const CborValue *it, CborType type, uint
     if (type >= CborHalfFloatType && type <= CborDoubleType)
         return err;     /* checked elsewhere */
 
-    err = _cbor_value_extract_number(&ptr, it->parser->end, &value);
+    err = extract_number_checked(it, &value, &bytesUsed);
     if (err)
         return err;
 
-    bytesUsed = (size_t)(ptr - it->ptr - 1);
     bytesNeeded = 0;
     if (value >= Value8Bit)
         ++bytesNeeded;
