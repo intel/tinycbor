@@ -276,7 +276,7 @@ void compare(const QVariant &input, const QByteArray &output)
     cbor_encoder_init(&encoder, bufptr, buffer.length(), 0);
 
     QCOMPARE(encodeVariant(&encoder, input), CborNoError);
-    QCOMPARE(encoder.added, size_t(1));
+    QCOMPARE(encoder.remaining, size_t(1));
     QCOMPARE(cbor_encoder_get_extra_bytes_needed(&encoder), size_t(0));
 
     buffer.resize(int(cbor_encoder_get_buffer_size(&encoder, bufptr)));
@@ -642,7 +642,7 @@ void tst_Encoder::tooShortArrays()
     cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), buffer.length(), 0);
     QCOMPARE(cbor_encoder_create_array(&encoder, &container, 2), CborNoError);
     QCOMPARE(encodeVariant(&container, input), CborNoError);
-    QCOMPARE(container.added, size_t(1));
+    QCOMPARE(container.remaining, size_t(2));
     QCOMPARE(cbor_encoder_close_container_checked(&encoder, &container), CborErrorTooFewItems);
 }
 
@@ -656,7 +656,7 @@ void tst_Encoder::tooShortMaps()
     cbor_encoder_init(&encoder, reinterpret_cast<quint8 *>(buffer.data()), buffer.length(), 0);
     QCOMPARE(cbor_encoder_create_map(&encoder, &container, 2), CborNoError);
     QCOMPARE(encodeVariant(&container, input), CborNoError);
-    QCOMPARE(container.added, size_t(1));
+    QCOMPARE(container.remaining, size_t(4));
     QCOMPARE(cbor_encoder_close_container_checked(&encoder, &container), CborErrorTooFewItems);
 }
 
@@ -671,7 +671,7 @@ void tst_Encoder::tooBigArrays()
     QCOMPARE(cbor_encoder_create_array(&encoder, &container, 1), CborNoError);
     QCOMPARE(encodeVariant(&container, input), CborNoError);
     QCOMPARE(encodeVariant(&container, input), CborNoError);
-    QCOMPARE(container.added, size_t(2));
+    QCOMPARE(container.remaining, size_t(0));
     QCOMPARE(cbor_encoder_close_container_checked(&encoder, &container), CborErrorTooManyItems);
 }
 
@@ -687,7 +687,7 @@ void tst_Encoder::tooBigMaps()
     QCOMPARE(encodeVariant(&container, input), CborNoError);
     QCOMPARE(encodeVariant(&container, input), CborNoError);
     QCOMPARE(encodeVariant(&container, input), CborNoError);
-    QCOMPARE(container.added, size_t(3));
+    QCOMPARE(container.remaining, size_t(0));
     QCOMPARE(cbor_encoder_close_container_checked(&encoder, &container), CborErrorTooManyItems);
 }
 
