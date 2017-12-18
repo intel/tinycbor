@@ -191,10 +191,43 @@ CborError CBOR_INTERNAL_API_CC _cbor_value_extract_number(const uint8_t **ptr, c
     return CborNoError;
 }
 
-static CborError extract_length(const CborParser *parser, const uint8_t **ptr, size_t *len)
+static CborError extract_number_and_advance(CborValue *it, uint64_t *len)
+{
+    uint8_t additional_information;
+    size_t bytesNeeded = 0;
+
+    /* We've already verified that there's at least one byte to be read */
+    read_bytes_unchecked(it, &additional_information, 0, 1);
+    additional_information &= SmallValueMask;
+    if (additional_information < Value8Bit) {
+        *len = additional_information;
+    } else if (unlikely(additional_information > Value64Bit)) {
+        return CborErrorIllegalNumber;
+    } else {
+        bytesNeeded = (size_t)(1 << (additional_information - Value8Bit));
+        if (!can_read_bytes(it, 1 + bytesNeeded))
+            return CborErrorUnexpectedEOF;
+        if (additional_information <= Value16Bit) {
+            if (additional_information == Value16Bit)
+                *len = read_uint16(it, 1);
+            else
+                *len = read_uint8(it, 1);
+        } else {
+            if (additional_information == Value32Bit)
+                *len = read_uint32(it, 1);
+            else
+                *len = read_uint64(it, 1);
+        }
+    }
+
+    advance_bytes(it, bytesNeeded + 1);
+    return CborNoError;
+}
+
+static CborError extract_string_length(CborValue *it, size_t *len)
 {
     uint64_t v;
-    CborError err = _cbor_value_extract_number(ptr, parser->end, &v);
+    CborError err = extract_number_and_advance(it, &v);
     if (err) {
         *len = 0;
         return err;
@@ -347,7 +380,7 @@ static CborError preparse_next_value(CborValue *it)
 static CborError advance_internal(CborValue *it)
 {
     uint64_t length;
-    CborError err = _cbor_value_extract_number(&it->ptr, it->parser->end, &length);
+    CborError err = extract_number_and_advance(it, &length);
     cbor_assert(err == CborNoError);
 
     if (it->type == CborByteStringType || it->type == CborTextStringType) {
@@ -612,7 +645,7 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
         advance_bytes(recursed, 1);
     } else {
         uint64_t len;
-        CborError err = _cbor_value_extract_number(&recursed->ptr, recursed->parser->end, &len);
+        CborError err = extract_number_and_advance(recursed, &len);
         cbor_assert(err == CborNoError);
 
         recursed->remaining = (uint32_t)len;
@@ -1046,7 +1079,7 @@ last_chunk:
         *len = 0;
         return preparse_next_value(it);
     } else if ((descriptor & MajorTypeMask) == it->type) {
-        err = extract_length(it->parser, &it->ptr, len);
+        err = extract_string_length(it, len);
         if (err)
             return err;
         if (!can_read_bytes(it, *len))
