@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Intel Corporation
+** Copyright (C) 2017 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,10 @@
 ****************************************************************************/
 
 #include "../../src/cborencoder.c"
+#include "../../src/cborerrorstrings.c"
 #include "../../src/cborparser.c"
 #include "../../src/cborparser_dup_string.c"
-#include "../../src/cborerrorstrings.c"
+#include "../../src/cborvalidation.c"
 
 #include <QtTest>
 

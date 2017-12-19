@@ -355,7 +355,7 @@ static inline CborError validate_tag(CborValue *it, CborTag tag, int flags, int 
 
         /* correct Integer so it's not zero */
         if (type == CborIntegerType)
-            ++type;
+            type = (CborType)(type + 1);
 
         while (allowedTypes) {
             if ((uint8_t)(allowedTypes & 0xff) == type)
