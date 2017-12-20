@@ -185,4 +185,32 @@ static inline void *read_bytes(const CborValue *it, void *dst, size_t offset, si
     return NULL;
 }
 
+static inline uint16_t read_uint8(const CborValue *it, size_t offset)
+{
+    uint8_t result;
+    read_bytes_unchecked(it, &result, offset, sizeof(result));
+    return result;
+}
+
+static inline uint16_t read_uint16(const CborValue *it, size_t offset)
+{
+    uint16_t result;
+    read_bytes_unchecked(it, &result, offset, sizeof(result));
+    return cbor_ntohs(result);
+}
+
+static inline uint32_t read_uint32(const CborValue *it, size_t offset)
+{
+    uint32_t result;
+    read_bytes_unchecked(it, &result, offset, sizeof(result));
+    return cbor_ntohl(result);
+}
+
+static inline uint64_t read_uint64(const CborValue *it, size_t offset)
+{
+    uint64_t result;
+    read_bytes_unchecked(it, &result, offset, sizeof(result));
+    return cbor_ntohll(result);
+}
+
 #endif /* CBORINTERNAL_P_H */

@@ -269,10 +269,11 @@ CBOR_INLINE_API size_t cbor_encoder_get_extra_bytes_needed(const CborEncoder *en
 
 enum CborParserIteratorFlags
 {
-    CborIteratorFlag_IntegerValueTooLarge   = 0x01,
-    CborIteratorFlag_NegativeInteger        = 0x02,
-    CborIteratorFlag_IteratingStringChunks  = 0x02,
-    CborIteratorFlag_UnknownLength          = 0x04,
+    CborIteratorFlag_IntegerValueIs64Bit    = 0x01,
+    CborIteratorFlag_IntegerValueTooLarge   = 0x02,
+    CborIteratorFlag_NegativeInteger        = 0x04,
+    CborIteratorFlag_IteratingStringChunks  = 0x08,
+    CborIteratorFlag_UnknownLength          = 0x10,
     CborIteratorFlag_ContainerIsMap         = 0x20,
     CborIteratorFlag_NextIsMapKey           = 0x40
 };

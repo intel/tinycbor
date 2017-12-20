@@ -256,7 +256,10 @@ static CborError preparse_value(CborValue *it)
             if (bytesNeeded == 2)
                 it->extra = cbor_ntohs(it->extra);
         } else {
-            it->flags |= CborIteratorFlag_IntegerValueTooLarge;     /* Value32Bit or Value64Bit */
+            cbor_static_assert(CborIteratorFlag_IntegerValueTooLarge == (Value32Bit & 3));
+            cbor_static_assert((CborIteratorFlag_IntegerValueIs64Bit |
+                                CborIteratorFlag_IntegerValueTooLarge) == (Value64Bit & 3));
+            it->flags |= (descriptor & 3);
         }
     }
 
@@ -370,17 +373,10 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
 {
     cbor_assert(value->flags & CborIteratorFlag_IntegerValueTooLarge ||
                 value->type == CborFloatType || value->type == CborDoubleType);
+    if (value->flags & CborIteratorFlag_IntegerValueIs64Bit)
+        return read_uint64(value, 1);
 
-    /* since the additional information can only be Value32Bit or Value64Bit,
-     * we just need to test for the one bit those two options differ */
-    uint8_t byte;
-    read_bytes_unchecked(value, &byte, 0, 1);
-    cbor_assert((byte & SmallValueMask) == Value32Bit || (byte & SmallValueMask) == Value64Bit);
-    if ((byte & 1) == (Value32Bit & 1))
-        return get32(value->ptr + 1);
-
-    cbor_assert((byte & SmallValueMask) == Value64Bit);
-    return get64(value->ptr + 1);
+    return read_uint32(value, 1);
 }
 
 /**
