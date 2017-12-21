@@ -31,6 +31,10 @@
 #  define CBOR_INTERNAL_API
 #endif
 
+#ifndef CBOR_PARSER_MAX_RECURSIONS
+#  define CBOR_PARSER_MAX_RECURSIONS 1024
+#endif
+
 /*
  * CBOR Major types
  * Encoded in the high 3 bits of the descriptor byte

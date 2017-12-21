@@ -38,10 +38,6 @@
 
 #include <string.h>
 
-#ifndef CBOR_PARSER_MAX_RECURSIONS
-#  define CBOR_PARSER_MAX_RECURSIONS 1024
-#endif
-
 /**
  * \defgroup CborParsing Parsing CBOR streams
  * \brief Group of functions used to parse CBOR streams.
