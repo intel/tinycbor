@@ -147,6 +147,11 @@
  * \value CborPrettyDefaultFlags       Default conversion flags.
  */
 
+static void printRecursionLimit(FILE *out)
+{
+    fputs("<nesting too deep, recursion stopped>", out);
+}
+
 static CborError hexDump(FILE *out, const void *ptr, size_t n)
 {
     const uint8_t *buffer = (const uint8_t *)ptr;
@@ -273,16 +278,22 @@ static const char *get_indicator(const CborValue *it, int flags)
     return resolve_indicator(it->ptr, it->parser->end, flags);
 }
 
-static CborError value_to_pretty(FILE *out, CborValue *it, int flags);
-static CborError container_to_pretty(FILE *out, CborValue *it, CborType containerType, int flags)
+static CborError value_to_pretty(FILE *out, CborValue *it, int flags, int recursionsLeft);
+static CborError container_to_pretty(FILE *out, CborValue *it, CborType containerType,
+                                     int flags, int recursionsLeft)
 {
+    if (!recursionsLeft) {
+        printRecursionLimit(out);
+        return CborNoError; /* do allow the dumping to continue */
+    }
+
     const char *comma = "";
     while (!cbor_value_at_end(it)) {
         if (fprintf(out, "%s", comma) < 0)
             return CborErrorIO;
         comma = ", ";
 
-        CborError err = value_to_pretty(out, it, flags);
+        CborError err = value_to_pretty(out, it, flags, recursionsLeft);
         if (err)
             return err;
 
@@ -292,14 +303,14 @@ static CborError container_to_pretty(FILE *out, CborValue *it, CborType containe
         /* map: that was the key, so get the value */
         if (fprintf(out, ": ") < 0)
             return CborErrorIO;
-        err = value_to_pretty(out, it, flags);
+        err = value_to_pretty(out, it, flags, recursionsLeft);
         if (err)
             return err;
     }
     return CborNoError;
 }
 
-static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
+static CborError value_to_pretty(FILE *out, CborValue *it, int flags, int recursionsLeft)
 {
     CborError err;
     CborType type = cbor_value_get_type(it);
@@ -319,7 +330,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
             it->ptr = recursed.ptr;
             return err;       /* parse error */
         }
-        err = container_to_pretty(out, &recursed, type, flags);
+        err = container_to_pretty(out, &recursed, type, flags, recursionsLeft - 1);
         if (err) {
             it->ptr = recursed.ptr;
             return err;       /* parse error */
@@ -424,7 +435,10 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
         err = cbor_value_advance_fixed(it);
         if (err)
             return err;
-        err = value_to_pretty(out, it, flags);
+        if (recursionsLeft)
+            err = value_to_pretty(out, it, flags, recursionsLeft - 1);
+        else
+            printRecursionLimit(out);
         if (err)
             return err;
         if (fprintf(out, ")") < 0)
@@ -533,7 +547,7 @@ static CborError value_to_pretty(FILE *out, CborValue *it, int flags)
  */
 CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value)
 {
-    return value_to_pretty(out, value, CborPrettyDefaultFlags);
+    return value_to_pretty(out, value, CborPrettyDefaultFlags, CBOR_PARSER_MAX_RECURSIONS);
 }
 
 /**
@@ -552,7 +566,7 @@ CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value)
  */
 CborError cbor_value_to_pretty_advance_flags(FILE *out, CborValue *value, int flags)
 {
-    return value_to_pretty(out, value, flags);
+    return value_to_pretty(out, value, flags, CBOR_PARSER_MAX_RECURSIONS);
 }
 
 /** @} */
