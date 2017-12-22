@@ -8,6 +8,7 @@ TINYCBOR_SOURCES = \
 	src\cborparser.c \
 	src\cborparser_dup_string.c \
 	src\cborpretty.c \
+	src\cborpretty_stdio.c \
 	src\cborvalidation.c
 TINYCBOR_OBJS = \
 	src\cborerrorstrings.obj \
@@ -16,6 +17,7 @@ TINYCBOR_OBJS = \
 	src\cborparser.obj \
 	src\cborparser_dup_string.obj \
 	src\cborpretty.obj \
+	src\cborpretty_stdio.obj \
 	src\cborvalidation.obj
 
 all: lib\tinycbor.lib
