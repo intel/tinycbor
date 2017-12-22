@@ -44,8 +44,8 @@
 CborError cbor_value_get_half_float_as_float(const CborValue *value, float *result)
 {
     uint16_t v;
-
-    v = _cbor_value_get_half_float_helper(value);
+    CborError err = cbor_value_get_half_float(value, &v);
+    cbor_assert(err == CborNoError);
 
     *result = (float)decode_half((unsigned short)v);
 

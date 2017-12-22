@@ -380,7 +380,7 @@ static inline CborError validate_floating_point(CborValue *it, CborType type, ui
     int r;
     double val;
     float valf;
-    uint16_t valf16;
+    uint16_t valf16 = 0x7c01;       /* dummy value, an infinity */
 
     if (type != CborDoubleType) {
         if (type == CborFloatType) {

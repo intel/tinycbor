@@ -513,9 +513,16 @@ CBOR_API CborError cbor_value_map_find_value(const CborValue *map, const char *s
 /* Floating point */
 CBOR_INLINE_API bool cbor_value_is_half_float(const CborValue *value)
 { return value->type == CborHalfFloatType; }
-CBOR_PRIVATE_API uint16_t _cbor_value_get_half_float_helper(const CborValue *value);
-CBOR_API CborError cbor_value_get_half_float(const CborValue *value, void *result);
 CBOR_API CborError cbor_value_get_half_float_as_float(const CborValue *value, float *result);
+CBOR_INLINE_API CborError cbor_value_get_half_float(const CborValue *value, void *result)
+{
+    assert(cbor_value_is_half_float(value));
+    assert((value->flags & CborIteratorFlag_IntegerValueTooLarge) == 0);
+
+    /* size has already been computed */
+    memcpy(result, &value->extra, sizeof(value->extra));
+    return CborNoError;
+}
 
 CBOR_INLINE_API bool cbor_value_is_float(const CborValue *value)
 { return value->type == CborFloatType; }

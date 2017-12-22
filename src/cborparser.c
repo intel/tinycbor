@@ -1504,6 +1504,8 @@ error:
  */
 
 /**
+ * \fn CborError cbor_value_get_half_float(const CborValue *value, void *result)
+ *
  * Retrieves the CBOR half-precision floating point (16-bit) value that \a
  * value points to and stores it in \a result. If the iterator \a value does
  * not point to a half-precision floating point value, the behavior is
@@ -1516,30 +1518,5 @@ error:
  *
  * \sa cbor_value_get_type(), cbor_value_is_valid(), cbor_value_is_half_float(), cbor_value_get_half_float_as_float(), cbor_value_get_float()
  */
-CborError cbor_value_get_half_float(const CborValue *value, void *result)
-{
-    uint16_t v;
-
-    v = _cbor_value_get_half_float_helper(value);
-    memcpy(result, &v, sizeof(v));
-
-    return CborNoError;
-}
-
-/** \internal
- *
- * Retrieves the CBOR half-precision floating point value binary
- * representation as 16-bit unsigned integer.
- * The result can be used as-is, e.g. to copy bitwise into the
- * system-dependent half-precision floating point type, or it can be
- * converted to the C language standard floating point type
- * (float or double).
- */
-CBOR_PRIVATE_API uint16_t _cbor_value_get_half_float_helper(const CborValue *value)
-{
-    cbor_assert(cbor_value_is_half_float(value));
-    /* size has been computed already */
-    return get16(value->ptr + 1);
-}
 
 /** @} */
