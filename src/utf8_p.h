@@ -22,6 +22,9 @@
 **
 ****************************************************************************/
 
+#ifndef CBOR_UTF8_H
+#define CBOR_UTF8_H
+
 #include "compilersupport_p.h"
 
 #include <stdint.h>
@@ -97,3 +100,5 @@ static inline uint32_t get_utf8(const uint8_t **buffer, const uint8_t *end)
 
     return uc;
 }
+
+#endif // CBOR_UTF8_H
