@@ -25,12 +25,8 @@
 #define _XOPEN_SOURCE 700
 #include <QtTest>
 #include "cbor.h"
-#include <locale.h>
 #include <stdio.h>
-
-#ifndef Q_CC_MSVC
-extern "C" FILE *open_memstream(char **bufptr, size_t *sizeptr);
-#endif
+#include <stdarg.h>
 
 Q_DECLARE_METATYPE(CborError)
 namespace QTest {
@@ -103,40 +99,23 @@ private slots:
     void recursionLimit();
 };
 
+static CborError qstring_printf(void *out, const char *fmt, ...)
+{
+    auto str = static_cast<QString *>(out);
+    va_list va;
+    va_start(va, fmt);
+    *str += QString::vasprintf(fmt, va);
+    va_end(va);
+    return CborNoError;
+};
+
 CborError parseOne(CborValue *it, QString *parsed)
 {
-    CborError err;
-    char *buffer;
-    size_t size;
-
     int flags = CborPrettyShowStringFragments | CborPrettyIndicateIndetermineLength |
                 CborPrettyIndicateOverlongNumbers;
 
-    setlocale(LC_ALL, "C");
-#ifdef Q_CC_MSVC
-    // no open_memstream, so use a temporary file
-    QTemporaryFile tmp("./output.XXXXXX.txt");
-    tmp.open();
-
-    FILE *f = fopen(QFile::encodeName(tmp.fileName()), "w+");
-    if (!f)
-        return CborErrorIO;
-    err = cbor_value_to_pretty_advance_flags(f, it, flags);
-    size = ftell(f);
-    rewind(f);
-
-    buffer = static_cast<char *>(malloc(size));
-    size = fread(buffer, 1, size, f);
-    fclose(f);
-#else
-    FILE *f = open_memstream(&buffer, &size);
-    err = cbor_value_to_pretty_advance_flags(f, it, flags);
-    fclose(f);
-#endif
-
-    *parsed = QString::fromLatin1(buffer, int(size));
-    free(buffer);
-    return err;
+    parsed->clear();
+    return cbor_value_to_pretty_stream(qstring_printf, parsed, it, flags);
 }
 
 CborError parseOneChunk(CborValue *it, QString *parsed)
@@ -331,13 +310,7 @@ void addFixedData()
     QTest::newRow("2.f^64") << raw("\xfa\x5f\x80\0\0") << "1.8446744073709552e+19f";
     QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << "1.8446744073709552e+19";
 
-    QTest::newRow("nan_f16") << raw("\xf9\x7e\x00")
-#ifdef Q_CC_MSVC
-                             << "-nan(ind)"
-#else
-                             << "nan"
-#endif
-                                ;
+    QTest::newRow("nan_f16") << raw("\xf9\x7e\x00") << "nan";
     QTest::newRow("nan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
     QTest::newRow("nan") << raw("\xfb\x7f\xf8\0\0\0\0\0\0") << "nan";
     QTest::newRow("-inf_f16") << raw("\xf9\xfc\x00") << "-inf";
