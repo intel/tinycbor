@@ -1021,6 +1021,7 @@ static CborError get_string_chunk(CborValue *it, const void **bufferptr, size_t 
         ++it->ptr;
 last_chunk:
         *bufferptr = NULL;
+        *len = 0;
         return preparse_next_value(it);
     } else if ((uint8_t)(*it->ptr & MajorTypeMask) == it->type) {
         err = extract_length(it->parser, &it->ptr, len);
