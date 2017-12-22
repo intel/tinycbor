@@ -401,6 +401,13 @@ CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborPa
  * \sa cbor_value_at_end()
  */
 
+CborError cbor_value_reparse(CborValue *it)
+{
+    if (it->flags & CborIteratorFlag_IteratingStringChunks)
+        return CborNoError;
+    return preparse_next_value_nodecrement(it);
+}
+
 /**
  * \fn bool cbor_value_is_valid(const CborValue *it)
  *

@@ -344,6 +344,7 @@ CBOR_INLINE_API bool cbor_value_at_end(const CborValue *it)
 { return it->remaining == 0; }
 CBOR_INLINE_API const uint8_t *cbor_value_get_next_byte(const CborValue *it)
 { return it->source.ptr; }
+CBOR_API CborError cbor_value_reparse(CborValue *it);
 CBOR_API CborError cbor_value_advance_fixed(CborValue *it);
 CBOR_API CborError cbor_value_advance(CborValue *it);
 CBOR_INLINE_API bool cbor_value_is_container(const CborValue *it)

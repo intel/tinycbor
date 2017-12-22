@@ -86,6 +86,8 @@ private slots:
 
     void readerApi_data() { arrays_data(); }
     void readerApi();
+    void reparse_data();
+    void reparse();
 
     // chunked string API
     void chunkedString_data();
@@ -108,8 +110,8 @@ private slots:
     void validation();
     void strictValidation_data();
     void strictValidation();
-    void resumeParsing_data();
-    void resumeParsing();
+    void incompleteData_data();
+    void incompleteData();
     void endPointer_data();
     void endPointer();
     void recursionLimit_data();
@@ -755,30 +757,25 @@ void tst_Parser::mapsAndArrays()
                    "{_ 1: [_ " + expected + "], \"Hello\": {_ " + expected + ": (_ )}}");
 }
 
-void tst_Parser::readerApi()
-{
-    QFETCH(QByteArray, data);
-    QFETCH(QString, expected);
+struct Input {
+    QByteArray data;
+    int consumed;
+};
 
-    struct Input {
-        QByteArray data;
-        int consumed;
-    } input = { data, 0 };
-
-    CborParserOperations ops;
-    ops.can_read_bytes = [](void *token, size_t len) {
+static const CborParserOperations byteArrayOps = {
+    /* can_read_bytes = */ [](void *token, size_t len) {
         auto input = static_cast<Input *>(token);
         return input->data.size() - input->consumed >= int(len);
-    };
-    ops.read_bytes = [](void *token, void *dst, size_t offset, size_t len) {
+    },
+    /* read_bytes = */ [](void *token, void *dst, size_t offset, size_t len) {
         auto input = static_cast<Input *>(token);
         return memcpy(dst, input->data.constData() + input->consumed + offset, len);
-    };
-    ops.advance_bytes = [](void *token, size_t len) {
+    },
+    /* advance_bytes = */ [](void *token, size_t len) {
         auto input = static_cast<Input *>(token);
         input->consumed += int(len);
-    };
-    ops.transfer_string = [](void *token, const void **userptr, size_t offset, size_t len) {
+    },
+    /* transfer_string = */ [](void *token, const void **userptr, size_t offset, size_t len) {
         // ###
         auto input = static_cast<Input *>(token);
         if (input->data.size() - input->consumed < int(len + offset))
@@ -787,11 +784,60 @@ void tst_Parser::readerApi()
         *userptr = input->data.constData() + input->consumed;
         input->consumed += int(len);
         return CborNoError;
-    };
+    }
+};
+
+void tst_Parser::readerApi()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    Input input = { data, 0 };
 
     CborParser parser;
     CborValue first;
-    CborError err = cbor_parser_init_reader(&ops, &parser, &first, &input);
+    CborError err = cbor_parser_init_reader(&byteArrayOps, &parser, &first, &input);
+    QCOMPARE(err, CborNoError);
+
+    QString decoded;
+    err = parseOne(&first, &decoded);
+    QCOMPARE(err, CborNoError);
+    QCOMPARE(decoded, expected);
+
+    // check we consumed everything
+    QCOMPARE(input.consumed, data.size());
+}
+
+void tst_Parser::reparse_data()
+{
+    // only one-item rows
+    addColumns();
+    addFixedData();
+}
+
+void tst_Parser::reparse()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, expected);
+
+    Input input = { QByteArray(), 0 };
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init_reader(&byteArrayOps, &parser, &first, &input);
+    QCOMPARE(err, CborErrorUnexpectedEOF);
+
+    for (int i = 0; i < data.size(); ++i) {
+        input.data = data.left(i);
+        err = cbor_value_reparse(&first);
+        if (err != CborErrorUnexpectedEOF)
+            qDebug() << "At" << i;
+        QCOMPARE(err, CborErrorUnexpectedEOF);
+        QCOMPARE(input.consumed, 0);
+    }
+
+    // now it should work
+    input.data = data;
+    err = cbor_value_reparse(&first);
     QCOMPARE(err, CborNoError);
 
     QString decoded;
@@ -1707,7 +1753,7 @@ void tst_Parser::strictValidation()
     QCOMPARE(err, expectedError);
 }
 
-void tst_Parser::resumeParsing_data()
+void tst_Parser::incompleteData_data()
 {
     addColumns();
     addFixedData();
@@ -1716,7 +1762,7 @@ void tst_Parser::resumeParsing_data()
     addMapMixedData();
 }
 
-void tst_Parser::resumeParsing()
+void tst_Parser::incompleteData()
 {
     QFETCH(QByteArray, data);
     QFETCH(QString, expected);
