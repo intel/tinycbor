@@ -28,6 +28,7 @@ TINYCBOR_SOURCES = \
 	src/cborparser.c \
 	src/cborparser_dup_string.c \
 	src/cborpretty.c \
+	src/cborpretty_stdio.c \
 	src/cbortojson.c \
 	src/cborvalidation.c \
 #

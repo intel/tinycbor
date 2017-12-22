@@ -36,8 +36,6 @@
 #include <float.h>
 #include <inttypes.h>
 #include <math.h>
-#include <stdarg.h>
-#include <stdio.h>
 #include <string.h>
 
 /**
@@ -147,18 +145,6 @@
  * \value CborPrettyMergeStringFragment         Merge all chunked byte or text strings and display them in a single entry.
  * \value CborPrettyDefaultFlags       Default conversion flags.
  */
-
-static CborError cbor_fprintf(void *out, const char *fmt, ...)
-{
-    int n;
-
-    va_list list;
-    va_start(list, fmt);
-    n = vfprintf((FILE *)out, fmt, list);
-    va_end(list);
-
-    return n < 0 ? CborErrorIO : CborNoError;
-}
 
 static void printRecursionLimit(CborStreamFunction stream, void *out)
 {
@@ -539,51 +525,6 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
 CborError cbor_value_to_pretty_stream(CborStreamFunction streamFunction, void *token, CborValue *value, int flags)
 {
     return value_to_pretty(streamFunction, token, value, flags, CBOR_PARSER_MAX_RECURSIONS);
-}
-
-/**
- * \fn CborError cbor_value_to_pretty(FILE *out, const CborValue *value)
- *
- * Converts the current CBOR type pointed by \a value to its textual
- * representation and writes it to the \a out stream. If an error occurs, this
- * function returns an error code similar to CborParsing.
- *
- * \sa cbor_value_to_pretty_advance(), cbor_value_to_json_advance()
- */
-
-/**
- * Converts the current CBOR type pointed by \a value to its textual
- * representation and writes it to the \a out stream. If an error occurs, this
- * function returns an error code similar to CborParsing.
- *
- * If no error ocurred, this function advances \a value to the next element.
- * Often, concatenating the text representation of multiple elements can be
- * done by appending a comma to the output stream.
- *
- * \sa cbor_value_to_pretty(), cbor_value_to_pretty_stream(), cbor_value_to_json_advance()
- */
-CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value)
-{
-    return value_to_pretty(cbor_fprintf, out, value, CborPrettyDefaultFlags, CBOR_PARSER_MAX_RECURSIONS);
-}
-
-/**
- * Converts the current CBOR type pointed by \a value to its textual
- * representation and writes it to the \a out stream. If an error occurs, this
- * function returns an error code similar to CborParsing.
- *
- * The textual representation can be controlled by the \a flags parameter (see
- * CborPrettyFlags for more information).
- *
- * If no error ocurred, this function advances \a value to the next element.
- * Often, concatenating the text representation of multiple elements can be
- * done by appending a comma to the output stream.
- *
- * \sa cbor_value_to_pretty_stream(), cbor_value_to_pretty(), cbor_value_to_json_advance()
- */
-CborError cbor_value_to_pretty_advance_flags(FILE *out, CborValue *value, int flags)
-{
-    return value_to_pretty(cbor_fprintf, out, value, flags, CBOR_PARSER_MAX_RECURSIONS);
 }
 
 /** @} */
