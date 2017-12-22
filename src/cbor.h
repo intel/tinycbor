@@ -591,6 +591,13 @@ enum CborPrettyFlags {
     CborPrettyDefaultFlags          = CborPrettyIndicateIndetermineLength
 };
 
+typedef CborError (*CborStreamFunction)(void *token, const char *fmt, ...)
+#ifdef __GNUC__
+    __attribute__((__format__(printf, 2, 3)))
+#endif
+;
+
+CBOR_API CborError cbor_value_to_pretty_stream(CborStreamFunction streamFunction, void *token, CborValue *value, int flags);
 CBOR_API CborError cbor_value_to_pretty_advance_flags(FILE *out, CborValue *value, int flags);
 CBOR_API CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value);
 CBOR_INLINE_API CborError cbor_value_to_pretty(FILE *out, const CborValue *value)
