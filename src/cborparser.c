@@ -297,15 +297,9 @@ static CborError preparse_value(CborValue *it)
     return CborNoError;
 }
 
-static CborError preparse_next_value(CborValue *it)
+static CborError preparse_next_value_nodecrement(CborValue *it)
 {
-    if (it->remaining != UINT32_MAX) {
-        /* don't decrement the item count if the current item is tag: they don't count */
-        if (it->type != CborTagType && !--it->remaining) {
-            it->type = CborInvalidType;
-            return CborNoError;
-        }
-    } else if (it->remaining == UINT32_MAX && it->ptr != it->parser->end && *it->ptr == (uint8_t)BreakByte) {
+    if (it->remaining == UINT32_MAX && it->ptr != it->parser->end && *it->ptr == (uint8_t)BreakByte) {
         /* end of map or array */
         ++it->ptr;
         it->type = CborInvalidType;
@@ -314,6 +308,18 @@ static CborError preparse_next_value(CborValue *it)
     }
 
     return preparse_value(it);
+}
+
+static CborError preparse_next_value(CborValue *it)
+{
+    if (it->remaining != UINT32_MAX) {
+        /* don't decrement the item count if the current item is tag: they don't count */
+        if (it->type != CborTagType && --it->remaining == 0) {
+            it->type = CborInvalidType;
+            return CborNoError;
+        }
+    }
+    return preparse_next_value_nodecrement(it);
 }
 
 static CborError advance_internal(CborValue *it)
@@ -578,22 +584,15 @@ CborError cbor_value_skip_tag(CborValue *it)
  */
 CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
 {
-    CborError err;
     cbor_assert(cbor_value_is_container(it));
     *recursed = *it;
 
     if (it->flags & CborIteratorFlag_UnknownLength) {
         recursed->remaining = UINT32_MAX;
         ++recursed->ptr;
-        err = preparse_value(recursed);
-        if (err != CborErrorUnexpectedBreak)
-            return err;
-        /* actually, break was expected here
-         * it's just an empty container */
-        ++recursed->ptr;
     } else {
         uint64_t len;
-        err = _cbor_value_extract_number(&recursed->ptr, recursed->parser->end, &len);
+        CborError err = _cbor_value_extract_number(&recursed->ptr, recursed->parser->end, &len);
         cbor_assert(err == CborNoError);
 
         recursed->remaining = (uint32_t)len;
@@ -611,14 +610,13 @@ CborError cbor_value_enter_container(const CborValue *it, CborValue *recursed)
             }
             recursed->remaining *= 2;
         }
-        if (len != 0)
-            return preparse_value(recursed);
+        if (len == 0) {
+            /* the case of the empty container */
+            recursed->type = CborInvalidType;
+            return CborNoError;
+        }
     }
-
-    /* the case of the empty container */
-    recursed->type = CborInvalidType;
-    recursed->remaining = 0;
-    return CborNoError;
+    return preparse_next_value_nodecrement(recursed);
 }
 
 /**
