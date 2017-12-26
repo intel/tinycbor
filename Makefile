@@ -21,13 +21,16 @@ SED = sed
 
 # Our sources
 TINYCBOR_HEADERS = src/cbor.h src/cborjson.h
-TINYCBOR_SOURCES = \
+TINYCBOR_FREESTANDING_SOURCES = \
 	src/cborerrorstrings.c \
 	src/cborencoder.c \
 	src/cborencoder_close_container_checked.c \
 	src/cborparser.c \
-	src/cborparser_dup_string.c \
 	src/cborpretty.c \
+#
+TINYCBOR_SOURCES = \
+	$(TINYCBOR_FREESTANDING_SOURCES) \
+	src/cborparser_dup_string.c \
 	src/cborpretty_stdio.c \
 	src/cbortojson.c \
 	src/cborvalidation.c \
@@ -128,6 +131,10 @@ configure: .config
 .config: Makefile.configure
 	$(MAKE) -f $(SRCDIR)Makefile.configure OUT='>&9' configure 9> $@
 
+lib/libtinycbor-freestanding.a: $(TINYCBOR_FREESTANDING_SOURCES:.c=.o)
+	@$(MKDIR) -p lib
+	$(AR) cqs $@ $^
+
 lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o)
 	@$(MKDIR) -p lib
 	$(AR) cqs $@ $^
@@ -190,6 +197,7 @@ clean: mostlyclean
 	$(RM) bin/cbordump
 	$(RM) bin/json2cbor
 	$(RM) lib/libtinycbor.a
+	$(RM) lib/libtinycbor-freestanding.a
 	$(RM) tinycbor.pc
 	$(RM) lib/libtinycbor.so*
 	test -e tests/Makefile && $(MAKE) -C tests clean || :
