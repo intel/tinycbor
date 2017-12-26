@@ -25,7 +25,9 @@
 #ifndef CBOR_H
 #define CBOR_H
 
+#ifndef assert
 #include <assert.h>
+#endif
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
