@@ -3,7 +3,7 @@ os:
   - linux
   - osx
 env:
-  - CFLAGS="-O0 -g" QMAKEFLAGS="-config debug" PATH=/opt/qt56/bin:/usr/local/opt/qt5/bin:$PATH
+  - CFLAGS="-O0 -g" QMAKEFLAGS="-config debug" PATH=/opt/qt59/bin:/usr/local/opt/qt5/bin:$PATH
 addons:
   apt:
     sources:
