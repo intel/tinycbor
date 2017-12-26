@@ -7,9 +7,9 @@ env:
 addons:
   apt:
     sources:
-      - sourceline: 'ppa:beineri/opt-qt563-trusty'
+      - sourceline: 'ppa:beineri/opt-qt593-trusty'
     packages:
-      - qt56base valgrind
+      - qt59base valgrind
 install:
   - if [ "${TRAVIS_OS_NAME}" != "linux" ]; then
         brew update;
