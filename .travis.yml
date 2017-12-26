@@ -1,24 +1,60 @@
 language: cpp
-os:
-  - linux
-  - osx
-env:
-  - CFLAGS="-O0 -g" QMAKEFLAGS="-config debug" PATH=/opt/qt59/bin:/usr/local/opt/qt5/bin:$PATH
-addons:
-  apt:
-    sources:
-      - sourceline: 'ppa:beineri/opt-qt593-trusty'
-    packages:
-      - qt59base valgrind
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - sourceline: 'ppa:beineri/opt-qt593-trusty'
+          packages:
+            - qt59base valgrind
+            - g++-7
+      env:
+        - QMAKESPEC=linux-g++
+        - EVAL="CC=gcc-7 && CXX=g++-7"
+        - CFLAGS="-Os"
+        - QMAKEFLAGS="-config release"
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-5.0
+            - sourceline: 'ppa:beineri/opt-qt593-trusty'
+          packages:
+            - qt59base
+            - clang-5.0
+      env:
+        - QMAKESPEC=linux-clang
+        - EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - CFLAGS="-Oz"
+        - QMAKEFLAGS="-config release"
+    - os: osx
+      env:
+        - QMAKESPEC=macx-clang
+        - CFLAGS="-Oz"
+        - QMAKEFLAGS="-config debug"
+        - PATH=/usr/local/opt/qt5/bin:$PATH
 install:
   - if [ "${TRAVIS_OS_NAME}" != "linux" ]; then
         brew update;
         brew install qt5;
     fi
 script:
+  - PATH=`echo /opt/qt*/bin`:$PATH
+  - eval "$EVAL"
   - make -s -f Makefile.configure configure | tee .config
+  - make -k
+        CFLAGS="$CFLAGS -march=native -g1 -Wall -Wextra -Werror"
+        CPPFLAGS="-DNDEBUG"
+        lib/libtinycbor.a
+  - size lib/libtinycbor.a
+  - make clean
+  - make -k
+        CFLAGS="$CFLAGS -O0 -g"
   - make
-        CFLAGS="$CFLAGS"
-        all tests/Makefile
+        QMAKEFLAGS="$QMAKEFLAGS QMAKE_CXX=$CXX"
+        tests/Makefile
   - cd tests && make check -k
         TESTRUNNER=`which valgrind 2>/dev/null`
