@@ -436,16 +436,15 @@ static CborError validate_container(CborValue *it, int containerType, int flags,
 {
     CborError err;
     const uint8_t *previous = NULL;
-    const uint8_t *previous_end;
+    const uint8_t *previous_end = NULL;
 
     if (!recursionLeft)
         return CborErrorNestingTooDeep;
 
     while (!cbor_value_at_end(it)) {
-        const uint8_t *current;
+        const uint8_t *current = cbor_value_get_next_byte(it);
 
         if (containerType == CborMapType) {
-            current = it->ptr;
             if (flags & CborValidateMapKeysAreString) {
                 CborType type = cbor_value_get_type(it);
                 if (type == CborTagType) {
