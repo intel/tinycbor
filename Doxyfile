@@ -23,12 +23,11 @@ FILE_PATTERNS          = *.h \
                          *.c \
                          *.dox
 EXCLUDE_PATTERNS       = *_p.h
-IMAGE_PATH             = pics
 STRIP_CODE_COMMENTS    = NO
 REFERENCED_BY_RELATION = YES
 IGNORE_PREFIX          = cbor_ \
                          Cbor
-HTML_TIMESTAMP         = YES
+HTML_TIMESTAMP         = NO
 GENERATE_HTMLHELP      = YES
 GENERATE_CHI           = YES
 BINARY_TOC             = YES
