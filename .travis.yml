@@ -10,6 +10,7 @@ matrix:
           packages:
             - qt59base valgrind
             - g++-7
+            - doxygen
       env:
         - QMAKESPEC=linux-g++
         - EVAL="CC=gcc-7 && CXX=g++-7"
@@ -20,21 +21,24 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-5.0
             - sourceline: 'ppa:beineri/opt-qt593-trusty'
           packages:
             - qt59base
-            - clang-5.0
       env:
         - QMAKESPEC=linux-clang
-        - EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - EVAL="CC=clang-5.0 && CXX=clang++"
+        - PATH=$PATH:/usr/local/clang/bin
         - CFLAGS="-Oz"
         - QMAKEFLAGS="-config release"
+        - MAKEFLAGS=-s
+        - TESTARGS=-silent
     - os: osx
       env:
         - QMAKESPEC=macx-clang
         - CFLAGS="-Oz"
         - QMAKEFLAGS="-config debug"
+        - MAKEFLAGS=-s
+        - TESTARGS=-silent
         - PATH=/usr/local/opt/qt5/bin:$PATH
 install:
   - if [ "${TRAVIS_OS_NAME}" != "linux" ]; then
@@ -49,12 +53,14 @@ script:
         CFLAGS="$CFLAGS -march=native -g1 -Wall -Wextra -Werror"
         CPPFLAGS="-DNDEBUG"
         lib/libtinycbor.a
-  - size lib/libtinycbor.a
-  - make clean
+  - size lib/libtinycbor.a | tee sizes
+  - make -s clean
   - make -k
         CFLAGS="$CFLAGS -O0 -g"
   - make
         QMAKEFLAGS="$QMAKEFLAGS QMAKE_CXX=$CXX"
         tests/Makefile
-  - cd tests && make check -k
-        TESTRUNNER=`which valgrind 2>/dev/null`
+  - (cd tests && make check -k
+        TESTRUNNER=`which valgrind 2>/dev/null`)
+  - make -s clean
+  - ./scripts/update-docs.sh

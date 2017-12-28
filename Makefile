@@ -209,7 +209,7 @@ distcheck: .git
 	$(RM) -r $${TMPDIR-/tmp}/tinycbor-distcheck
 
 tag: distcheck
-	@cd $(SRCDIR). && perl maketag.pl
+	@cd $(SRCDIR). && perl scripts/maketag.pl
 
 .PHONY: all check silentcheck configure install uninstall
 .PHONY: mostlyclean clean distclean
