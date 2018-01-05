@@ -50,6 +50,14 @@
 #  include <immintrin.h>
 #endif
 
+/* workaround for missing static_assert macro in MinGW32's glibc 
+ * See C11 standard, chapter 7.2 "Diagnostics <assert.h>", paragraph 3) */
+#if !defined (__cplusplus) && defined(__MINGW32__) && !defined(__MINGW64__) \
+    && (defined (_ISOC11_SOURCE) || (defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)))
+#  undef  static_assert
+#  define static_assert                 _Static_assert
+#endif
+
 #if __STDC_VERSION__ >= 201112L || __cplusplus >= 201103L || __cpp_static_assert >= 200410
 #  define cbor_static_assert(x)         static_assert(x, #x)
 #elif !defined(__cplusplus) && defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 406) && (__STDC_VERSION__ > 199901L)
