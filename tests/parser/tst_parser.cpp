@@ -43,6 +43,8 @@ private slots:
     void initParserEmpty();
 
     // parsing API
+    void integers_data();
+    void integers();
     void fixed_data();
     void fixed();
     void strings_data();
@@ -320,6 +322,104 @@ void addFixedData()
     QTest::newRow("+inf_f") << raw("\xfa\x7f\x80\0\0") << "inf";
     QTest::newRow("+inf") << raw("\xfb\x7f\xf0\0\0\0\0\0\0") << "inf";
 
+}
+
+static void addIntegers()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<quint64>("expectedRaw");
+    QTest::addColumn<qint64>("expectedValue");
+    QTest::addColumn<bool>("isNegative");
+    QTest::addColumn<bool>("inInt64Range");
+
+    // unsigned integers
+    QTest::newRow("0") << raw("\x00") << Q_UINT64_C(0) << Q_INT64_C(0) << false << true;
+    QTest::newRow("1") << raw("\x01") << Q_UINT64_C(1) << Q_INT64_C(1) << false << true;
+    QTest::newRow("10") << raw("\x0a") << Q_UINT64_C(10) << Q_INT64_C(10) << false << true;
+    QTest::newRow("23") << raw("\x17") << Q_UINT64_C(23) << Q_INT64_C(23) << false << true;
+    QTest::newRow("24") << raw("\x18\x18") << Q_UINT64_C(24) << Q_INT64_C(24) << false << true;
+    QTest::newRow("UINT8_MAX") << raw("\x18\xff") << Q_UINT64_C(255) << Q_INT64_C(255) << false << true;
+    QTest::newRow("UINT8_MAX+1") << raw("\x19\x01\x00") << Q_UINT64_C(256) << Q_INT64_C(256) << false << true;
+    QTest::newRow("UINT16_MAX") << raw("\x19\xff\xff") << Q_UINT64_C(65535) << Q_INT64_C(65535) << false << true;
+    QTest::newRow("UINT16_MAX+1") << raw("\x1a\0\1\x00\x00") << Q_UINT64_C(65536) << Q_INT64_C(65536) << false << true;
+    QTest::newRow("UINT32_MAX") << raw("\x1a\xff\xff\xff\xff") << Q_UINT64_C(4294967295) << Q_INT64_C(4294967295) << false << true;
+    QTest::newRow("UINT32_MAX+1") << raw("\x1b\0\0\0\1\0\0\0\0") << Q_UINT64_C(4294967296) << Q_INT64_C(4294967296) << false << true;
+    QTest::newRow("INT64_MAX") << raw("\x1b" "\x7f\xff\xff\xff" "\xff\xff\xff\xff")
+                                << quint64(std::numeric_limits<qint64>::max())
+                                << std::numeric_limits<qint64>::max() << false << true;
+    QTest::newRow("UINT64_MAX") << raw("\x1b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
+                                << std::numeric_limits<quint64>::max() << qint64(-123456) << false << false;
+
+    // negative integers
+    QTest::newRow("-1") << raw("\x20") << Q_UINT64_C(0) << Q_INT64_C(-1) << true << true;
+    QTest::newRow("-2") << raw("\x21") << Q_UINT64_C(1) << Q_INT64_C(-2) << true << true;
+    QTest::newRow("-24") << raw("\x37") << Q_UINT64_C(23) << Q_INT64_C(-24) << true << true;
+    QTest::newRow("-25") << raw("\x38\x18") << Q_UINT64_C(24) << Q_INT64_C(-25) << true << true;
+    QTest::newRow("-UINT8_MAX") << raw("\x38\xff") << Q_UINT64_C(255) << Q_INT64_C(-256) << true << true;
+    QTest::newRow("-UINT8_MAX-1") << raw("\x39\x01\x00") << Q_UINT64_C(256) << Q_INT64_C(-257) << true << true;
+    QTest::newRow("-UINT16_MAX") << raw("\x39\xff\xff") << Q_UINT64_C(65535) << Q_INT64_C(-65536) << true << true;
+    QTest::newRow("-UINT16_MAX-1") << raw("\x3a\0\1\x00\x00") << Q_UINT64_C(65536) << Q_INT64_C(-65537) << true << true;
+    QTest::newRow("-UINT32_MAX") << raw("\x3a\xff\xff\xff\xff") << Q_UINT64_C(4294967295) << Q_INT64_C(-4294967296) << true << true;
+    QTest::newRow("-UINT32_MAX-1") << raw("\x3b\0\0\0\1\0\0\0\0") << Q_UINT64_C(4294967296) << Q_INT64_C(-4294967297) << true << true;
+    QTest::newRow("INT64_MIN+1") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xfe")
+                               << quint64(std::numeric_limits<qint64>::max() - 1)
+                               << (std::numeric_limits<qint64>::min() + 1)
+                               << true << true;
+    QTest::newRow("INT64_MIN") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xff")
+                               << quint64(std::numeric_limits<qint64>::max())
+                               << std::numeric_limits<qint64>::min()
+                               << true << true;
+    QTest::newRow("INT64_MIN-1") << raw("\x3b\x80\0\0\0""\0\0\0\0") << Q_UINT64_C(9223372036854775808) << qint64(-123456) << true << false;
+    QTest::newRow("-UINT64_MAX") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xfe")
+                                 << (std::numeric_limits<quint64>::max() - 1) << qint64(-123456) << true << false;
+    QTest::newRow("-UINT64_MAX+1") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
+                                   << std::numeric_limits<quint64>::max() << qint64(-123456) << true << false;
+}
+
+void tst_Parser::integers_data()
+{
+    addIntegers();
+}
+
+void tst_Parser::integers()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(bool, isNegative);
+    QFETCH(quint64, expectedRaw);
+    QFETCH(qint64, expectedValue);
+    QFETCH(bool, inInt64Range);
+
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+    QVERIFY(cbor_value_is_integer(&first));
+
+    uint64_t raw;
+    cbor_value_get_raw_integer(&first, &raw);
+    QCOMPARE(quint64(raw), expectedRaw);
+
+    if (isNegative) {
+        QVERIFY(cbor_value_is_negative_integer(&first));
+        QVERIFY(!cbor_value_is_unsigned_integer(&first));
+    } else {
+        QVERIFY(!cbor_value_is_negative_integer(&first));
+        QVERIFY(cbor_value_is_unsigned_integer(&first));
+    }
+
+    int64_t value;
+    if (inInt64Range) {
+        cbor_value_get_int64(&first, &value);
+        QCOMPARE(qint64(value), expectedValue);
+    }
+
+    err = cbor_value_get_int64_checked(&first, &value);
+    QCOMPARE(err, inInt64Range ? CborNoError : CborErrorDataTooLarge);
+
+    int ivalue;
+    bool inIntRange = inInt64Range && (expectedValue == int(expectedValue));
+    err = cbor_value_get_int_checked(&first, &ivalue);
+    QCOMPARE(err, inIntRange ? CborNoError : CborErrorDataTooLarge);
 }
 
 void tst_Parser::fixed_data()
