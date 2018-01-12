@@ -326,11 +326,13 @@ CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value)
  * Appends the negative 64-bit integer whose absolute value is \a
  * absolute_value to the CBOR stream provided by \a encoder.
  *
+ * If the value \a absolute_value is zero, this function encodes -2^64 - 1.
+ *
  * \sa cbor_encode_uint, cbor_encode_int
  */
 CborError cbor_encode_negative_int(CborEncoder *encoder, uint64_t absolute_value)
 {
-    return encode_number(encoder, absolute_value, NegativeIntegerType << MajorTypeShift);
+    return encode_number(encoder, absolute_value - 1, NegativeIntegerType << MajorTypeShift);
 }
 
 /**
