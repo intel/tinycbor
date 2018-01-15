@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2019 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -270,7 +270,8 @@ enum CborParserIteratorFlags
     CborIteratorFlag_NegativeInteger        = 0x02,
     CborIteratorFlag_IteratingStringChunks  = 0x02,
     CborIteratorFlag_UnknownLength          = 0x04,
-    CborIteratorFlag_ContainerIsMap         = 0x20
+    CborIteratorFlag_ContainerIsMap         = 0x20,
+    CborIteratorFlag_NextIsMapKey           = 0x40
 };
 
 struct CborParser

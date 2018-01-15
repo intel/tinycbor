@@ -1563,6 +1563,10 @@ static void addValidationData()
     QTest::newRow("array-no-break2") << raw("\x81\x9f\0") << 0 << CborErrorUnexpectedEOF;
     QTest::newRow("map-no-break1") << raw("\x81\xbf") << 0 << CborErrorUnexpectedEOF;
     QTest::newRow("map-no-break2") << raw("\x81\xbf\0\0") << 0 << CborErrorUnexpectedEOF;
+    QTest::newRow("map-break-after-key") << raw("\x81\xbf\0\xff") << 0 << CborErrorUnexpectedBreak;
+    QTest::newRow("map-break-after-second-key") << raw("\x81\xbf\x64xyzw\x04\x00\xff") << 0 << CborErrorUnexpectedBreak;
+    QTest::newRow("map-break-after-value-tag") << raw("\x81\xbf\0\xc0\xff") << 0 << CborErrorUnexpectedBreak;
+    QTest::newRow("map-break-after-value-tag2") << raw("\x81\xbf\0\xd8\x20\xff") << 0 << CborErrorUnexpectedBreak;
 
     // check for pointer additions wrapping over the limit of the address space
     CborError tooLargeOn32bit = (sizeof(void *) == 4) ? CborErrorDataTooLarge : CborErrorUnexpectedEOF;
@@ -1673,6 +1677,24 @@ void tst_Parser::validation()
     if (!QByteArray(QTest::currentDataTag()).contains("utf8")) {
         QCOMPARE(err2, expectedError);
         QCOMPARE(err3, expectedError);
+    }
+
+    // see if we've got a map
+    if (QByteArray(QTest::currentDataTag()).startsWith("map")) {
+        w.init(data, uint32_t(flags));      // reinit
+        QVERIFY(cbor_value_is_array(&w.first));
+
+        CborValue map;
+        CborError err = cbor_value_enter_container(&w.first, &map);
+        if (err == CborNoError) {
+            QVERIFY(cbor_value_is_map(&map));
+            CborValue element;
+            err = cbor_value_map_find_value(&map, "foobar", &element);
+            if (err == CborNoError)
+                QVERIFY(!cbor_value_is_valid(&element));
+        }
+
+        QCOMPARE(err, expectedError);
     }
 }
 
