@@ -25,6 +25,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include "cbor.h"
 #include "cborjson.h"
+#include "cbor_buf_reader.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +80,7 @@ void dumpFile(FILE *in, const char *fname, bool printJosn, int flags)
         if (!err)
             puts("");
     }
-    if (!err && value.ptr != buffer + buflen)
+    if (!err && value.offset != (int)buflen)
         err = CborErrorGarbageAtEnd;
     if (err)
         printerror(err, fname);

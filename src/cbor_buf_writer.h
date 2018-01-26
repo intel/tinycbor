@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2016 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,34 @@
 **
 ****************************************************************************/
 
-#include "../../src/cbor_buf_writer.c"
-#include "../../src/cbor_buf_reader.c"
-#include "../../src/cborencoder.c"
-#include "../../src/cborerrorstrings.c"
-#include "../../src/cborparser.c"
-#include "../../src/cborparser_dup_string.c"
-#include "../../src/cborvalidation.c"
+#ifndef CBOR_BUF_WRITER_H
+#define CBOR_BUF_WRITER_H
 
-#include <QtTest>
+#include "cbor_encoder_writer.h"
 
-// This is a compilation-only test.
-// All it does is verify that the four source files above
-// compile as C++ without errors.
-class tst_Cpp : public QObject
-{
-    Q_OBJECT
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct cbor_buf_writer {
+    struct cbor_encoder_writer enc;
+    uint8_t *ptr;
+    const uint8_t *end;
+    int bytes_needed;
 };
 
-QTEST_MAIN(tst_Cpp)
-#include "tst_cpp.moc"
+struct CborEncoder;
+
+void cbor_buf_writer_init(struct cbor_buf_writer *cb, uint8_t *buffer,
+                          size_t data);
+size_t cbor_buf_writer_buffer_size(struct cbor_buf_writer *cb,
+                                   const uint8_t *buffer);
+size_t cbor_encoder_get_extra_bytes_needed(const struct CborEncoder *encoder);
+size_t cbor_encoder_get_buffer_size(const struct CborEncoder *encoder,
+                                    const uint8_t *buffer);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CBOR_BUF_WRITER_H */

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2016 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,26 @@
 **
 ****************************************************************************/
 
-#include "../../src/cbor_buf_writer.c"
-#include "../../src/cbor_buf_reader.c"
-#include "../../src/cborencoder.c"
-#include "../../src/cborerrorstrings.c"
-#include "../../src/cborparser.c"
-#include "../../src/cborparser_dup_string.c"
-#include "../../src/cborvalidation.c"
+#ifndef CBOR_BUF_READER_H
+#define CBOR_BUF_READER_H
 
-#include <QtTest>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// This is a compilation-only test.
-// All it does is verify that the four source files above
-// compile as C++ without errors.
-class tst_Cpp : public QObject
-{
-    Q_OBJECT
+#include "cbor_decoder_reader.h"
+
+struct cbor_buf_reader {
+    struct cbor_decoder_reader r;
+    const uint8_t *buffer;
 };
 
-QTEST_MAIN(tst_Cpp)
-#include "tst_cpp.moc"
+void cbor_buf_reader_init(struct cbor_buf_reader *cb, const uint8_t *buffer,
+                          size_t data);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CBOR_BUF_READER_H */
+

@@ -1,6 +1,6 @@
 CFLAGS = -W3
 
-TINYCBOR_HEADERS = src\cbor.h src\cborjson.h
+TINYCBOR_HEADERS = src
 TINYCBOR_SOURCES = \
 	src\cborerrorstrings.c \
 	src\cborencoder.c \
@@ -9,7 +9,9 @@ TINYCBOR_SOURCES = \
 	src\cborparser_dup_string.c \
 	src\cborpretty.c \
 	src\cborpretty_stdio.c \
-	src\cborvalidation.c
+	src\cborvalidation.c \
+	src\cbor_buf_reader.c \
+	src\cbor_buf_writer.c
 TINYCBOR_OBJS = \
 	src\cborerrorstrings.obj \
 	src\cborencoder.obj \
@@ -18,7 +20,9 @@ TINYCBOR_OBJS = \
 	src\cborparser_dup_string.obj \
 	src\cborpretty.obj \
 	src\cborpretty_stdio.obj \
-	src\cborvalidation.obj
+	src\cborvalidation.obj \
+	src\cbor_buf_writer.obj \
+	src\cbor_buf_reader.obj
 
 all: lib\tinycbor.lib
 check: tests\Makefile lib\tinycbor.lib
