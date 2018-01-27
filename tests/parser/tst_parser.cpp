@@ -120,6 +120,36 @@ CborError parseOne(CborValue *it, QString *parsed)
     return cbor_value_to_pretty_stream(qstring_printf, parsed, it, flags);
 }
 
+CborError parseOneChunk(CborValue *it, QString *parsed)
+{
+    CborError err;
+    CborType ourType = cbor_value_get_type(it);
+    if (ourType == CborByteStringType) {
+        const uint8_t *bytes;
+        size_t len;
+        err = cbor_value_get_byte_string_chunk(it, &bytes, &len, it);
+        if (err)
+            return err;
+
+        if (bytes)
+            *parsed = QString::fromLatin1("h'" +
+                                          QByteArray::fromRawData(reinterpret_cast<const char *>(bytes), len).toHex() +
+                                          '\'');
+    } else if (ourType == CborTextStringType) {
+        const char *text;
+        size_t len;
+        err = cbor_value_get_text_string_chunk(it, &text, &len, it);
+        if (err)
+            return err;
+
+        if (text)
+            *parsed = '"' + QString::fromUtf8(text, len) + '"';
+    } else {
+        Q_ASSERT(false);
+    }
+    return err;
+}
+
 template <size_t N> QByteArray raw(const char (&data)[N])
 {
     return QByteArray::fromRawData(data, N - 1);
@@ -879,8 +909,19 @@ static void chunkedStringTest(const QByteArray &data, const QString &concatenate
 
     CborValue copy = value;
 
-    Q_UNUSED(chunks);   // for future API
-    QCOMPARE(cbor_value_advance(&value), CborNoError);
+    forever {
+        QString decoded;
+        err = parseOneChunk(&value, &decoded);
+        QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+        if (decoded.isEmpty())
+            break;          // last chunk
+
+        QVERIFY2(!chunks.isEmpty(), "Too many chunks");
+        QString expected = chunks.takeFirst();
+        QCOMPARE(decoded, expected);
+    }
+    QVERIFY2(chunks.isEmpty(), "Too few chunks");
 
     // compare to the concatenated data
     {
