@@ -1,4 +1,3 @@
-linux-clang:
    text	   data	    bss	    dec	    hex	filename
    1602	      0	      0	   1602	    642	cborerrorstrings.o (ex lib/libtinycbor.a)
    1139	      0	      0	   1139	    473	cborencoder.o (ex lib/libtinycbor.a)
