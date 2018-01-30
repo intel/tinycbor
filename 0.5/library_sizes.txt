@@ -9,3 +9,15 @@ linux-clang:
     290	      0	      0	    290	    122	cborpretty_stdio.o (ex lib/libtinycbor.a)
    3816	      0	      0	   3816	    ee8	cbortojson.o (ex lib/libtinycbor.a)
    2586	      0	      0	   2586	    a1a	cborvalidation.o (ex lib/libtinycbor.a)
+macx-clang:
+__TEXT	__DATA	__OBJC	others	dec	hex
+1765	0	0	547	2312	908	lib/libtinycbor.a(cborerrorstrings.o)
+1737	0	0	3185	4922	133a	lib/libtinycbor.a(cborencoder.o)
+74	0	0	594	668	29c	lib/libtinycbor.a(cborencoder_close_container_checked.o)
+3818	0	0	6014	9832	2668	lib/libtinycbor.a(cborparser.o)
+3110	0	0	3643	6753	1a61	lib/libtinycbor.a(cborpretty.o)
+186	0	0	592	778	30a	lib/libtinycbor.a(cborparser_dup_string.o)
+379	0	0	784	1163	48b	lib/libtinycbor.a(cborpretty_stdio.o)
+3984	0	0	4590	8574	217e	lib/libtinycbor.a(cbortojson.o)
+2576	0	0	3619	6195	1833	lib/libtinycbor.a(cborvalidation.o)
+447	0	0	982	1429	595	lib/libtinycbor.a(open_memstream.o)
