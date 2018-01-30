@@ -1,0 +1,393 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML><HEAD></HEAD><BODY>
+<OBJECT type="text/site properties">
+<param name="FrameName" value="right">
+</OBJECT>
+<UL>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="Modules"><param name="ImageNumber" value="1"></OBJECT>
+  <UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Global constants"><param name="ImageNumber" value="1"></OBJECT>
+    <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborTag"><param name="Local" value="a00017.html#ga46c29d9d57408740dc269d6125d37d26"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborError"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborKnownTags"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborType"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_error_string"><param name="Local" value="a00017.html#gad4519e8ab62ea64773fa6dce00c361dc"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIndefiniteLength"><param name="Local" value="a00017.html#gadc05d7725df5c9a2995580e2be0e5b57"><param name="ImageNumber" value="11"></OBJECT>
+    </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Encoding to CBOR"><param name="ImageNumber" value="1"></OBJECT>
+    <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborEncoder"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_boolean"><param name="Local" value="a00018.html#ga857154b97cad978f4afb3e2f809051bd"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_byte_string"><param name="Local" value="a00018.html#ga1260b72bb0f067fd3c68d49a6b5f58d0"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_double"><param name="Local" value="a00018.html#ga211aa80dc5b793ee8dd74d24cb9e7ca6"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_float"><param name="Local" value="a00018.html#gae981ee934ef22ce4c5b52f8069e1b15c"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_floating_point"><param name="Local" value="a00018.html#gac56f8c2ad79916f2719acb24f049cde5"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_half_float"><param name="Local" value="a00018.html#gad8e5a125cfaceb9a32528e620e003bc6"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_int"><param name="Local" value="a00018.html#gabbf6e10fd963d673f5ad293dff4a67a9"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_negative_int"><param name="Local" value="a00018.html#ga0e84daa854e0480f4a3758bcb46b9b60"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_null"><param name="Local" value="a00018.html#ga30b769ff1da73ed8b4536f551347c5ed"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_simple_value"><param name="Local" value="a00018.html#ga923a63a01dae47a3dd46f74a3f744008"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_tag"><param name="Local" value="a00018.html#ga77b579b1a5a867fc0712e46bb4eb3200"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_text_string"><param name="Local" value="a00018.html#ga4fa673c63e85b1fd6f8067aca4ccdde4"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_text_stringz"><param name="Local" value="a00018.html#ga6df3eff486535322f66584dc5431f9e9"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_uint"><param name="Local" value="a00018.html#ga2b898ce6f5821c5aba8b6f0020c4b5ba"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_undefined"><param name="Local" value="a00018.html#ga9d9f0668e2cf69352a45095006efab4f"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_close_container"><param name="Local" value="a00018.html#gacb4352260971102dbbd2f2a20e854c57"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_close_container_checked"><param name="Local" value="a00018.html#gaa597ba3b072473a41448e131ca20a66b"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_create_array"><param name="Local" value="a00018.html#ga97b4d15feaa128ed900704523979bd3f"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_create_map"><param name="Local" value="a00018.html#gad4a5ef2d574b5ac30d18ba696e219340"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_get_buffer_size"><param name="Local" value="a00018.html#ga753c2f9e09db7fa9317f1c1f19a16342"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_get_extra_bytes_needed"><param name="Local" value="a00018.html#gafc9abf6503d40787c3fd637a86bc0fb6"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_init"><param name="Local" value="a00018.html#ga257051966d907f88af804f30f2e9d8e2"><param name="ImageNumber" value="11"></OBJECT>
+    </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Parsing CBOR streams"><param name="ImageNumber" value="1"></OBJECT>
+    <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValue"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidationFlags"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_parser_init"><param name="Local" value="a00019.html#gadb356bb705f2d8239f03b36081a43b4f"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_advance"><param name="Local" value="a00019.html#gae2ede5aacd59f04437c24ef8ca2f449a"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_advance_fixed"><param name="Local" value="a00019.html#gac0701f791608589ddfff0bdb8acee7b4"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_at_end"><param name="Local" value="a00019.html#ga49bd2a99edcceb72962eedc7584cd19c"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_calculate_string_length"><param name="Local" value="a00019.html#gad5b2dd803244946b15603e09ce147044"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_copy_byte_string"><param name="Local" value="a00019.html#gac5204b942fd5e6e1d8064262f3ce96b3"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_copy_text_string"><param name="Local" value="a00019.html#ga02ec0b5c8346f407cf5def566ddcf5ae"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_enter_container"><param name="Local" value="a00019.html#ga0c8a61e484973272f34b00cfbef9ddfd"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_array_length"><param name="Local" value="a00019.html#gae3dec7120c8ce4326aea96c6eec6090c"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_boolean"><param name="Local" value="a00019.html#gade7bfd61f35e448b1119d9bcfce234c0"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_float"><param name="Local" value="a00019.html#gafcb81c2eeff3cc6dab0f2da699bb564b"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_half_float"><param name="Local" value="a00019.html#ga566e51dcf54db8eb43ec19e8d31b8c6f"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_int"><param name="Local" value="a00019.html#gabf95f402facf8436989b830f1dd4b06a"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_int64"><param name="Local" value="a00019.html#gae16139e4a8857033b908dad98ddb2ac3"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_int64_checked"><param name="Local" value="a00019.html#ga5bd9f8ab2b61aaeb31fd9b724622f0df"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_int_checked"><param name="Local" value="a00019.html#gaf9b7aba18f57c255e744b874645ac9be"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_map_length"><param name="Local" value="a00019.html#gad82740107f90881f83e7fb44ed74674b"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_next_byte"><param name="Local" value="a00019.html#ga06b1da795150786eb43ee83d65cd17d7"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_raw_integer"><param name="Local" value="a00019.html#ga30c4dc9fb923feac58d962b02aeecd41"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_simple_type"><param name="Local" value="a00019.html#ga033d3d2c9570501cf9dce099fe98e863"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_string_length"><param name="Local" value="a00019.html#gaf39519cfc9a8fb64a787348af835569c"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_tag"><param name="Local" value="a00019.html#ga4ee8cd4c95df1d788f5ef8fee6ac101a"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_text_string_chunk"><param name="Local" value="a00019.html#gacb1070d99c7094657271ef914b40a91b"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_type"><param name="Local" value="a00019.html#ga49bb974313534553ccafb28e5eba46d5"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_uint64"><param name="Local" value="a00019.html#gab4c30532c395047b62ccc7c7eeb3a51b"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_array"><param name="Local" value="a00019.html#gadf427a0fdeb50f7a94d3c3620dd36161"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_boolean"><param name="Local" value="a00019.html#ga0f85ec6748006a36c237a79d6f223b29"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_byte_string"><param name="Local" value="a00019.html#gad864d46aa7cfa3d57813da2b242380b4"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_container"><param name="Local" value="a00019.html#gaf3da16a547bcb54d3ad2ca70cf0f4341"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_double"><param name="Local" value="a00019.html#ga911e93729874ae5a2b4560c5bfe83ec3"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_float"><param name="Local" value="a00019.html#gafda7173c376b4789887db1717ef3f1b8"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_half_float"><param name="Local" value="a00019.html#gab44b87547a7c5a028479354d2f66c46c"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_integer"><param name="Local" value="a00019.html#ga3ea2ca067d876ca95251005f4ad696b0"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_length_known"><param name="Local" value="a00019.html#ga0422ed961d973d190a19e12a3fe2390f"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_map"><param name="Local" value="a00019.html#ga1b34d5f429a4c77f451391c4f7dff497"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_negative_integer"><param name="Local" value="a00019.html#gaaecdd62ea0656b7c4b367b19648ac79b"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_null"><param name="Local" value="a00019.html#ga11f38fada70d371257f7b51f311e8826"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_simple_type"><param name="Local" value="a00019.html#gaae1a1b893975549d5fa74452ba4b79e8"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_tag"><param name="Local" value="a00019.html#ga283d20b9bd9787647841dd245d486b1d"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_text_string"><param name="Local" value="a00019.html#gaed463f5bf4b69d7aec41e6aca9c637ad"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_undefined"><param name="Local" value="a00019.html#ga1079ce3272f905c3d4a20821507be6f6"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_unsigned_integer"><param name="Local" value="a00019.html#gac6aaf9010ea974034fe62b4670e44235"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_valid"><param name="Local" value="a00019.html#gae8bf13b3880863cf5c8a0bddf52426e6"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_leave_container"><param name="Local" value="a00019.html#ga51e02f0b62bc864fe8cf290988936e15"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_map_find_value"><param name="Local" value="a00019.html#gaf145f4513ce734265d0128429cc4d5bd"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_skip_tag"><param name="Local" value="a00019.html#ga2b805f0f440905a7ba4f93b3569bb97b"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_text_string_equals"><param name="Local" value="a00019.html#gac8f08df74d65c8454528824a667550ec"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_validate"><param name="Local" value="a00019.html#ga7636f480757b302845ee38227f15cef1"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_validate_basic"><param name="Local" value="a00019.html#ga19b60bc2cff3d3ffcc81adbcad09fd58"><param name="ImageNumber" value="11"></OBJECT>
+    </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Converting CBOR to text"><param name="ImageNumber" value="1"></OBJECT>
+    <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPrettyFlags"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty_stream"><param name="Local" value="a00020.html#gab43d4414c47f00c74262e0687e23dcda"><param name="ImageNumber" value="11"></OBJECT>
+    </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Converting CBOR to JSON"><param name="ImageNumber" value="1"></OBJECT>
+    <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborToJsonFlags"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+      <UL>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_json"><param name="Local" value="a00021.html#ga3f2ce7eadf9a355654186166d24e69cf"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_json_advance"><param name="Local" value="a00021.html#ga558485bab0ebcb2646e7669d13861d79"><param name="ImageNumber" value="11"></OBJECT>
+    </UL>
+  </UL>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="Data Structures"><param name="ImageNumber" value="1"></OBJECT>
+  <UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Data Structures"><param name="ImageNumber" value="1"></OBJECT>
+    <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborEncoder"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValue"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      </UL>
+    </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Data Structure Index"><param name="Local" value="classes.html"><param name="ImageNumber" value="11"></OBJECT>
+  </UL>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="Files"><param name="ImageNumber" value="1"></OBJECT>
+  <UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="File List"><param name="ImageNumber" value="1"></OBJECT>
+    <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor.h"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="CborTag"><param name="Local" value="a00004.html#ga46c29d9d57408740dc269d6125d37d26"><param name="ImageNumber" value="11"></OBJECT>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborEncoderAppendCborData"><param name="Local" value="a00004.html#a1dd3b87ce0fa673ab1ccc77ccb90b8bfa6fd8f0b837cfbe313f81133a9a8ec9eb"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborEncoderAppendStringData"><param name="Local" value="a00004.html#a1dd3b87ce0fa673ab1ccc77ccb90b8bfa35138bd2614374b501057fb813958a60"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIteratorFlag_WriterFunction"><param name="Local" value="a00004.html#abf92e9dba338e9e912488e2544a719cea4111f291c148bd808bfd6f7743778423"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIteratorFlag_ContainerIsMap_"><param name="Local" value="a00004.html#abf92e9dba338e9e912488e2544a719ceaa124d3cd8360e35175c72dfe07e23ac4"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="CborError"><param name="ImageNumber" value="1"></OBJECT>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborNoError"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5add85c52a3e4e6cd2095c819d61a5c123"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborUnknownError"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5acb578ce1fd4a8ee68c2f2bd59cf681b8"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorUnknownLength"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a86cd5cc65a686023e7ceaa5c46bbfb87"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorAdvancePastEOF"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a9b131d3786022b3e1bde7a47afe18519"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorIO"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5aabf86576a156e93da0116771d5ba119c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorGarbageAtEnd"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5aaf8da26782ece688ed0d6a06b5663677"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorUnexpectedEOF"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5af2803322055eaead505a8f21d0c95952"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorUnexpectedBreak"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5ad18843935e231c46f88b05de8840581c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorUnknownType"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a0df69f8a450ddc96d2022fe994b38acc"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorIllegalType"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5adf360061045a788904cda2c24493b6b6"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorIllegalNumber"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5adfc4a2afeec84d694a437a73dc50c47c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorIllegalSimpleType"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a0f4d427163ef10a7b8525444d867e448"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorLastStringChunk"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5af7c69a5004f0119910577a6515647b22"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorUnknownSimpleType"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5ad3e81f791b3926865b2ec7955644749a"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorUnknownTag"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5aa765751f61965220418e0271cc83d9fb"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorInappropriateTagForType"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a722248658a3aaf164a23ec01b8525d45"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorDuplicateObjectKeys"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5ab3ea313df1bf27b4cffae52df1c99399"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorInvalidUtf8TextString"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a1803013480f73d194c8a099a157cf468"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorExcludedType"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5aba2496808d3f5151afe4cb1ca38c35fb"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorExcludedValue"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5aaacfd2a1b315ed43c4a5a9d999d31abd"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorImproperValue"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a3f3b20b4b696c4784d8d383f6f2c0f29"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorOverlongEncoding"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a4fa4fd2168fa202b1645b85cf35f1cae"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorMapKeyNotString"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a75c35dcfd849ef5fc2ebaf15cac13922"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorMapNotSorted"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5ad32298f493c3928acb81fb36c2c934d4"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorMapKeysNotUnique"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5ab380f68bc3b2c4050f35bcfad2861c53"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorTooManyItems"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5adf6429cf3d900727c7c8e54625d8660b"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorTooFewItems"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a4513969885eb85f89c7c40e6419c570e"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorDataTooLarge"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a279d5910dafefeb1a4a63178926b96d4"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorNestingTooDeep"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a4d2ca59003b623f142837a4614b568d9"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorUnsupportedType"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a4b308cc6b53f935d0d2856e3f32e5170"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorUnimplementedValidation"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a71547a7810d3abc5f0b3088349b10c5e"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorJsonObjectKeyIsAggregate"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a7d41cc3dd2066c1fdeb439817cc5efbe"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorJsonObjectKeyNotString"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5ac9def664ebebae2e7e2063e1eb4d0542"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorJsonNotImplemented"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5ae96ce56a4cb4db5740085e38a7d7989c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorOutOfMemory"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5abf2001bdd6a82ae71d06bd505e022a28"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborErrorInternalError"><param name="Local" value="a00004.html#ga76e9c9acc63dd940da4ab7e91309f7b5a05c8d444462490cfc1e049299a6b30c1"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="CborKnownTags"><param name="ImageNumber" value="1"></OBJECT>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborDateTimeStringTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a6ea5f360db1baa9737df76c55a98f90f"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborUnixTime_tTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a41fd6d243e17be74a7de436fb8d84bc9"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPositiveBignumTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a1d3a0f106f0c44bf62d53da0010c1484"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborNegativeBignumTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a0cad1a47349e4206f7f885561a1829f1"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborDecimalTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a2b05e8521f0cc4567811dac08bdb9277"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborBigfloatTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1ad8a580d7b25b821e44dace212cbc8a3e"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborCOSE_Encrypt0Tag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a6a6065a2506724dc00b5505dd1dfe2a1"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborCOSE_Mac0Tag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a9fbeb3b5a4bb9df25cac463ec517db34"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborCOSE_Sign1Tag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a10624dd7101a856e4ca404330c81e580"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborExpectedBase64urlTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a7c84a5dbff1e5627bb86cc19b577607f"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborExpectedBase64Tag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1addd5065c1dfc5b7d086312e1ab6b72fd"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborExpectedBase16Tag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a6a94e0a289adf8189a596fb15fc4ad56"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborEncodedCborTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1aa3f01b1906a94c3fb7bf1f4ae4ccdadf"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborUrlTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a5b5f46f9407eb390bc0c43dcef14cf71"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborBase64urlTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a6529f1c24e857364060c4c365bf5a5f3"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborBase64Tag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1af3a84052cf873056a78348757273075f"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborRegularExpressionTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a1cc1bf0ad1fab91e6d0d20c03fb76d8d"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborMimeMessageTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a44c21020712bb7dc72678eea0593462c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborCOSE_EncryptTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1acd9494fe33bf2dbe5db1bfdeff3057e1"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborCOSE_MacTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1aa8caa6b6c4cccb97d5420a5da7f55664"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborCOSE_SignTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a2bbd089870757fddb6e08269f281b9ad"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborSignatureTag"><param name="Local" value="a00004.html#gade6fa23a8fb3df9db434c69ca05d5ec1a639107f0a9254120684f66efea80a215"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborParserFlag_ExternalSource"><param name="Local" value="a00004.html#add1553bc31a52c1fd0c6bf7ccf14567da7ed5993331966de779fc534473b43ac0"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIteratorFlag_IntegerValueIs64Bit"><param name="Local" value="a00004.html#acde3bb8a22e2bc2f085050150c014098a310425ce4312ad2c147687abe99f0317"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIteratorFlag_IntegerValueTooLarge"><param name="Local" value="a00004.html#acde3bb8a22e2bc2f085050150c014098a3b671ede929298c355a80d75ff76ec47"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIteratorFlag_NegativeInteger"><param name="Local" value="a00004.html#acde3bb8a22e2bc2f085050150c014098a3982fbbff1ed9f48a11d5157150d00ca"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIteratorFlag_IteratingStringChunks"><param name="Local" value="a00004.html#acde3bb8a22e2bc2f085050150c014098adb759d33149ddf5cfa518aa807794acf"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIteratorFlag_UnknownLength"><param name="Local" value="a00004.html#acde3bb8a22e2bc2f085050150c014098adf57bdbc36c6f2a948c1f54158d7a599"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIteratorFlag_ContainerIsMap"><param name="Local" value="a00004.html#acde3bb8a22e2bc2f085050150c014098a6fbc087ec3c62621d6c28f35555d6564"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIteratorFlag_NextIsMapKey"><param name="Local" value="a00004.html#acde3bb8a22e2bc2f085050150c014098a08b85e2dee0cbc899d0c4850c05e1186"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPrettyFlags"><param name="ImageNumber" value="1"></OBJECT>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPrettyNumericEncodingIndicators"><param name="Local" value="a00004.html#gacc03414f6f6313d18ae5c56d4167d798a4c64098a832744e84ede9437254ea069"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPrettyTextualEncodingIndicators"><param name="Local" value="a00004.html#gacc03414f6f6313d18ae5c56d4167d798a9a2b3b9c1c783bfcf36a92483a336e1e"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPrettyIndicateIndetermineLength"><param name="Local" value="a00004.html#gacc03414f6f6313d18ae5c56d4167d798a247f115b16b6a2f5fa1f614a1e0e5722"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPrettyIndicateOverlongNumbers"><param name="Local" value="a00004.html#gacc03414f6f6313d18ae5c56d4167d798ae9292598081dcaf886a2ff656d6f753f"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPrettyShowStringFragments"><param name="Local" value="a00004.html#gacc03414f6f6313d18ae5c56d4167d798a4fae866ac1336285997e7585c72bf6e3"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPrettyMergeStringFragments"><param name="Local" value="a00004.html#gacc03414f6f6313d18ae5c56d4167d798a43f48b414fb06d41ffd349467dff448c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborPrettyDefaultFlags"><param name="Local" value="a00004.html#gacc03414f6f6313d18ae5c56d4167d798ad06170c550b6bb9b563149ae3f47d9e8"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="CborType"><param name="ImageNumber" value="1"></OBJECT>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIntegerType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178a3b5f909a392c850b1e0f28774364a80c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborByteStringType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178a63200c8d5ebc0a33d3c3ce321f7b3d3a"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborTextStringType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178aca6b618ee0d41fb31031c5922cb6b8b4"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborArrayType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178ab96dd0b384e891b39255f8936c379e73"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborMapType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178a14dca50c5dee0a6cb2c74eb0608cc30c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborTagType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178aba7d7ca146facdc1b947c0bc91f98eaa"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborSimpleType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178ae705bcff9f8ea5e470dd222e5534592b"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborBooleanType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178ad2eb846ce721d2a49a0eca7c8ed58530"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborNullType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178a6ebad0c52647cd6af9fc76e0a4dc339f"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborUndefinedType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178a129aaabaaddafbd62f18e46c09e99949"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborHalfFloatType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178ae7a6d0a85bc0fb0006848f2f4ab10841"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborFloatType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178a01b671e9ca2572e13e6acf1db35741c9"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborDoubleType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178a959e9111a04cb3bf4fe0d296a1fe94d2"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborInvalidType"><param name="Local" value="a00004.html#ga38f51ceba8bc8a9b1cf7dd31e3f9c178a66e65beb62c266100dbf2dd18cd51364"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidationFlags"><param name="ImageNumber" value="1"></OBJECT>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateShortestIntegrals"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fcab3373cfc322fbec49136620f3f6dfd12"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateShortestFloatingPoint"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca05b917d7ee4c7104b2ddd0e5b93a2b73"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateShortestNumbers"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca94b001da0495d0b20d7f7325453d30d8"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateNoIndeterminateLength"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fcacc614f25e95f61bf080a21f864633869"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateMapIsSorted"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca26f6a16e77ee37811c1039d8869b4a5d"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateCanonicalFormat"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca9723c549fe62ebf89b141537849d025c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateMapKeysAreUnique"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca538ff4ac6006b895037bc1be17d82a32"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateTagUse"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fcaec9e2a4bf0ee2ab2ed092729decb9629"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateUtf8"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca060c32c9fff37be29de0c77f1acc8e83"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateStrictMode"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fcaca0e8dca46c4050e122fd51cc8a0f346"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateMapKeysAreString"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fcaf9a0fd3c072e6aca50da4456f6e51eb1"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateNoUndefined"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca21feca902a3cfb3f8d58e641f2cd5355"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateNoTags"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca91b3dbe5ad25c09ff2a6ef94de72a7f9"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateFiniteFloatingPoint"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca981102f1437cad29c31c2e4290cd6593"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateNoUnknownSimpleTypesSA"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca59bf077aa9207812591ba69136d633af"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateNoUnknownSimpleTypes"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca17175a41250776b00d00f892ce00425e"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateNoUnknownTagsSA"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca651d0182b89079ec9c8de77df345a03c"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateNoUnknownTagsSR"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca5b995bd235307474d3715fa7b6c57e1f"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateNoUnknownTags"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca9de7e8eb571cdb1cd0d8ab539846e4c6"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateCompleteData"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca1b8ca9662fe597543e7f45932f3fa60a"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateStrictest"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca76a48872ee1ae1ab29ce90e8bfc5f6d8"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborValidateBasic"><param name="Local" value="a00004.html#gac7df91cad1cba43d5d0103284fc390fca10336f196bcefe891702c93f163e6681"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_boolean"><param name="Local" value="a00004.html#ga857154b97cad978f4afb3e2f809051bd"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_byte_string"><param name="Local" value="a00004.html#ga1260b72bb0f067fd3c68d49a6b5f58d0"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_double"><param name="Local" value="a00004.html#ga211aa80dc5b793ee8dd74d24cb9e7ca6"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_float"><param name="Local" value="a00004.html#gae981ee934ef22ce4c5b52f8069e1b15c"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_floating_point"><param name="Local" value="a00004.html#gac56f8c2ad79916f2719acb24f049cde5"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_half_float"><param name="Local" value="a00004.html#gad8e5a125cfaceb9a32528e620e003bc6"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_int"><param name="Local" value="a00004.html#gabbf6e10fd963d673f5ad293dff4a67a9"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_negative_int"><param name="Local" value="a00004.html#ga0e84daa854e0480f4a3758bcb46b9b60"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_null"><param name="Local" value="a00004.html#ga30b769ff1da73ed8b4536f551347c5ed"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_simple_value"><param name="Local" value="a00004.html#ga923a63a01dae47a3dd46f74a3f744008"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_tag"><param name="Local" value="a00004.html#ga77b579b1a5a867fc0712e46bb4eb3200"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_text_string"><param name="Local" value="a00004.html#ga4fa673c63e85b1fd6f8067aca4ccdde4"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_text_stringz"><param name="Local" value="a00004.html#ga6df3eff486535322f66584dc5431f9e9"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_uint"><param name="Local" value="a00004.html#ga2b898ce6f5821c5aba8b6f0020c4b5ba"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encode_undefined"><param name="Local" value="a00004.html#ga9d9f0668e2cf69352a45095006efab4f"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_close_container"><param name="Local" value="a00004.html#gacb4352260971102dbbd2f2a20e854c57"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_close_container_checked"><param name="Local" value="a00004.html#gaa597ba3b072473a41448e131ca20a66b"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_create_array"><param name="Local" value="a00004.html#ga97b4d15feaa128ed900704523979bd3f"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_create_map"><param name="Local" value="a00004.html#gad4a5ef2d574b5ac30d18ba696e219340"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_get_buffer_size"><param name="Local" value="a00004.html#ga753c2f9e09db7fa9317f1c1f19a16342"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_get_extra_bytes_needed"><param name="Local" value="a00004.html#gafc9abf6503d40787c3fd637a86bc0fb6"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_encoder_init"><param name="Local" value="a00004.html#ga257051966d907f88af804f30f2e9d8e2"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_error_string"><param name="Local" value="a00004.html#gad4519e8ab62ea64773fa6dce00c361dc"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_parser_init"><param name="Local" value="a00004.html#gadb356bb705f2d8239f03b36081a43b4f"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_advance"><param name="Local" value="a00004.html#gae2ede5aacd59f04437c24ef8ca2f449a"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_advance_fixed"><param name="Local" value="a00004.html#gac0701f791608589ddfff0bdb8acee7b4"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_at_end"><param name="Local" value="a00004.html#ga49bd2a99edcceb72962eedc7584cd19c"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_calculate_string_length"><param name="Local" value="a00004.html#gad5b2dd803244946b15603e09ce147044"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_copy_byte_string"><param name="Local" value="a00004.html#gac5204b942fd5e6e1d8064262f3ce96b3"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_copy_text_string"><param name="Local" value="a00004.html#ga02ec0b5c8346f407cf5def566ddcf5ae"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_dup_byte_string"><param name="Local" value="a00004.html#adf17ef706737dc8c30d7a424d6bfc4b9"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_dup_text_string"><param name="Local" value="a00004.html#a4365a3a12a36871dd84006b9d19fd9ed"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_enter_container"><param name="Local" value="a00004.html#ga0c8a61e484973272f34b00cfbef9ddfd"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_array_length"><param name="Local" value="a00004.html#gae3dec7120c8ce4326aea96c6eec6090c"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_boolean"><param name="Local" value="a00004.html#gade7bfd61f35e448b1119d9bcfce234c0"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_float"><param name="Local" value="a00004.html#gafcb81c2eeff3cc6dab0f2da699bb564b"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_half_float"><param name="Local" value="a00004.html#ga566e51dcf54db8eb43ec19e8d31b8c6f"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_int"><param name="Local" value="a00004.html#gabf95f402facf8436989b830f1dd4b06a"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_int64"><param name="Local" value="a00004.html#gae16139e4a8857033b908dad98ddb2ac3"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_int64_checked"><param name="Local" value="a00004.html#ga5bd9f8ab2b61aaeb31fd9b724622f0df"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_int_checked"><param name="Local" value="a00004.html#gaf9b7aba18f57c255e744b874645ac9be"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_map_length"><param name="Local" value="a00004.html#gad82740107f90881f83e7fb44ed74674b"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_next_byte"><param name="Local" value="a00004.html#ga06b1da795150786eb43ee83d65cd17d7"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_raw_integer"><param name="Local" value="a00004.html#ga30c4dc9fb923feac58d962b02aeecd41"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_simple_type"><param name="Local" value="a00004.html#ga033d3d2c9570501cf9dce099fe98e863"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_string_length"><param name="Local" value="a00004.html#gaf39519cfc9a8fb64a787348af835569c"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_tag"><param name="Local" value="a00004.html#ga4ee8cd4c95df1d788f5ef8fee6ac101a"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_text_string_chunk"><param name="Local" value="a00004.html#gacb1070d99c7094657271ef914b40a91b"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_type"><param name="Local" value="a00004.html#ga49bb974313534553ccafb28e5eba46d5"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_get_uint64"><param name="Local" value="a00004.html#gab4c30532c395047b62ccc7c7eeb3a51b"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_array"><param name="Local" value="a00004.html#gadf427a0fdeb50f7a94d3c3620dd36161"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_boolean"><param name="Local" value="a00004.html#ga0f85ec6748006a36c237a79d6f223b29"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_byte_string"><param name="Local" value="a00004.html#gad864d46aa7cfa3d57813da2b242380b4"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_container"><param name="Local" value="a00004.html#gaf3da16a547bcb54d3ad2ca70cf0f4341"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_double"><param name="Local" value="a00004.html#ga911e93729874ae5a2b4560c5bfe83ec3"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_float"><param name="Local" value="a00004.html#gafda7173c376b4789887db1717ef3f1b8"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_half_float"><param name="Local" value="a00004.html#gab44b87547a7c5a028479354d2f66c46c"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_integer"><param name="Local" value="a00004.html#ga3ea2ca067d876ca95251005f4ad696b0"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_length_known"><param name="Local" value="a00004.html#ga0422ed961d973d190a19e12a3fe2390f"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_map"><param name="Local" value="a00004.html#ga1b34d5f429a4c77f451391c4f7dff497"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_negative_integer"><param name="Local" value="a00004.html#gaaecdd62ea0656b7c4b367b19648ac79b"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_null"><param name="Local" value="a00004.html#ga11f38fada70d371257f7b51f311e8826"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_simple_type"><param name="Local" value="a00004.html#gaae1a1b893975549d5fa74452ba4b79e8"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_tag"><param name="Local" value="a00004.html#ga283d20b9bd9787647841dd245d486b1d"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_text_string"><param name="Local" value="a00004.html#gaed463f5bf4b69d7aec41e6aca9c637ad"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_undefined"><param name="Local" value="a00004.html#ga1079ce3272f905c3d4a20821507be6f6"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_unsigned_integer"><param name="Local" value="a00004.html#gac6aaf9010ea974034fe62b4670e44235"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_is_valid"><param name="Local" value="a00004.html#gae8bf13b3880863cf5c8a0bddf52426e6"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_leave_container"><param name="Local" value="a00004.html#ga51e02f0b62bc864fe8cf290988936e15"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_map_find_value"><param name="Local" value="a00004.html#gaf145f4513ce734265d0128429cc4d5bd"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_skip_tag"><param name="Local" value="a00004.html#ga2b805f0f440905a7ba4f93b3569bb97b"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_text_string_equals"><param name="Local" value="a00004.html#gac8f08df74d65c8454528824a667550ec"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty"><param name="Local" value="a00004.html#a0529f04ea9045bbd351ea03ee0a21b7b"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty_advance"><param name="Local" value="a00004.html#aef4d5dc4b2bfaf458e82e350509f9c30"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty_advance_flags"><param name="Local" value="a00004.html#adba89091b9618b1b6daa22284321cce7"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty_stream"><param name="Local" value="a00004.html#gab43d4414c47f00c74262e0687e23dcda"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_validate"><param name="Local" value="a00004.html#ga7636f480757b302845ee38227f15cef1"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_validate_basic"><param name="Local" value="a00004.html#ga19b60bc2cff3d3ffcc81adbcad09fd58"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="CborIndefiniteLength"><param name="Local" value="a00004.html#gadc05d7725df5c9a2995580e2be0e5b57"><param name="ImageNumber" value="11"></OBJECT>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="cborjson.h"><param name="ImageNumber" value="1"></OBJECT>
+      <UL>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="CborToJsonFlags"><param name="ImageNumber" value="1"></OBJECT>
+        <UL>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborConvertAddMetadata"><param name="Local" value="a00008.html#ga2f7386ebce337e0de69cae456bda78f7a23c9c29c0cc3ee4659e7fe0a8e066937"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborConvertTagsToObjects"><param name="Local" value="a00008.html#ga2f7386ebce337e0de69cae456bda78f7ae1ab3b74cc0bb6655980199e17d55bd7"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborConvertIgnoreTags"><param name="Local" value="a00008.html#ga2f7386ebce337e0de69cae456bda78f7a33e4e7ea6f284182f5f2f80507f3c3e1"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborConvertObeyByteStringTags"><param name="Local" value="a00008.html#ga2f7386ebce337e0de69cae456bda78f7a0e2878268018b9814cb4ae9a1fe43c2d"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborConvertByteStringsToBase64Url"><param name="Local" value="a00008.html#ga2f7386ebce337e0de69cae456bda78f7a18b723e7e2f822e9f9dd129b3b06b431"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborConvertRequireMapStringKeys"><param name="Local" value="a00008.html#ga2f7386ebce337e0de69cae456bda78f7ac0a9579eb724ee38773cb4a3a4d7d0fb"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborConvertStringifyMapKeys"><param name="Local" value="a00008.html#ga2f7386ebce337e0de69cae456bda78f7a3b43d90a6eb9c8b4973e67435bbae1db"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="CborConvertDefaultFlags"><param name="Local" value="a00008.html#ga2f7386ebce337e0de69cae456bda78f7a59712345fc1385ac949d9fbf855029c2"><param name="ImageNumber" value="11"></OBJECT>
+        </UL>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_json"><param name="Local" value="a00008.html#ga3f2ce7eadf9a355654186166d24e69cf"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_json_advance"><param name="Local" value="a00008.html#ga558485bab0ebcb2646e7669d13861d79"><param name="ImageNumber" value="11"></OBJECT>
+      </UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="tinycbor-version.h"><param name="Local" value="a00016_source.html"><param name="ImageNumber" value="11"></OBJECT>
+    </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Globals"><param name="Local" value="globals.html"><param name="ImageNumber" value="11"></OBJECT>
+    <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="All"><param name="Local" value="globals.html"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="Functions"><param name="Local" value="globals_func.html"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="Variables"><param name="Local" value="globals_vars.html"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="Typedefs"><param name="Local" value="globals_type.html"><param name="ImageNumber" value="11"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="Enumerations"><param name="Local" value="globals_enum.html"><param name="ImageNumber" value="11"></OBJECT>
+    </UL>
+  </UL>
+</UL>
+</BODY>
+</HTML>

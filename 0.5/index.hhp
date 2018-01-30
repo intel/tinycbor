@@ -8,24 +8,24 @@ Index file=index.hhk
 Language=0x409 English (United States)
 Binary TOC=YES
 Create CHI file=YES
-Title=TinyCBOR 0.5-beta1 API
+Title=TinyCBOR 0.5.0 API
 
 [WINDOWS]
-main="TinyCBOR 0.5-beta1 API","index.hhc","index.hhk","index.html","index.html",,,,,0x23520,,0x70387e,,,,,,,,0
+main="TinyCBOR 0.5.0 API","index.hhc","index.hhk","index.html","index.html",,,,,0x23520,,0x10387e,,,,,,,,0
 
 [FILES]
-a00005_source.html
-a00047_source.html
-a00128_source.html
-a00005.html
-a00047.html
-a00138.html
-a00139.html
-a00140.html
-a00141.html
-a00142.html
-a00146.html
-a00158.html
+a00004_source.html
+a00008_source.html
+a00016_source.html
+a00004.html
+a00008.html
+a00017.html
+a00018.html
+a00019.html
+a00020.html
+a00021.html
+a00001.html
+a00002.html
 index.html
 modules.html
 annotated.html
@@ -49,3 +49,19 @@ open.png
 bdwn.png
 sync_on.png
 sync_off.png
+ftv2blank.png
+ftv2doc.png
+ftv2folderclosed.png
+ftv2folderopen.png
+ftv2ns.png
+ftv2mo.png
+ftv2cl.png
+ftv2lastnode.png
+ftv2link.png
+ftv2mlastnode.png
+ftv2mnode.png
+ftv2node.png
+ftv2plastnode.png
+ftv2pnode.png
+ftv2vertline.png
+ftv2splitbar.png
