@@ -1,6 +1,6 @@
 #!/bin/sh -ex
-case "$TRAVIS_BRANCH,$TRAVIS_PULL_REQUEST" in
-    dev,false|master,false)
+case "$TRAVIS_BRANCH${TRAVIS_TAG+tag:$TRAVIS_TAG},$TRAVIS_PULL_REQUEST" in
+    dev,false|master,false|tag:*)
         ;;
     *)
         exit 0
