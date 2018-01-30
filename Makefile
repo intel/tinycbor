@@ -50,7 +50,7 @@ INSTALL_TARGETS += $(bindir)/cbordump
 ifeq ($(BUILD_SHARED),1)
 BINLIBRARY=lib/libtinycbor.so
 INSTALL_TARGETS += $(libdir)/libtinycbor.so
-INSTALL_TARGETS += $(libdir)/libtinycbor.so.0
+INSTALL_TARGETS += $(libdir)/libtinycbor.so.$(SOVERSION)
 INSTALL_TARGETS += $(libdir)/libtinycbor.so.$(VERSION)
 endif
 ifeq ($(BUILD_STATIC),1)
@@ -67,15 +67,8 @@ VPATH = $(SRCDIR):$(SRCDIR)/src
 
 # Our version
 GIT_DIR := $(strip $(shell git -C $(SRCDIR). rev-parse --git-dir 2> /dev/null))
-ifeq ($(GIT_DIR),)
-  VERSION = $(shell cat $(SRCDIR)VERSION)
-  DIRTYSRC :=
-else
-  VERSION := $(shell git -C $(SRCDIR). describe --tags | cut -c2-)
-  DIRTYSRC := $(shell \
-	test -n "`git -C $(SRCDIR). diff --name-only HEAD`" && \
-	echo +)
-endif
+VERSION = $(shell cat $(SRCDIR)VERSION)
+SOVERSION = $(shell cut -f1-2 -d. $(SRCDIR)VERSION)
 PACKAGE = tinycbor-$(VERSION)
 
 # Check that QMAKE is Qt 5
@@ -141,8 +134,8 @@ lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o)
 
 lib/libtinycbor.so: $(TINYCBOR_SOURCES:.c=.pic.o)
 	@$(MKDIR) -p lib
-	$(CC) -shared -Wl,-soname,libtinycbor.so.0 -o lib/libtinycbor.so.$(VERSION) $(LDFLAGS) $^
-	cd lib ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so.0
+	$(CC) -shared -Wl,-soname,libtinycbor.so.$(SOVERSION) -o lib/libtinycbor.so.$(VERSION) $(LDFLAGS) $^
+	cd lib ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so.$(SOVERSION)
 
 bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) $(BINLIBRARY)
 	@$(MKDIR) -p bin
@@ -224,7 +217,6 @@ tag: distcheck
 .SECONDARY:
 
 cflags := $(CPPFLAGS) -I$(SRCDIR)src
-cflags += -DTINYCBOR_VERSION_SUFFIX=\"$(DIRTYSRC)\"
 cflags += -std=c99 $(CFLAGS)
 %.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
