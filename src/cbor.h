@@ -162,7 +162,7 @@ typedef enum CborError {
     CborErrorGarbageAtEnd = 256,
     CborErrorUnexpectedEOF,
     CborErrorUnexpectedBreak,
-    CborErrorUnknownType,           /* can only heppen in major type 7 */
+    CborErrorUnknownType,           /* can only happen in major type 7 */
     CborErrorIllegalType,           /* type not allowed here */
     CborErrorIllegalNumber,
     CborErrorIllegalSimpleType,     /* types of value less than 32 encoded in two bytes */
