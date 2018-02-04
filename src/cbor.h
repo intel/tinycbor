@@ -564,13 +564,14 @@ enum CborPrettyFlags {
     CborPrettyNumericEncodingIndicators     = 0x01,
     CborPrettyTextualEncodingIndicators     = 0,
 
-    CborPrettyIndicateIndetermineLength     = 0x02,
+    CborPrettyIndicateIndeterminateLength   = 0x02,
+    CborPrettyIndicateIndetermineLength     = CborPrettyIndicateIndeterminateLength, /* deprecated */
     CborPrettyIndicateOverlongNumbers       = 0x04,
 
     CborPrettyShowStringFragments           = 0x100,
     CborPrettyMergeStringFragments          = 0,
 
-    CborPrettyDefaultFlags          = CborPrettyIndicateIndetermineLength
+    CborPrettyDefaultFlags          = CborPrettyIndicateIndeterminateLength
 };
 
 typedef CborError (*CborStreamFunction)(void *token, const char *fmt, ...)

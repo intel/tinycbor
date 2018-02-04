@@ -104,7 +104,7 @@ int main(int argc, char **argv)
             cbor_flags |= CborPrettyShowStringFragments;
             break;
         case 'n':
-            cbor_flags |= CborPrettyIndicateIndetermineLength | CborPrettyNumericEncodingIndicators;
+            cbor_flags |= CborPrettyIndicateIndeterminateLength | CborPrettyNumericEncodingIndicators;
             break;
 
         case 'M':

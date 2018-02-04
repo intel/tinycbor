@@ -127,7 +127,7 @@
  *      number or the opening bracket or brace, followed by a number
  *      indicating the CBOR additional information: 0 for 1 byte, 1 for 2
  *      bytes, 2 for 4 bytes and 3 for 8 bytes.
- *      If the CborPrettyIndicateIndetermineLength option is active, maps,
+ *      If the CborPrettyIndicateIndeterminateLength option is active, maps,
  *      arrays and strings encoded with indeterminate length will be marked by
  *      an underscore after the opening bracket or brace or the string (if not
  *      showing fragments), without a number after it.
@@ -139,7 +139,7 @@
  *
  * \value CborPrettyNumericEncodingIndicators   Use numeric encoding indicators instead of textual for float and half-float.
  * \value CborPrettyTextualEncodingIndicators   Use textual encoding indicators for float ("f") and half-float ("f16").
- * \value CborPrettyIndicateIndetermineLength   Indicate when a map or array has indeterminate length.
+ * \value CborPrettyIndicateIndeterminateLength Indicate when a map or array has indeterminate length.
  * \value CborPrettyIndicateOverlongNumbers     Indicate when a number or length was encoded with more bytes than needed.
  * \value CborPrettyShowStringFragments         If the byte or text string is transmitted in chunks, show each individually.
  * \value CborPrettyMergeStringFragment         Merge all chunked byte or text strings and display them in a single entry.
@@ -245,7 +245,7 @@ static const char *resolve_indicator(const uint8_t *ptr, const uint8_t *end, int
         return no_indicator;
 
     /* determine whether to show anything */
-    if ((flags & CborPrettyIndicateIndetermineLength) &&
+    if ((flags & CborPrettyIndicateIndeterminateLength) &&
             additional_information == IndefiniteLength)
         return indicators[IndefiniteLength - Value8Bit];
     if ((flags & CborPrettyIndicateOverlongNumbers) == 0)
