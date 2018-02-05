@@ -61,7 +61,7 @@
  *     CborParser parser;
  *     CborValue value;
  *     int result;
- *     cbor_parser_init(buffer, len, 0, &buffer, &value);
+ *     cbor_parser_init(buffer, len, 0, &parser, &value);
  *     cbor_value_get_int(&value, &result);
  *     return result;
  * }
@@ -69,7 +69,7 @@
  *
  * The code above does no error checking, which means it assumes the data comes
  * from a source trusted to send one properly-encoded integer. The following
- * example does the exact same operation, but includes error parsing and
+ * example does the exact same operation, but includes error checking and
  * returns 0 on parsing failure:
  *
  * \code
@@ -78,7 +78,7 @@
  *     CborParser parser;
  *     CborValue value;
  *     int result;
- *     if (cbor_parser_init(buffer, len, 0, &buffer, &value) != CborNoError)
+ *     if (cbor_parser_init(buffer, len, 0, &parser, &value) != CborNoError)
  *         return 0;
  *     if (!cbor_value_is_integer(&value) ||
  *             cbor_value_get_int(&value, &result) != CborNoError)
@@ -461,7 +461,7 @@ CborError cbor_value_validate_basic(const CborValue *it)
  * If the type is not of fixed size, this function has undefined behavior. Code
  * must be sure that the current type is one of the fixed-size types before
  * calling this function. This function is provided because it can guarantee
- * that runs in constant time (O(1)).
+ * that it runs in constant time (O(1)).
  *
  * If the caller is not able to determine whether the type is fixed or not, code
  * can use the cbor_value_advance() function instead.
@@ -746,7 +746,7 @@ CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
  *
  * Note that this function does not do range-checking: integral values that do
  * not fit in a variable of type \c{int} are silently truncated to fit. Use
- * cbor_value_get_int_checked() that is not acceptable.
+ * cbor_value_get_int_checked() if that is not acceptable.
  *
  * \sa cbor_value_get_type(), cbor_value_is_valid(), cbor_value_is_integer()
  */
@@ -804,7 +804,7 @@ CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
  * behavior is undefined, so checking with \ref cbor_value_get_type or with
  * \ref cbor_value_is_integer is recommended.
  *
- * Unlike cbor_value_get_int64(), this function performs a check to see if the
+ * Unlike \ref cbor_value_get_int64(), this function performs a check to see if the
  * stored integer fits in \a result without data loss. If the number is outside
  * the valid range for the data type, this function returns the recoverable
  * error CborErrorDataTooLarge. In that case, use either
@@ -843,7 +843,7 @@ CborError cbor_value_get_int64_checked(const CborValue *value, int64_t *result)
  * behavior is undefined, so checking with \ref cbor_value_get_type or with
  * \ref cbor_value_is_integer is recommended.
  *
- * Unlike cbor_value_get_int(), this function performs a check to see if the
+ * Unlike \ref cbor_value_get_int(), this function performs a check to see if the
  * stored integer fits in \a result without data loss. If the number is outside
  * the valid range for the data type, this function returns the recoverable
  * error CborErrorDataTooLarge. In that case, use one of the other integer
@@ -863,8 +863,8 @@ CborError cbor_value_get_int_checked(const CborValue *value, int *result)
      *
      * But we can convert from signed to unsigned without fault (paragraph 2).
      *
-     * The range for int is implementation-defined and int is not guaranteed use
-     * two's complement representation (int32_t is).
+     * The range for int is implementation-defined and int is not guaranteed to use
+     * two's complement representation (although int32_t is).
      */
 
     if (value->flags & CborIteratorFlag_NegativeInteger) {
@@ -1120,7 +1120,7 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
 /**
  * \fn CborError cbor_value_copy_text_string(const CborValue *value, char *buffer, size_t *buflen, CborValue *next)
  *
- * Copies the string pointed by \a value into the buffer provided at \a buffer
+ * Copies the string pointed to by \a value into the buffer provided at \a buffer
  * of \a buflen bytes. If \a buffer is a NULL pointer, this function will not
  * copy anything and will only update the \a next value.
  *
@@ -1136,7 +1136,10 @@ static CborError iterate_string_chunks(const CborValue *value, char *buffer, siz
  * On success, this function sets the number of bytes copied to \c{*buflen}. If
  * the buffer is large enough, this function will insert a null byte after the
  * last copied byte, to facilitate manipulation of text strings. That byte is
- * not included in the returned value of \c{*buflen}.
+ * not included in the returned value of \c{*buflen}. If there was no space for
+ * the terminating null, no error is returned, so callers must check the value
+ * of *buflen after the call, before relying on the '\0'; if it has not been
+ * changed by the call, there is no '\0'-termination on the buffer's contents.
  *
  * The \a next pointer, if not null, will be updated to point to the next item
  * after this string. If \a value points to the last item, then \a next will be
@@ -1193,12 +1196,12 @@ CborError _cbor_value_copy_string(const CborValue *value, void *buffer,
 }
 
 /**
- * Compares the entry \a value with the string \a string and store the result
+ * Compares the entry \a value with the string \a string and stores the result
  * in \a result. If the value is different from \a string \a result will
  * contain \c false.
  *
- * The entry at \a value may be a tagged string. If \a is not a string or a
- * tagged string, the comparison result will be false.
+ * The entry at \a value may be a tagged string. If \a value is not a string or
+ * a tagged string, the comparison result will be false.
  *
  * CBOR requires text strings to be encoded in UTF-8, but this function does
  * not validate either the strings in the stream or the string \a string to be
