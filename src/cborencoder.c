@@ -83,7 +83,7 @@
  *      cbor_encoder_close_container(&encoder, &mapEncoder);
  * \endcode
  *
- * <h3 class="groupheader">Error checking and buffer size</h2>
+ * <h3 class="groupheader">Error checking and buffer size</h3>
  *
  * All functions operating on CborEncoder return a condition of type CborError.
  * If the encoding was successful, they return CborNoError. Some functions do
@@ -134,7 +134,7 @@
  *      return CborNoError;
  * \endcode
  *
- * Finally, the example below illustrates expands on the one above and also
+ * Finally, the example below expands on the one above and also
  * deals with dynamically growing the buffer if the initial allocation wasn't
  * big enough. Note the two places where the error checking was replaced with
  * an cbor_assertion, showing where the author assumes no error can occur.
@@ -332,7 +332,7 @@ CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value)
  * Appends the negative 64-bit integer whose absolute value is \a
  * absolute_value to the CBOR stream provided by \a encoder.
  *
- * If the value \a absolute_value is zero, this function encodes -2^64 - 1.
+ * If the value \a absolute_value is zero, this function encodes -2^64.
  *
  * \sa cbor_encode_uint, cbor_encode_int
  */
@@ -507,13 +507,14 @@ CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEnco
  * with the same \a encoder and \a mapEncoder parameters.
  *
  * The number of pair of items inserted into the map must be exactly \a length
- * items, otherwise the stream is invalid. If the number of items is not known
+ * items, otherwise the stream is invalid. If the number is not known
  * when creating the map, the constant \ref CborIndefiniteLength may be passed as
  * length instead.
  *
  * \b{Implementation limitation:} TinyCBOR cannot encode more than SIZE_MAX/2
  * key-value pairs in the stream. If the length \a length is larger than this
- * value, this function returns error CborErrorDataTooLarge.
+ * value (and is not \ref CborIndefiniteLength), this function returns error
+ * CborErrorDataTooLarge.
  *
  * \sa cbor_encoder_create_array
  */
@@ -530,8 +531,8 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
  * same as were passed to cbor_encoder_create_array() or
  * cbor_encoder_create_map().
  *
- * Since version 0.5, this function verifies that the number of items (or pair
- * of items, in the case of a map) was correct. It is no longer needed to call
+ * Since version 0.5, this function verifies that the number of items (or pairs
+ * of items, in the case of a map) was correct. It is no longer necessary to call
  * cbor_encoder_close_container_checked() instead.
  *
  * \sa cbor_encoder_create_array(), cbor_encoder_create_map()

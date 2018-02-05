@@ -80,7 +80,7 @@
  * \value CborArrayType             Type is a CBOR array
  * \value CborMapType               Type is a CBOR map (an associative container with key and value pairs)
  * \value CborTagType               Type is a CBOR tag (a 64-bit integer describing the item that follows, see CborKnownTags)
- * \value CborSimpleType            Type is one of CBOR Simple Types
+ * \value CborSimpleType            Type is one of the CBOR Simple Types
  * \value CborBooleanType           Type is a boolean (true or false)
  * \value CborNullType              Type encodes a null
  * \value CborUndefinedType         Type encodes an undefined value
@@ -105,7 +105,7 @@
  * \value CborExpectedBase64urlTag  Item is a CBOR byte string that is expected to be encoded as Base64Url
  * \value CborExpectedBase64Tag     Item is a CBOR byte string that is expected to be encoded as Base64
  * \value CborExpectedBase16Tag     Item is a CBOR byte string that is expected to be encoded as Base16 (also known as "hexdump")
- * \value CborUriTag                Item is a CBOR text string containing an URI (RFC 3986) or IRI (RFC 3987)
+ * \value CborUriTag                Item is a CBOR text string containing a URI (RFC 3986) or IRI (RFC 3987)
  * \value CborBase64urlTag          Item is a CBOR text string that was encoded as Base64Url
  * \value CborBase64Tag             Item is a CBOR text string that was encoded as Base64
  * \value CborRegularExpressionTag  Item is a CBOR text string containing a regular expression

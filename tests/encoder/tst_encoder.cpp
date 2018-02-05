@@ -624,7 +624,7 @@ void tst_Encoder::maps()
         if (QTest::currentTestFailed()) return;
     }
 
-    // nested lists
+    // nested maps
     compare(make_map({{1, make_map({{2, input}})}}), "\xa1\1\xa1\2" + output);
     if (QTest::currentTestFailed()) return;
 

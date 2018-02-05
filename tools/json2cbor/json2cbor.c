@@ -407,7 +407,7 @@ int main(int argc, char **argv)
             // fall through
         case 'h':
             puts("Usage: json2cbor [OPTION]... [FILE]...\n"
-                 "Reads JSON content from FILE and convert to CBOR.\n"
+                 "Reads JSON content from FILE and converts to CBOR.\n"
                  "\n"
                  "Options:\n"
                  " -M       Interpret metadata added by cbordump tool\n"

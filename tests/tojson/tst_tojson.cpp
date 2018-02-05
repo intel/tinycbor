@@ -651,7 +651,7 @@ void compareMetaData(QByteArray data, const QString &expected, int otherFlags = 
 {
     QString decoded;
 
-    // needs to be in in one map, with the entry called "v"
+    // needs to be in one map, with the entry called "v"
     data = "\xa1\x61v" + data;
 
     {

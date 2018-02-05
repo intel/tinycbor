@@ -41,7 +41,7 @@ static CborError cbor_fprintf(void *out, const char *fmt, ...)
 /**
  * \fn CborError cbor_value_to_pretty(FILE *out, const CborValue *value)
  *
- * Converts the current CBOR type pointed by \a value to its textual
+ * Converts the current CBOR type pointed to by \a value to its textual
  * representation and writes it to the \a out stream. If an error occurs, this
  * function returns an error code similar to CborParsing.
  *
@@ -49,13 +49,14 @@ static CborError cbor_fprintf(void *out, const char *fmt, ...)
  */
 
 /**
- * Converts the current CBOR type pointed by \a value to its textual
+ * Converts the current CBOR type pointed to by \a value to its textual
  * representation and writes it to the \a out stream. If an error occurs, this
  * function returns an error code similar to CborParsing.
  *
  * If no error ocurred, this function advances \a value to the next element.
  * Often, concatenating the text representation of multiple elements can be
- * done by appending a comma to the output stream.
+ * done by appending a comma to the output stream in between calls to this
+ * function.
  *
  * \sa cbor_value_to_pretty(), cbor_value_to_pretty_stream(), cbor_value_to_json_advance()
  */
@@ -65,7 +66,7 @@ CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value)
 }
 
 /**
- * Converts the current CBOR type pointed by \a value to its textual
+ * Converts the current CBOR type pointed to by \a value to its textual
  * representation and writes it to the \a out stream. If an error occurs, this
  * function returns an error code similar to CborParsing.
  *
@@ -74,7 +75,8 @@ CborError cbor_value_to_pretty_advance(FILE *out, CborValue *value)
  *
  * If no error ocurred, this function advances \a value to the next element.
  * Often, concatenating the text representation of multiple elements can be
- * done by appending a comma to the output stream.
+ * done by appending a comma to the output stream in between calls to this
+ * function.
  *
  * \sa cbor_value_to_pretty_stream(), cbor_value_to_pretty(), cbor_value_to_json_advance()
  */

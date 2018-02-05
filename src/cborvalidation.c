@@ -55,7 +55,7 @@
  * The CborValidationFlags enum contains flags that control the validation of a
  * CBOR stream.
  *
- * \value CborValidateBasic         Validates only the syntax correctedness of the stream.
+ * \value CborValidateBasic         Validates only the syntactic correctedness of the stream.
  * \value CborValidateCanonical     Validates that the stream is in canonical format, according to
  *                                  RFC 7049 section 3.9.
  * \value CborValidateStrictMode    Performs strict validation, according to RFC 7049 section 3.10.
@@ -65,7 +65,7 @@
  *                                          enconded in their shortest form possible.
  * \value CborValidateShortestFloatingPoint (Canonical) Validate that floating-point numbers are encoded
  *                                          in their shortest form possible.
- * \value CborValidateShortestNumbers       (Canonical) Validate both integrals and floating-point numbers
+ * \value CborValidateShortestNumbers       (Canonical) Validate both integral and floating-point numbers
  *                                          are in their shortest form possible.
  * \value CborValidateNoIndeterminateLength (Canonical) Validate that no string, array or map uses
  *                                          indeterminate length encoding.
@@ -74,7 +74,10 @@
  * \value CborValidateMapKeysAreUnique      (Strict mode) Validate that map keys are unique.
  * \value CborValidateTagUse                (Strict mode) Validate that known tags are used with the
  *                                          correct types. This does not validate that the content of
- *                                          those types is syntactically correct.
+ *                                          those types is syntactically correct. For example, this
+ *                                          option validates that tag 1 (DateTimeString) is used with
+ *                                          a Text String, but it does not validate that the string is
+ *                                          a valid date/time representation.
  * \value CborValidateUtf8                  (Strict mode) Validate that text strings are appropriately
  *                                          encoded in UTF-8.
  * \value CborValidateMapKeysAreString      Validate that all map keys are text strings.
@@ -632,10 +635,10 @@ static CborError validate_value(CborValue *it, int flags, int recursionLeft)
 }
 
 /**
- * Performs a full validation controlled by the \a flags options of the CBOR
+ * Performs a full validation, controlled by the \a flags options, of the CBOR
  * stream pointed by \a it and returns the error it found. If no error was
  * found, it returns CborNoError and the application can iterate over the items
- * with certainty that no other errors will appear during parsing.
+ * with certainty that no errors will appear during parsing.
  *
  * If \a flags is CborValidateBasic, the result should be the same as
  * cbor_value_validate_basic().
