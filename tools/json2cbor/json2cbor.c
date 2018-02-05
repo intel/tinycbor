@@ -448,8 +448,10 @@ int main(int argc, char **argv)
         buffer = NULL;
         do {    // it the hard way
             buffer = realloc(buffer, buffersize + chunk);
-            if (buffer == NULL)
+            if (buffer == NULL) {
                 perror("malloc");
+                return EXIT_FAILURE;
+            }
 
             buffersize += fread(buffer + buffersize, 1, chunk, in);
         } while (!feof(in) && !ferror(in));
