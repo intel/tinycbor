@@ -457,8 +457,10 @@ static CborError map_to_json(FILE *out, CborValue *it, int flags, ConversionStat
             return err;
 
         /* first, print the key */
-        if (fprintf(out, "\"%s\":", key) < 0)
+        if (fprintf(out, "\"%s\":", key) < 0) {
+            free(key);
             return CborErrorIO;
+        }
 
         /* then, print the value */
         CborType valueType = cbor_value_get_type(it);
