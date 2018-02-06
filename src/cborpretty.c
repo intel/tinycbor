@@ -407,14 +407,13 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
             open[1] = '\0';
         }
 
-        if (showingFragments) {
+        if (showingFragments)
             err = stream(out, "(_ ");
-            if (!err)
-                err = _cbor_value_prepare_string_iteration(it);
-        } else {
+        else
             err = stream(out, "%s", open);
-        }
 
+        if (!err)
+            err = cbor_value_begin_string_iteration(it);
         while (!err) {
             if (showingFragments || indicator == NULL) {
                 /* any iteration, except the second for a non-chunked string */
@@ -422,10 +421,10 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
             }
 
             err = _cbor_value_get_string_chunk(it, &ptr, &n, it);
-            if (err)
-                return err;
-            if (!ptr)
+            if (err == CborErrorNoMoreStringChunks) {
+                err = cbor_value_finish_string_iteration(it);
                 break;
+            }
 
             if (!err && showingFragments)
                 err = stream(out, "%s%s", separator, open);

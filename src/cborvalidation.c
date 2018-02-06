@@ -543,24 +543,24 @@ static CborError validate_value(CborValue *it, uint32_t flags, int recursionLeft
         size_t n = 0;
         const void *ptr;
 
-        err = _cbor_value_prepare_string_iteration(it);
+        err = cbor_value_begin_string_iteration(it);
         if (err)
             return err;
 
         while (1) {
             CborValue next;
             err = _cbor_value_get_string_chunk(it, &ptr, &n, &next);
-            if (err)
-                return err;
-            if (ptr) {
+            if (!err) {
                 err = validate_number(it, type, flags);
                 if (err)
                     return err;
             }
 
             *it = next;
-            if (!ptr)
-                break;
+            if (err == CborErrorNoMoreStringChunks)
+                return cbor_value_finish_string_iteration(it);
+            if (err)
+                return err;
 
             if (type == CborTextStringType && flags & CborValidateUtf8) {
                 err = validate_utf8_string(ptr, n);

@@ -119,6 +119,9 @@ const char *cbor_error_string(CborError error)
     case CborErrorIllegalSimpleType:
         return _("illegal encoding of simple type smaller than 32");
 
+    case CborErrorNoMoreStringChunks:
+        return _("no more byte or text strings available");
+
     case CborErrorUnknownSimpleType:
         return _("unknown simple type");
 
