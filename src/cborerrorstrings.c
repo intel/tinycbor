@@ -62,7 +62,7 @@
  * \omitvalue CborErrorDuplicateObjectKeys
  * \value CborErrorInvalidUtf8TextString Illegal UTF-8 encoding found while parsing CBOR Text String
  * \value CborErrorTooManyItems         Too many items were added to CBOR map or array of pre-determined length
- * \value CborErrorTooFewItems          Too few items were added to CBOR map or array of pre-determeined length
+ * \value CborErrorTooFewItems          Too few items were added to CBOR map or array of pre-determined length
  * \value CborErrorDataTooLarge         Data item size exceeds TinyCBOR's implementation limits
  * \value CborErrorNestingTooDeep       Data item nesting exceeds TinyCBOR's implementation limits
  * \omitvalue CborErrorUnsupportedType
