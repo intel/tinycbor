@@ -272,7 +272,6 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
     return CborErrorUnknownType;
 }
 
-bool compareFailed;
 void compare(const QVariant &input, const QByteArray &output)
 {
     QByteArray buffer(output.length(), Qt::Uninitialized);
@@ -512,34 +511,34 @@ void tst_Encoder::tags()
     QFETCH(QByteArray, output);
 
     compare(QVariant::fromValue(Tag{1, input}), "\xc1" + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(QVariant::fromValue(Tag{24, input}), "\xd8\x18" + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(QVariant::fromValue(Tag{255, input}), "\xd8\xff" + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(QVariant::fromValue(Tag{256, input}), raw("\xd9\1\0") + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(QVariant::fromValue(Tag{CborSignatureTag, input}), raw("\xd9\xd9\xf7") + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(QVariant::fromValue(Tag{65535, input}), raw("\xd9\xff\xff") + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(QVariant::fromValue(Tag{65536, input}), raw("\xda\0\1\0\0") + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(QVariant::fromValue(Tag{UINT32_MAX, input}), raw("\xda\xff\xff\xff\xff") + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(QVariant::fromValue(Tag{UINT32_MAX + Q_UINT64_C(1), input}), raw("\xdb\0\0\0\1\0\0\0\0") + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(QVariant::fromValue(Tag{UINT64_MAX, input}), raw("\xdb\xff\xff\xff\xff\xff\xff\xff\xff") + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     // nested tags
     compare(QVariant::fromValue(Tag{1, QVariant::fromValue(Tag{1, input})}), "\xc1\xc1" + output);
@@ -551,10 +550,10 @@ void tst_Encoder::arrays()
     QFETCH(QByteArray, output);
 
     compare(make_list(input), "\x81" + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(make_list(input, input), "\x82" + output + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     {
         QVariantList list{input};
@@ -566,7 +565,7 @@ void tst_Encoder::arrays()
             longoutput += longoutput;
         }
         compare(list, "\x98\x20" + longoutput);
-        if (compareFailed) return;
+        if (QTest::currentTestFailed()) return;
 
         // now 256 elements (32 << 3)
         for (int i = 0; i < 3; ++i) {
@@ -574,18 +573,18 @@ void tst_Encoder::arrays()
             longoutput += longoutput;
         }
         compare(list, raw("\x99\1\0") + longoutput);
-        if (compareFailed) return;
+        if (QTest::currentTestFailed()) return;
     }
 
     // nested lists
     compare(make_list(make_list(input)), "\x81\x81" + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(make_list(make_list(input, input)), "\x81\x82" + output + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(make_list(make_list(input), input), "\x82\x81" + output + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(make_list(make_list(input), make_list(input)), "\x82\x81" + output + "\x81" + output);
 }
@@ -596,13 +595,13 @@ void tst_Encoder::maps()
     QFETCH(QByteArray, output);
 
     compare(make_map({{1, input}}), "\xa1\1" + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(make_map({{1, input}, {input, 24}}), "\xa2\1" + output + output + "\x18\x18");
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(make_map({{input, input}}), "\xa1" + output + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     {
         Map map{{1, input}};
@@ -614,7 +613,7 @@ void tst_Encoder::maps()
             longoutput += longoutput;
         }
         compare(QVariant::fromValue(map), "\xb8\x20" + longoutput);
-        if (compareFailed) return;
+        if (QTest::currentTestFailed()) return;
 
         // now 256 elements (32 << 3)
         for (int i = 0; i < 3; ++i) {
@@ -622,18 +621,18 @@ void tst_Encoder::maps()
             longoutput += longoutput;
         }
         compare(QVariant::fromValue(map), raw("\xb9\1\0") + longoutput);
-        if (compareFailed) return;
+        if (QTest::currentTestFailed()) return;
     }
 
-    // nested lists
+    // nested maps
     compare(make_map({{1, make_map({{2, input}})}}), "\xa1\1\xa1\2" + output);
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(make_map({{1, make_map({{2, input}, {input, false}})}}), "\xa1\1\xa2\2" + output + output + "\xf4");
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 
     compare(make_map({{1, make_map({{2, input}})}, {input, false}}), "\xa2\1\xa1\2" + output + output + "\xf4");
-    if (compareFailed) return;
+    if (QTest::currentTestFailed()) return;
 }
 
 void tst_Encoder::shortBuffer()

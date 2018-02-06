@@ -365,7 +365,7 @@ encode_double:
 
         for (item = json->child ; item; item = item->next) {
             if (usingMetaData && strlen(item->string) > strlen(meta_data_marker)
-                    && strcmp(item->string + strlen(item->string) - 5, meta_data_marker) == 0)
+                    && strcmp(item->string + strlen(item->string) - strlen(meta_data_marker), meta_data_marker) == 0)
                 continue;
 
             err = cbor_encode_text_stringz(&container, item->string);
@@ -407,7 +407,7 @@ int main(int argc, char **argv)
             // fall through
         case 'h':
             puts("Usage: json2cbor [OPTION]... [FILE]...\n"
-                 "Reads JSON content from FILE and convert to CBOR.\n"
+                 "Reads JSON content from FILE and converts to CBOR.\n"
                  "\n"
                  "Options:\n"
                  " -M       Interpret metadata added by cbordump tool\n"
@@ -448,8 +448,10 @@ int main(int argc, char **argv)
         buffer = NULL;
         do {    // it the hard way
             buffer = realloc(buffer, buffersize + chunk);
-            if (buffer == NULL)
+            if (buffer == NULL) {
                 perror("malloc");
+                return EXIT_FAILURE;
+            }
 
             buffersize += fread(buffer + buffersize, 1, chunk, in);
         } while (!feof(in) && !ferror(in));

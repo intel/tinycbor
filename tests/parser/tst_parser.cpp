@@ -113,7 +113,7 @@ static CborError qstring_printf(void *out, const char *fmt, ...)
 
 CborError parseOne(CborValue *it, QString *parsed)
 {
-    int flags = CborPrettyShowStringFragments | CborPrettyIndicateIndetermineLength |
+    int flags = CborPrettyShowStringFragments | CborPrettyIndicateIndeterminateLength |
                 CborPrettyIndicateOverlongNumbers;
 
     parsed->clear();

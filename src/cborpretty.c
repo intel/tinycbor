@@ -42,7 +42,7 @@
  * \defgroup CborPretty Converting CBOR to text
  * \brief Group of functions used to convert CBOR to text form.
  *
- * This group contains two functions that are can be used to convert one
+ * This group contains two functions that can be used to convert a \ref
  * CborValue object to a text representation. This module attempts to follow
  * the recommendations from RFC 7049 section 6 "Diagnostic Notation", though it
  * has a few differences. They are noted below.
@@ -58,13 +58,13 @@
  * error CborErrorIO.
  *
  * These functions also perform UTF-8 validation in CBOR text strings. If they
- * encounter a sequence of bytes that not permitted in UTF-8, they will return
+ * encounter a sequence of bytes that is not permitted in UTF-8, they will return
  * CborErrorInvalidUtf8TextString. That includes encoding of surrogate points
  * in UTF-8.
  *
  * \warning The output type produced by these functions is not guaranteed to
  * remain stable. A future update of TinyCBOR may produce different output for
- * the same input and parsers may be unable to handle them.
+ * the same input and parsers may be unable to handle it.
  *
  * \sa CborParsing, CborToJson, cbor_parser_init()
  */
@@ -102,7 +102,7 @@
  *      By default, float values are suffixed by "f" and half-float values suffixed by "f16" (doubles have no suffix).
  *      If the CborPrettyNumericEncodingIndicators flag is active, the values instead are encoded following the
  *      Section 6 recommended encoding indicators: float values are suffixed with "_2" and half-float with "_1".
- *      A dot is always present.
+ *      A decimal point is always present.
  * \par Arrays:
  *      Comma-separated list of elements, enclosed in square brackets ("[" and "]").
  * \par Maps:
@@ -127,7 +127,7 @@
  *      number or the opening bracket or brace, followed by a number
  *      indicating the CBOR additional information: 0 for 1 byte, 1 for 2
  *      bytes, 2 for 4 bytes and 3 for 8 bytes.
- *      If the CborPrettyIndicateIndetermineLength option is active, maps,
+ *      If the CborPrettyIndicateIndeterminateLength option is active, maps,
  *      arrays and strings encoded with indeterminate length will be marked by
  *      an underscore after the opening bracket or brace or the string (if not
  *      showing fragments), without a number after it.
@@ -139,11 +139,11 @@
  *
  * \value CborPrettyNumericEncodingIndicators   Use numeric encoding indicators instead of textual for float and half-float.
  * \value CborPrettyTextualEncodingIndicators   Use textual encoding indicators for float ("f") and half-float ("f16").
- * \value CborPrettyIndicateIndetermineLength   Indicate when a map or array has indeterminate length.
+ * \value CborPrettyIndicateIndeterminateLength (default) Indicate when a map or array has indeterminate length.
  * \value CborPrettyIndicateOverlongNumbers     Indicate when a number or length was encoded with more bytes than needed.
  * \value CborPrettyShowStringFragments         If the byte or text string is transmitted in chunks, show each individually.
  * \value CborPrettyMergeStringFragment         Merge all chunked byte or text strings and display them in a single entry.
- * \value CborPrettyDefaultFlags       Default conversion flags.
+ * \value CborPrettyDefaultFlags                Default conversion flags.
  */
 
 static void printRecursionLimit(CborStreamFunction stream, void *out)
@@ -245,7 +245,7 @@ static const char *resolve_indicator(const uint8_t *ptr, const uint8_t *end, int
         return no_indicator;
 
     /* determine whether to show anything */
-    if ((flags & CborPrettyIndicateIndetermineLength) &&
+    if ((flags & CborPrettyIndicateIndeterminateLength) &&
             additional_information == IndefiniteLength)
         return indicators[IndefiniteLength - Value8Bit];
     if ((flags & CborPrettyIndicateOverlongNumbers) == 0)
@@ -507,14 +507,15 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
  * Converts the current CBOR type pointed by \a value to its textual
  * representation and writes it to the stream by calling the \a streamFunction.
  * If an error occurs, this function returns an error code similar to
- * CborParsing.
+ * \ref CborParsing.
  *
  * The textual representation can be controlled by the \a flags parameter (see
- * CborPrettyFlags for more information).
+ * \ref CborPrettyFlags for more information).
  *
  * If no error ocurred, this function advances \a value to the next element.
  * Often, concatenating the text representation of multiple elements can be
- * done by appending a comma to the output stream.
+ * done by appending a comma to the output stream in between calls to this
+ * function.
  *
  * The \a streamFunction function will be called with the \a token value as the
  * first parameter and a printf-style format string as the second, with a variable

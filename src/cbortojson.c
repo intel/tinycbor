@@ -45,7 +45,7 @@
  * \defgroup CborToJson Converting CBOR to JSON
  * \brief Group of functions used to convert CBOR to JSON.
  *
- * This group contains two functions that are can be used to convert one
+ * This group contains two functions that can be used to convert a \ref
  * CborValue object to an equivalent JSON representation. This module attempts
  * to follow the recommendations from RFC 7049 section 4.1 "Converting from
  * CBOR to JSON", though it has a few differences. They are noted below.
@@ -71,13 +71,13 @@
  * error CborErrorIO.
  *
  * These functions also perform UTF-8 validation in CBOR text strings. If they
- * encounter a sequence of bytes that not permitted in UTF-8, they will return
+ * encounter a sequence of bytes that is not permitted in UTF-8, they will return
  * CborErrorInvalidUtf8TextString. That includes encoding of surrogate points
  * in UTF-8.
  *
  * \warning The metadata produced by these functions is not guaranteed to
  * remain stable. A future update of TinyCBOR may produce different output for
- * the same input and parsers may be unable to handle them.
+ * the same input and parsers may be unable to handle it.
  *
  * \sa CborParsing, CborPretty, cbor_parser_init()
  */
@@ -93,12 +93,12 @@
  * \par Number precision:
  * ALL JSON numbers, due to its JavaScript heritage, are IEEE 754
  * double-precision floating point. This means JSON is not capable of
- * representing integers numbers outside the range [-(2<sup>53</sup>)+1,
+ * representing all integers numbers outside the range [-(2<sup>53</sup>)+1,
  * 2<sup>53</sup>-1] and is not capable of representing NaN or infinite. If the
  * CBOR data contains a number outside the valid range, the conversion will
  * lose precision. If the input was NaN or infinite, the result of the
- * conversion will be "null". In addition, the distinction between half-,
- * single- and double-precision is lost.
+ * conversion will be the JSON null value. In addition, the distinction between
+ * half-, single- and double-precision is lost.
  *
  * \par
  * If enabled, the original value and original type are stored in the metadata.
@@ -122,7 +122,7 @@
  *
  * \par
  * If the CborConvertTagsToObjects option is active, then the tag and the
- * tagged value are converted to to a JSON object. Otherwise, if enabled, the
+ * tagged value are converted to a JSON object. Otherwise, if enabled, the
  * last (innermost) tag is stored in the metadata.
  *
  * \par Non-string keys in maps:
@@ -136,7 +136,7 @@
  * \par Duplicate keys in maps:
  * Neither JSON nor CBOR allow duplicated keys, but current TinyCBOR does not
  * validate that this is the case. If there are duplicated keys in the input,
- * they will be repeated in the output, which may JSON tools may flag as
+ * they will be repeated in the output, which many JSON tools may flag as
  * invalid. In addition to that, if the CborConvertStringifyMapKeys option is
  * active, it is possible that a non-string key in a CBOR map will be converted
  * to a string form that is identical to another key.
@@ -155,7 +155,7 @@ enum ConversionStatusFlags {
     NumberPrecisionWasLost      = 0x400,
     NumberWasNaN                = 0x800,
     NumberWasInfinite           = 0x1000,
-    NumberWasNegative           = 0x2000,   /* always used with NumberWasInifite or NumberWasTooBig */
+    NumberWasNegative           = 0x2000,   /* only used with NumberWasInifite or NumberWasTooBig */
 
     FinalTypeMask               = 0xff
 };
@@ -457,8 +457,10 @@ static CborError map_to_json(FILE *out, CborValue *it, int flags, ConversionStat
             return err;
 
         /* first, print the key */
-        if (fprintf(out, "\"%s\":", key) < 0)
+        if (fprintf(out, "\"%s\":", key) < 0) {
+            free(key);
             return CborErrorIO;
+        }
 
         /* then, print the value */
         CborType valueType = cbor_value_get_type(it);
@@ -657,19 +659,19 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
 /**
  * \fn CborError cbor_value_to_json(FILE *out, const CborValue *value, int flags)
  *
- * Converts the current CBOR type pointed by \a value to JSON and writes that
+ * Converts the current CBOR type pointed to by \a value to JSON and writes that
  * to the \a out stream. If an error occurs, this function returns an error
- * code similar to CborParsing. The \a flags parameter indicates one of the
- * flags from CborToJsonFlags that control the conversion.
+ * code similar to CborParsing. The \a flags parameter indicates one or more of
+ * the flags from CborToJsonFlags that control the conversion.
  *
  * \sa cbor_value_to_json_advance(), cbor_value_to_pretty()
  */
 
 /**
- * Converts the current CBOR type pointed by \a value to JSON and writes that
+ * Converts the current CBOR type pointed to by \a value to JSON and writes that
  * to the \a out stream. If an error occurs, this function returns an error
- * code similar to CborParsing. The \a flags parameter indicates one of the
- * flags from CborToJsonFlags that control the conversion.
+ * code similar to CborParsing. The \a flags parameter indicates one or more of
+ * the flags from CborToJsonFlags that control the conversion.
  *
  * If no error ocurred, this function advances \a value to the next element.
  *

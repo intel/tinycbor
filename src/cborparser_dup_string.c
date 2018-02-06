@@ -41,7 +41,7 @@
  *
  * Allocates memory for the string pointed by \a value and copies it into this
  * buffer. The pointer to the buffer is stored in \a buffer and the number of
- * bytes copied is stored in \a len (those variables must not be NULL).
+ * bytes copied is stored in \a buflen (those variables must not be NULL).
  *
  * If the iterator \a value does not point to a text string, the behaviour is
  * undefined, so checking with \ref cbor_value_get_type or \ref
@@ -72,7 +72,7 @@
  *
  * Allocates memory for the string pointed by \a value and copies it into this
  * buffer. The pointer to the buffer is stored in \a buffer and the number of
- * bytes copied is stored in \a len (those variables must not be NULL).
+ * bytes copied is stored in \a buflen (those variables must not be NULL).
  *
  * If the iterator \a value does not point to a byte string, the behaviour is
  * undefined, so checking with \ref cbor_value_get_type or \ref
