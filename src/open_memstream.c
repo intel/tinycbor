@@ -26,7 +26,7 @@
 #define _DEFAULT_SOURCE 1
 #define _GNU_SOURCE 1
 
-#ifndef WITHOUT_OPEN_MEMSTREAM
+#ifndef CBOR_WITHOUT_OPEN_MEMSTREAM
 
 #include <sys/types.h>
 #include <errno.h>

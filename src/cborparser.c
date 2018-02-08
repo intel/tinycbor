@@ -303,7 +303,8 @@ static CborError preparse_next_value(CborValue *it)
 static CborError advance_internal(CborValue *it)
 {
     uint64_t length;
-    CborError err = _cbor_value_extract_number(it->parser, &it->offset,  &length);
+    CborError err;
+    err = _cbor_value_extract_number(it->parser, &it->offset,  &length);
     cbor_assert(err == CborNoError);
 
     if (it->type == CborByteStringType || it->type == CborTextStringType) {
@@ -342,7 +343,7 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
         return value->parser->d->get64(value->parser->d, value->offset + 1);
 }
 
-#ifndef NO_DFLT_READER
+#ifndef CBOR_NO_DFLT_READER
 /**
  * Initializes the CBOR parser for parsing \a size bytes beginning at \a
  * buffer. Parsing will use flags set in \a flags. The iterator to the first

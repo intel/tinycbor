@@ -196,7 +196,7 @@
  * Structure used to encode to CBOR.
  */
 
-#ifndef NO_DFLT_WRITER
+#ifndef CBOR_NO_DFLT_WRITER
 /**
  * Initializes a CborEncoder structure \a encoder by pointing it to buffer \a
  * buffer of size \a size. The \a flags field is currently unused and must be
@@ -223,7 +223,7 @@ void cbor_encoder_cust_writer_init(CborEncoder *encoder, struct cbor_encoder_wri
 }
 
 
-#ifndef NO_FLOAT_SUPPORT
+#ifndef CBOR_NO_FLOATING_POINT
 static inline void put16(void *where, uint16_t v)
 {
     v = cbor_htons(v);
@@ -242,7 +242,7 @@ static inline bool isOomError(CborError err)
     return true;
 }
 
-#ifndef NO_FLOAT_SUPPORT
+#ifndef CBOR_NO_FLOATING_POINT
 static inline void put32(void *where, uint32_t v)
 {
     v = cbor_htonl(v);
@@ -363,7 +363,7 @@ CborError cbor_encode_simple_value(CborEncoder *encoder, uint8_t value)
     return encode_number(encoder, value, SimpleTypesType << MajorTypeShift);
 }
 
-#ifndef NO_FLOAT_SUPPORT
+#ifndef CBOR_NO_FLOATING_POINT
 /**
  * Appends the floating-point value of type \a fpType and pointed to by \a
  * value to the CBOR stream provided by \a encoder. The value of \a fpType must
@@ -453,7 +453,7 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
 {
     CborError err;
     container->writer = encoder->writer;
-#ifndef NO_DFLT_WRITER
+#ifndef CBOR_NO_DFLT_WRITER
     container->wr.end = encoder->wr.end;
 #endif
     saturated_decrement(encoder);
@@ -540,7 +540,7 @@ CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *
     if (containerEncoder->remaining != 1)
         return containerEncoder->remaining == 0 ? CborErrorTooManyItems : CborErrorTooFewItems;
 
-#ifndef NO_DFLT_WRITER
+#ifndef CBOR_NO_DFLT_WRITER
     if (!encoder->wr.end) {
         return CborErrorOutOfMemory;
     }

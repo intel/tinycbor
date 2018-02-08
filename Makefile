@@ -101,7 +101,7 @@ endif
 # version using funopen or fopencookie
 ifeq ($(open_memstream-pass),)
   ifeq ($(funopen-pass)$(fopencookie-pass),)
-    CFLAGS += -DWITHOUT_OPEN_MEMSTREAM
+    CFLAGS += -DCBOR_WITHOUT_OPEN_MEMSTREAM
     $(warning warning: funopen and fopencookie unavailable, open_memstream can not be implemented and conversion to JSON will not work properly!)
   else
     TINYCBOR_SOURCES += src/open_memstream.c

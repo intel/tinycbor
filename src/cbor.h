@@ -208,7 +208,7 @@ struct CborEncoder
 {
     cbor_encoder_writer *writer;
     void *writer_arg;
-#ifndef NO_DFLT_WRITER
+#ifndef CBOR_NO_DFLT_WRITER
     struct cbor_buf_writer wr;
 #endif
     size_t remaining;
@@ -219,7 +219,7 @@ typedef struct CborEncoder CborEncoder;
 
 static const size_t CborIndefiniteLength = SIZE_MAX;
 
-#ifndef NO_DFLT_WRITER
+#ifndef CBOR_NO_DFLT_WRITER
 CBOR_API void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags);
 #endif
 CBOR_API void cbor_encoder_cust_writer_init(CborEncoder *encoder, struct cbor_encoder_writer *w, int flags);
@@ -267,7 +267,7 @@ enum CborParserIteratorFlags
 
 struct CborParser
 {
-#ifndef NO_DFLT_READER
+#ifndef CBOR_NO_DFLT_READER
     struct cbor_buf_reader br;
 #endif
     struct cbor_decoder_reader *d;
@@ -288,7 +288,7 @@ struct CborValue
 };
 typedef struct CborValue CborValue;
 
-#ifndef NO_DFLT_READER
+#ifndef CBOR_NO_DFLT_READER
 CBOR_API CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborParser *parser, CborValue *it);
 #endif
 CBOR_API CborError cbor_parser_cust_reader_init(struct cbor_decoder_reader *r, int flags, CborParser *parser, CborValue *it);
