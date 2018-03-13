@@ -1,5 +1,6 @@
 #!/bin/sh -ex
-case "$TRAVIS_BRANCH${TRAVIS_TAG+tag:$TRAVIS_TAG},$TRAVIS_PULL_REQUEST" in
+tuple="$TRAVIS_BRANCH${TRAVIS_TAG:+tag:$TRAVIS_TAG},$TRAVIS_PULL_REQUEST"
+case "$tuple" in
     dev,false|master,false|tag:*)
         ;;
     *)
@@ -37,6 +38,7 @@ mv sizes "library_sizes/$TRAVIS_BRANCH/$QMAKESPEC"
 (cd "library_sizes/$TRAVIS_BRANCH/";
  for f in *; do echo "$f:"; cat  "$f" ; done) > "$V/library_sizes.txt"
 git add "library_sizes/$TRAVIS_BRANCH" "$V/library_sizes.txt"
+git diff --cached -U0 "$V/library_sizes.txt"
 
 # Commit everything
 if git commit -m "Update docs for $V (Travis build $TRAVIS_BUILD_NUMBER)
