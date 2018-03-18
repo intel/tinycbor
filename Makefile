@@ -217,7 +217,7 @@ tag: distcheck
 .SECONDARY:
 
 cflags := $(CPPFLAGS) -I$(SRCDIR)src
-cflags += -std=c99 $(CFLAGS)
+cflags += -std=gnu99 $(CFLAGS)
 %.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
 	$(CC) $(cflags) $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
