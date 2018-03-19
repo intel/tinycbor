@@ -163,7 +163,7 @@ static inline uint64_t get64(const uint8_t *ptr)
     return cbor_ntohll(result);
 }
 
-CBOR_INTERNAL_API_CC CborError _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
+CborError CBOR_INTERNAL_API_CC _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
 {
     uint8_t additional_information = **ptr & SmallValueMask;
     ++*ptr;
@@ -978,7 +978,7 @@ static inline void prepare_string_iteration(CborValue *it)
     }
 }
 
-CBOR_INTERNAL_API_CC CborError _cbor_value_prepare_string_iteration(CborValue *it)
+CborError CBOR_INTERNAL_API_CC _cbor_value_prepare_string_iteration(CborValue *it)
 {
     cbor_assert((it->flags & CborIteratorFlag_IteratingStringChunks) == 0);
     prepare_string_iteration(it);
@@ -1038,9 +1038,9 @@ last_chunk:
     return CborNoError;
 }
 
-CBOR_INTERNAL_API_CC
-CborError _cbor_value_get_string_chunk(const CborValue *value, const void **bufferptr,
-                                                        size_t *len, CborValue *next)
+CborError CBOR_INTERNAL_API_CC
+_cbor_value_get_string_chunk(const CborValue *value, const void **bufferptr,
+                             size_t *len, CborValue *next)
 {
     CborValue tmp;
     if (!next)
