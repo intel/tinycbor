@@ -12,7 +12,7 @@ CCFLAGS-gc_sections = -Wl,--gc-sections
 PROGRAM-cjson  = \#include <stdlib.h>\n
 PROGRAM-cjson += \#include <cjson/cJSON.h>\n
 PROGRAM-cjson += int main() { return cJSON_False; }
-CCFLAGS-cjson = -I$(dir $(MAKEFILE))src/cjson
+CCFLAGS-cjson = -I$(dir $(MAKEFILE))src
 PROGRAM-system-cjson = $(PROGRAM-cjson)
 CCFLAGS-system-cjson = -lcjson
 

@@ -163,7 +163,7 @@ static inline uint64_t get64(const uint8_t *ptr)
     return cbor_ntohll(result);
 }
 
-CBOR_INTERNAL_API_CC CborError _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
+CborError CBOR_INTERNAL_API_CC _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
 {
     uint8_t additional_information = **ptr & SmallValueMask;
     ++*ptr;
@@ -423,7 +423,7 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborPa
  * happen when iteration reaches the end of a container (see \ref
  * cbor_value_at_end()) or when a search function resulted in no matches.
  *
- * \sa cbor_value_advance(), cbor_valie_at_end(), cbor_value_get_type()
+ * \sa cbor_value_advance(), cbor_value_at_end(), cbor_value_get_type()
  */
 
 /**
@@ -978,7 +978,7 @@ static inline void prepare_string_iteration(CborValue *it)
     }
 }
 
-CBOR_INTERNAL_API_CC CborError _cbor_value_prepare_string_iteration(CborValue *it)
+CborError CBOR_INTERNAL_API_CC _cbor_value_prepare_string_iteration(CborValue *it)
 {
     cbor_assert((it->flags & CborIteratorFlag_IteratingStringChunks) == 0);
     prepare_string_iteration(it);
