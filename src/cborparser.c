@@ -326,7 +326,9 @@ static CborError advance_internal(CborValue *it)
 {
     uint64_t length;
     CborError err = _cbor_value_extract_number(&it->ptr, it->parser->end, &length);
-    cbor_assert(err == CborNoError);
+    
+    if (err)
+	    return err;
 
     if (it->type == CborByteStringType || it->type == CborTextStringType) {
         cbor_assert(length == (size_t)length);
