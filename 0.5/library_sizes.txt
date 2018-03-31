@@ -18,7 +18,7 @@ linux-g++:
    2701	      0	      0	   2701	    a8d	cborpretty.o (ex lib/libtinycbor.a)
     200	      0	      0	    200	     c8	cborparser_dup_string.o (ex lib/libtinycbor.a)
     300	      0	      0	    300	    12c	cborpretty_stdio.o (ex lib/libtinycbor.a)
-   3850	      0	      0	   3850	    f0a	cbortojson.o (ex lib/libtinycbor.a)
+   3851	      0	      0	   3851	    f0b	cbortojson.o (ex lib/libtinycbor.a)
    2267	      0	      0	   2267	    8db	cborvalidation.o (ex lib/libtinycbor.a)
 macx-clang:
 __TEXT	__DATA	__OBJC	others	dec	hex
