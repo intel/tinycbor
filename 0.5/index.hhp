@@ -8,10 +8,10 @@ Index file=index.hhk
 Language=0x409 English (United States)
 Binary TOC=YES
 Create CHI file=YES
-Title=TinyCBOR 0.5.1 API
+Title=TinyCBOR 0.5.2 API
 
 [WINDOWS]
-main="TinyCBOR 0.5.1 API","index.hhc","index.hhk","index.html","index.html",,,,,0x23520,,0x70387e,,,,,,,,0
+main="TinyCBOR 0.5.2 API","index.hhc","index.hhk","index.html","index.html",,,,,0x23520,,0x70387e,,,,,,,,0
 
 [FILES]
 a00005_source.html

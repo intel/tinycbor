@@ -233,8 +233,8 @@
       <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_skip_tag"><param name="Local" value="a00047.html#ga2b805f0f440905a7ba4f93b3569bb97b"><param name="ImageNumber" value="11"></OBJECT>
       <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_text_string_equals"><param name="Local" value="a00047.html#gac8f08df74d65c8454528824a667550ec"><param name="ImageNumber" value="11"></OBJECT>
       <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty"><param name="Local" value="a00005.html#a0529f04ea9045bbd351ea03ee0a21b7b"><param name="ImageNumber" value="11"></OBJECT>
-      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty_advance"><param name="Local" value="a00005.html#ad7838e3fa9878a2350d0410d9f7b99cd"><param name="ImageNumber" value="11"></OBJECT>
-      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty_advance_flags"><param name="Local" value="a00005.html#a39f1fe1fc34f2a2256b59568b52e93c8"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty_advance"><param name="Local" value="a00005.html#aef4d5dc4b2bfaf458e82e350509f9c30"><param name="ImageNumber" value="11"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty_advance_flags"><param name="Local" value="a00005.html#adba89091b9618b1b6daa22284321cce7"><param name="ImageNumber" value="11"></OBJECT>
       <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_to_pretty_stream"><param name="Local" value="a00048.html#gab43d4414c47f00c74262e0687e23dcda"><param name="ImageNumber" value="11"></OBJECT>
       <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_validate"><param name="Local" value="a00047.html#ga7636f480757b302845ee38227f15cef1"><param name="ImageNumber" value="11"></OBJECT>
       <LI><OBJECT type="text/sitemap"><param name="Name" value="cbor_value_validate_basic"><param name="Local" value="a00047.html#ga19b60bc2cff3d3ffcc81adbcad09fd58"><param name="ImageNumber" value="11"></OBJECT>
