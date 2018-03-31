@@ -6,5 +6,5 @@
    2940	      0	      0	   2940	    b7c	cborpretty.o (ex lib/libtinycbor.a)
     188	      0	      0	    188	     bc	cborparser_dup_string.o (ex lib/libtinycbor.a)
     290	      0	      0	    290	    122	cborpretty_stdio.o (ex lib/libtinycbor.a)
-   3816	      0	      0	   3816	    ee8	cbortojson.o (ex lib/libtinycbor.a)
+   3826	      0	      0	   3826	    ef2	cbortojson.o (ex lib/libtinycbor.a)
    2586	      0	      0	   2586	    a1a	cborvalidation.o (ex lib/libtinycbor.a)
