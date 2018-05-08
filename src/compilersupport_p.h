@@ -150,10 +150,13 @@
 #  define cbor_htonll       htonll
 /* ntohll isn't usually defined */
 #  ifndef ntohll
-#    if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#    if (defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || \
+    defined(__ARMEB__) || defined(__MIPSEB__) || defined(__sparc__)
 #      define ntohll
 #      define htonll
-#    elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#    elif (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || \
+    defined(__ARMEL__) || defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__) || \
+    defined(__amd64) || defined(__MIPSEL__)
 #      define ntohll(x)       ((ntohl((uint32_t)(x)) * UINT64_C(0x100000000)) + (ntohl((x) >> 32)))
 #      define htonll          ntohll
 #    else
