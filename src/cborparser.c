@@ -372,7 +372,7 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
  * threads iterating at the same time, but the object can be copied so multiple
  * threads can iterate.
  */
-CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborParser *parser, CborValue *it)
+CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, CborParser *parser, CborValue *it)
 {
     memset(parser, 0, sizeof(*parser));
     parser->end = buffer + size;
