@@ -623,8 +623,8 @@ static CborError validate_value(CborValue *it, int flags, int recursionLeft)
         if (err)
             return err;
         break;
-    }
 #endif /* !CBOR_NO_FLOATING_POINT */
+    }
 
     case CborInvalidType:
         return CborErrorUnknownType;
