@@ -104,8 +104,8 @@ for my $n (@tagnumbers) {
         my $actualtype = "Cbor${type}Type";
         $actualtype = "($actualtype+1)" if $type eq "Integer";
         $typemask .= " | " if $typemask ne "";
-        $typemask .= "((uint8_t)$actualtype << $shift)" if $shift;
-        $typemask .= "(uint8_t)$actualtype" unless $shift;
+        $typemask .= "((uint32_t)$actualtype << $shift)" if $shift;
+        $typemask .= "(uint32_t)$actualtype" unless $shift;
         $shift += 8;
     }
     $typemask = "0U" if $typemask eq "";
