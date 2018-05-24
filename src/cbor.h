@@ -276,7 +276,7 @@ enum CborParserIteratorFlags
 struct CborParser
 {
     const uint8_t *end;
-    int flags;
+    uint32_t flags;
 };
 typedef struct CborParser CborParser;
 
@@ -291,7 +291,7 @@ struct CborValue
 };
 typedef struct CborValue CborValue;
 
-CBOR_API CborError cbor_parser_init(const uint8_t *buffer, size_t size, int flags, CborParser *parser, CborValue *it);
+CBOR_API CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, CborParser *parser, CborValue *it);
 
 CBOR_API CborError cbor_value_validate_basic(const CborValue *it);
 
@@ -556,7 +556,7 @@ enum CborValidationFlags {
     CborValidateBasic                       = 0
 };
 
-CBOR_API CborError cbor_value_validate(const CborValue *it, int flags);
+CBOR_API CborError cbor_value_validate(const CborValue *it, uint32_t flags);
 
 /* Human-readable (dump) API */
 
