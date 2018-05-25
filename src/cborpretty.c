@@ -146,6 +146,36 @@
  * \value CborPrettyDefaultFlags                Default conversion flags.
  */
 
+static inline bool convertToUint64(double v, uint64_t *absolute)
+{
+    v = fabs(v);
+
+    /* C11 standard section 6.3.1.4 "Real floating and integer" says:
+     *
+     *  1 When a finite value of real floating type is converted to an integer
+     *    type other than _Bool, the fractional part is discarded (i.e., the
+     *    value is truncated toward zero). If the value of the integral part
+     *    cannot be represented by the integer type, the behavior is undefined.
+     *
+     * So we must perform a range check that v <= UINT64_MAX, but we can't use
+     * UINT64_MAX + 1.0 because the standard continues:
+     *
+     *  2 When a value of integer type is converted to a real floating type, if
+     *    the value being converted can be represented exactly in the new type,
+     *    it is unchanged. If the value being converted is in the range of
+     *    values that can be represented but cannot be represented exactly, the
+     *    result is either the nearest higher or nearest lower representable
+     *    value, chosen in an implementation-defined manner.
+     */
+    double supremum = -2.0 * INT64_MIN;     /* -2 * (- 2^63) == 2^64 */
+    if (v >= supremum)
+        return false;
+
+    /* Now we can convert, these two conversions cannot be UB */
+    *absolute = v;
+    return *absolute == v;
+}
+
 static void printRecursionLimit(CborStreamFunction stream, void *out)
 {
     stream(out, "<nesting too deep, recursion stopped>");
@@ -479,8 +509,8 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
                 suffix = "";
         }
 
-        uint64_t ival = (uint64_t)fabs(val);
-        if (ival == fabs(val)) {
+        uint64_t ival;
+        if (convertToUint64(val, &ival)) {
             /* this double value fits in a 64-bit integer, so show it as such
              * (followed by a floating point suffix, to disambiguate) */
             err = stream(out, "%s%" PRIu64 ".%s", val < 0 ? "-" : "", ival, suffix);
