@@ -386,7 +386,7 @@ static inline CborError validate_floating_point(CborValue *it, CborType type, ui
             val = valf;
         } else {
 #  ifdef CBOR_NO_HALF_FLOAT_TYPE
-            (void)val16;
+            (void)valf16;
             return CborErrorUnsupportedType;
 #  else
             err = cbor_value_get_half_float(it, &valf16);
