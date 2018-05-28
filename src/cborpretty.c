@@ -33,10 +33,13 @@
 #include "compilersupport_p.h"
 #include "utf8_p.h"
 
-#include <float.h>
 #include <inttypes.h>
-#include <math.h>
 #include <string.h>
+
+#ifndef CBOR_NO_FLOATING_POINT
+#  include <float.h>
+#  include <math.h>
+#endif
 
 /**
  * \defgroup CborPretty Converting CBOR to text
@@ -452,6 +455,7 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
         break;
     }
 
+#ifndef CBOR_NO_FLOATING_POINT
     case CborDoubleType: {
         const char *suffix;
         double val;
@@ -465,9 +469,15 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
         } else if (false) {
             uint16_t f16;
     case CborHalfFloatType:
+#ifndef CBOR_NO_HALF_FLOAT_TYPE
             cbor_value_get_half_float(it, &f16);
             val = decode_half(f16);
             suffix = flags & CborPrettyNumericEncodingIndicators ? "_1" : "f16";
+#else
+            (void)f16;
+            err = CborErrorUnsupportedType;
+            break;
+#endif
         } else {
             cbor_value_get_double(it, &val);
             suffix = "";
@@ -490,6 +500,13 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
         }
         break;
     }
+#else
+    case CborDoubleType:
+    case CborFloatType:
+    case CborHalfFloatType:
+        err = CborErrorUnsupportedType;
+        break;
+#endif /* !CBOR_NO_FLOATING_POINT */
 
     case CborInvalidType:
         err = stream(out, "invalid");
