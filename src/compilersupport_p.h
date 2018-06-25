@@ -37,6 +37,9 @@
 #  include <assert.h>
 #endif
 #include <float.h>
+#ifdef __TIZENRT__
+#include <wchar.h>
+#endif
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
