@@ -216,6 +216,7 @@ typedef struct CborEncoder CborEncoder;
 
 static const size_t CborIndefiniteLength = SIZE_MAX;
 
+#ifndef CBOR_NO_ENCODER_API
 CBOR_API void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags);
 CBOR_API CborError cbor_encode_uint(CborEncoder *encoder, uint64_t value);
 CBOR_API CborError cbor_encode_int(CborEncoder *encoder, int64_t value);
@@ -261,6 +262,7 @@ CBOR_INLINE_API size_t cbor_encoder_get_extra_bytes_needed(const CborEncoder *en
 {
     return encoder->end ? 0 : (size_t)encoder->data.bytes_needed;
 }
+#endif /* CBOR_NO_ENCODER_API */
 
 /* Parser API */
 
@@ -291,6 +293,7 @@ struct CborValue
 };
 typedef struct CborValue CborValue;
 
+#ifndef CBOR_NO_PARSER_API
 CBOR_API CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, CborParser *parser, CborValue *it);
 
 CBOR_API CborError cbor_value_validate_basic(const CborValue *it);
@@ -534,6 +537,7 @@ CBOR_INLINE_API CborError cbor_value_get_double(const CborValue *value, double *
 }
 
 /* Validation API */
+#ifndef CBOR_NO_VALIDATION_API
 
 enum CborValidationFlags {
     /* Bit mapping:
@@ -577,8 +581,10 @@ enum CborValidationFlags {
 };
 
 CBOR_API CborError cbor_value_validate(const CborValue *it, uint32_t flags);
+#endif /* CBOR_NO_VALIDATION_API */
 
 /* Human-readable (dump) API */
+#ifndef CBOR_NO_PRETTY_API
 
 enum CborPrettyFlags {
     CborPrettyNumericEncodingIndicators     = 0x01,
@@ -612,6 +618,10 @@ CBOR_INLINE_API CborError cbor_value_to_pretty(FILE *out, const CborValue *value
     return cbor_value_to_pretty_advance_flags(out, &copy, CborPrettyDefaultFlags);
 }
 #endif /* __STDC_HOSTED__ check */
+
+#endif /* CBOR_NO_PRETTY_API */
+
+#endif /* CBOR_NO_PARSER_API */
 
 #ifdef __cplusplus
 }
