@@ -165,6 +165,7 @@ static inline uint64_t get64(const uint8_t *ptr)
 
 CborError CBOR_INTERNAL_API_CC _cbor_value_extract_number(const uint8_t **ptr, const uint8_t *end, uint64_t *len)
 {
+    size_t bytesNeeded;
     uint8_t additional_information = **ptr & SmallValueMask;
     ++*ptr;
     if (additional_information < Value8Bit) {
@@ -174,7 +175,7 @@ CborError CBOR_INTERNAL_API_CC _cbor_value_extract_number(const uint8_t **ptr, c
     if (unlikely(additional_information > Value64Bit))
         return CborErrorIllegalNumber;
 
-    size_t bytesNeeded = (size_t)(1 << (additional_information - Value8Bit));
+    bytesNeeded = (size_t)(1 << (additional_information - Value8Bit));
     if (unlikely(bytesNeeded > (size_t)(end - *ptr))) {
         return CborErrorUnexpectedEOF;
     } else if (bytesNeeded == 1) {
@@ -479,6 +480,9 @@ CborError cbor_value_advance_fixed(CborValue *it)
 
 static CborError advance_recursive(CborValue *it, int nestingLevel)
 {
+    CborError err;
+    CborValue recursed;
+
     if (is_fixed_type(it->type))
         return advance_internal(it);
 
@@ -491,8 +495,6 @@ static CborError advance_recursive(CborValue *it, int nestingLevel)
     if (nestingLevel == 0)
         return CborErrorNestingTooDeep;
 
-    CborError err;
-    CborValue recursed;
     err = cbor_value_enter_container(it, &recursed);
     if (err)
         return err;
@@ -815,8 +817,9 @@ CborError cbor_value_leave_container(CborValue *it, const CborValue *recursed)
  */
 CborError cbor_value_get_int64_checked(const CborValue *value, int64_t *result)
 {
+    uint64_t v;
     cbor_assert(cbor_value_is_integer(value));
-    uint64_t v = _cbor_value_extract_int64_helper(value);
+    v = _cbor_value_extract_int64_helper(value);
 
     /* Check before converting, as the standard says (C11 6.3.1.3 paragraph 3):
      * "[if] the new type is signed and the value cannot be represented in it; either the
@@ -854,8 +857,9 @@ CborError cbor_value_get_int64_checked(const CborValue *value, int64_t *result)
  */
 CborError cbor_value_get_int_checked(const CborValue *value, int *result)
 {
+    uint64_t v;
     cbor_assert(cbor_value_is_integer(value));
-    uint64_t v = _cbor_value_extract_int64_helper(value);
+    v = _cbor_value_extract_int64_helper(value);
 
     /* Check before converting, as the standard says (C11 6.3.1.3 paragraph 3):
      * "[if] the new type is signed and the value cannot be represented in it; either the
@@ -1076,13 +1080,12 @@ static uintptr_t iterate_memcpy(char *dest, const uint8_t *src, size_t len)
 static CborError iterate_string_chunks(const CborValue *value, char *buffer, size_t *buflen,
                                        bool *result, CborValue *next, IterateFunction func)
 {
-    cbor_assert(cbor_value_is_byte_string(value) || cbor_value_is_text_string(value));
-
     CborError err;
     CborValue tmp;
     size_t total = 0;
     const void *ptr;
 
+    cbor_assert(cbor_value_is_byte_string(value) || cbor_value_is_text_string(value));
     if (!next)
         next = &tmp;
     *next = *value;
@@ -1215,6 +1218,7 @@ CborError _cbor_value_copy_string(const CborValue *value, void *buffer,
  */
 CborError cbor_value_text_string_equals(const CborValue *value, const char *string, bool *result)
 {
+    size_t len;
     CborValue copy = *value;
     CborError err = cbor_value_skip_tag(&copy);
     if (err)
@@ -1224,7 +1228,7 @@ CborError cbor_value_text_string_equals(const CborValue *value, const char *stri
         return CborNoError;
     }
 
-    size_t len = strlen(string);
+    len = strlen(string);
     return iterate_string_chunks(&copy, CONST_CAST(char *, string), &len, result, NULL, iterate_memcmp);
 }
 
@@ -1302,9 +1306,10 @@ CborError cbor_value_text_string_equals(const CborValue *value, const char *stri
  */
 CborError cbor_value_map_find_value(const CborValue *map, const char *string, CborValue *element)
 {
-    cbor_assert(cbor_value_is_map(map));
+    CborError err;
     size_t len = strlen(string);
-    CborError err = cbor_value_enter_container(map, element);
+    cbor_assert(cbor_value_is_map(map));
+    err = cbor_value_enter_container(map, element);
     if (err)
         goto error;
 
@@ -1413,10 +1418,11 @@ error:
  */
 CborError cbor_value_get_half_float(const CborValue *value, void *result)
 {
+    uint16_t v;
     cbor_assert(cbor_value_is_half_float(value));
 
     /* size has been computed already */
-    uint16_t v = get16(value->ptr + 1);
+    v = get16(value->ptr + 1);
     memcpy(result, &v, sizeof(v));
     return CborNoError;
 }

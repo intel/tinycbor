@@ -151,6 +151,7 @@
 
 static inline bool convertToUint64(double v, uint64_t *absolute)
 {
+    double supremum;
     v = fabs(v);
 
     /* C11 standard section 6.3.1.4 "Real floating and integer" says:
@@ -170,7 +171,7 @@ static inline bool convertToUint64(double v, uint64_t *absolute)
      *    result is either the nearest higher or nearest lower representable
      *    value, chosen in an implementation-defined manner.
      */
-    double supremum = -2.0 * INT64_MIN;     /* -2 * (- 2^63) == 2^64 */
+    supremum = -2.0 * INT64_MIN;     /* -2 * (- 2^63) == 2^64 */
     if (v >= supremum)
         return false;
 
@@ -209,13 +210,13 @@ static CborError utf8EscapedDump(CborStreamFunction stream, void *out, const voi
 
         if (uc < 0x80) {
             /* single-byte UTF-8 */
+            unsigned char escaped = (unsigned char)uc;
             if (uc < 0x7f && uc >= 0x20 && uc != '\\' && uc != '"') {
                 err = stream(out, "%c", (char)uc);
                 continue;
             }
 
             /* print as an escape sequence */
-            char escaped = (char)uc;
             switch (uc) {
             case '"':
             case '\\':
@@ -311,13 +312,14 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
 static CborError container_to_pretty(CborStreamFunction stream, void *out, CborValue *it, CborType containerType,
                                      int flags, int recursionsLeft)
 {
-    if (!recursionsLeft) {
-        printRecursionLimit(stream, out);
-        return CborNoError; /* do allow the dumping to continue */
-    }
-
     const char *comma = "";
     CborError err = CborNoError;
+
+    if (!recursionsLeft) {
+        printRecursionLimit(stream, out);
+        return err;     /* do allow the dumping to continue */
+    }
+
     while (!cbor_value_at_end(it) && !err) {
         err = stream(out, "%s", comma);
         comma = ", ";
@@ -490,6 +492,8 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
         const char *suffix;
         double val;
         int r;
+        uint64_t ival;
+
         if (false) {
             float f;
     case CborFloatType:
@@ -519,7 +523,6 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
                 suffix = "";
         }
 
-        uint64_t ival;
         if (convertToUint64(val, &ival)) {
             /* this double value fits in a 64-bit integer, so show it as such
              * (followed by a floating point suffix, to disambiguate) */

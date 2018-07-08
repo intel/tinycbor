@@ -96,10 +96,11 @@
  */
 CborError _cbor_value_dup_string(const CborValue *value, void **buffer, size_t *buflen, CborValue *next)
 {
+    CborError err;
     cbor_assert(buffer);
     cbor_assert(buflen);
     *buflen = SIZE_MAX;
-    CborError err = _cbor_value_copy_string(value, NULL, buflen, NULL);
+    err = _cbor_value_copy_string(value, NULL, buflen, NULL);
     if (err)
         return err;
 

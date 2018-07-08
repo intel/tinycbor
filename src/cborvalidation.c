@@ -294,6 +294,7 @@ static inline CborError validate_number(const CborValue *it, CborType type, uint
 {
     CborError err = CborNoError;
     const uint8_t *ptr = it->ptr;
+    size_t bytesUsed, bytesNeeded;
     uint64_t value;
 
     if ((flags & CborValidateShortestIntegrals) == 0)
@@ -305,8 +306,8 @@ static inline CborError validate_number(const CborValue *it, CborType type, uint
     if (err)
         return err;
 
-    size_t bytesUsed = (size_t)(ptr - it->ptr - 1);
-    size_t bytesNeeded = 0;
+    bytesUsed = (size_t)(ptr - it->ptr - 1);
+    bytesNeeded = 0;
     if (value >= Value8Bit)
         ++bytesNeeded;
     if (value > 0xffU)
@@ -376,6 +377,7 @@ static inline CborError validate_tag(CborValue *it, CborTag tag, uint32_t flags,
 static inline CborError validate_floating_point(CborValue *it, CborType type, uint32_t flags)
 {
     CborError err;
+    int r;
     double val;
     float valf;
     uint16_t valf16;
@@ -398,7 +400,7 @@ static inline CborError validate_floating_point(CborValue *it, CborType type, ui
     }
     cbor_assert(err == CborNoError);     /* can't fail */
 
-    int r = fpclassify(val);
+    r = fpclassify(val);
     if (r == FP_NAN || r == FP_INFINITE) {
         if (flags & CborValidateFiniteFloatingPoint)
             return CborErrorExcludedValue;

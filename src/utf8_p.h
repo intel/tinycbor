@@ -31,7 +31,9 @@
 
 static inline uint32_t get_utf8(const uint8_t **buffer, const uint8_t *end)
 {
-    uint32_t uc;
+    int charsNeeded;
+    uint32_t uc, min_uc;
+    uint8_t b;
     ptrdiff_t n = end - *buffer;
     if (n == 0)
         return ~0U;
@@ -43,8 +45,6 @@ static inline uint32_t get_utf8(const uint8_t **buffer, const uint8_t *end)
     }
 
     /* multi-byte UTF-8, decode it */
-    int charsNeeded;
-    uint32_t min_uc;
     if (unlikely(uc <= 0xC1))
         return ~0U;
     if (uc < 0xE0) {
@@ -70,7 +70,7 @@ static inline uint32_t get_utf8(const uint8_t **buffer, const uint8_t *end)
         return ~0U;
 
     /* first continuation character */
-    uint8_t b = *(*buffer)++;
+    b = *(*buffer)++;
     if ((b & 0xc0) != 0x80)
         return ~0U;
     uc <<= 6;
@@ -101,4 +101,4 @@ static inline uint32_t get_utf8(const uint8_t **buffer, const uint8_t *end)
     return uc;
 }
 
-#endif // CBOR_UTF8_H
+#endif /* CBOR_UTF8_H */
