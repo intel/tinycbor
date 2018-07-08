@@ -15,7 +15,7 @@ linux-g++:
    1166	      0	      0	   1166	    48e	cborencoder.o (ex lib/libtinycbor.a)
      53	      0	      0	     53	     35	cborencoder_close_container_checked.o (ex lib/libtinycbor.a)
    2953	      0	      0	   2953	    b89	cborparser.o (ex lib/libtinycbor.a)
-   2701	      0	      0	   2701	    a8d	cborpretty.o (ex lib/libtinycbor.a)
+   2715	      0	      0	   2715	    a9b	cborpretty.o (ex lib/libtinycbor.a)
     200	      0	      0	    200	     c8	cborparser_dup_string.o (ex lib/libtinycbor.a)
     300	      0	      0	    300	    12c	cborpretty_stdio.o (ex lib/libtinycbor.a)
    3851	      0	      0	   3851	    f0b	cbortojson.o (ex lib/libtinycbor.a)
