@@ -241,31 +241,31 @@
 
 struct KnownTagData { uint32_t tag; uint32_t types; };
 static const struct KnownTagData knownTagData[] = {
-    { 0, (uint8_t)CborTextStringType },
-    { 1, (uint8_t)(CborIntegerType+1) },
-    { 2, (uint8_t)CborByteStringType },
-    { 3, (uint8_t)CborByteStringType },
-    { 4, (uint8_t)CborArrayType },
-    { 5, (uint8_t)CborArrayType },
-    { 16, (uint8_t)CborArrayType },
-    { 17, (uint8_t)CborArrayType },
-    { 18, (uint8_t)CborArrayType },
-    { 21, (uint8_t)CborByteStringType | ((uint8_t)CborArrayType << 8) | ((uint8_t)CborMapType << 16) },
-    { 22, (uint8_t)CborByteStringType | ((uint8_t)CborArrayType << 8) | ((uint8_t)CborMapType << 16) },
-    { 23, (uint8_t)CborByteStringType | ((uint8_t)CborArrayType << 8) | ((uint8_t)CborMapType << 16) },
-    { 24, (uint8_t)CborByteStringType },
-    { 32, (uint8_t)CborTextStringType },
-    { 33, (uint8_t)CborTextStringType },
-    { 34, (uint8_t)CborTextStringType },
-    { 35, (uint8_t)CborTextStringType },
-    { 36, (uint8_t)CborTextStringType },
-    { 96, (uint8_t)CborArrayType },
-    { 97, (uint8_t)CborArrayType },
-    { 98, (uint8_t)CborArrayType },
+    { 0, (uint32_t)CborTextStringType },
+    { 1, (uint32_t)(CborIntegerType+1) },
+    { 2, (uint32_t)CborByteStringType },
+    { 3, (uint32_t)CborByteStringType },
+    { 4, (uint32_t)CborArrayType },
+    { 5, (uint32_t)CborArrayType },
+    { 16, (uint32_t)CborArrayType },
+    { 17, (uint32_t)CborArrayType },
+    { 18, (uint32_t)CborArrayType },
+    { 21, (uint32_t)CborByteStringType | ((uint32_t)CborArrayType << 8) | ((uint32_t)CborMapType << 16) },
+    { 22, (uint32_t)CborByteStringType | ((uint32_t)CborArrayType << 8) | ((uint32_t)CborMapType << 16) },
+    { 23, (uint32_t)CborByteStringType | ((uint32_t)CborArrayType << 8) | ((uint32_t)CborMapType << 16) },
+    { 24, (uint32_t)CborByteStringType },
+    { 32, (uint32_t)CborTextStringType },
+    { 33, (uint32_t)CborTextStringType },
+    { 34, (uint32_t)CborTextStringType },
+    { 35, (uint32_t)CborTextStringType },
+    { 36, (uint32_t)CborTextStringType },
+    { 96, (uint32_t)CborArrayType },
+    { 97, (uint32_t)CborArrayType },
+    { 98, (uint32_t)CborArrayType },
     { 55799, 0U }
 };
 
-static CborError validate_value(CborValue *it, int flags, int recursionLeft);
+static CborError validate_value(CborValue *it, uint32_t flags, int recursionLeft);
 
 static inline CborError validate_utf8_string(const void *ptr, size_t n)
 {
@@ -279,7 +279,7 @@ static inline CborError validate_utf8_string(const void *ptr, size_t n)
     return CborNoError;
 }
 
-static inline CborError validate_simple_type(uint8_t simple_type, int flags)
+static inline CborError validate_simple_type(uint8_t simple_type, uint32_t flags)
 {
     /* At current time, all known simple types are those from RFC 7049,
      * which are parsed by the parser into different CBOR types.
@@ -290,10 +290,11 @@ static inline CborError validate_simple_type(uint8_t simple_type, int flags)
                 CborErrorUnknownSimpleType : CborNoError;
 }
 
-static inline CborError validate_number(const CborValue *it, CborType type, int flags)
+static inline CborError validate_number(const CborValue *it, CborType type, uint32_t flags)
 {
     CborError err = CborNoError;
     const uint8_t *ptr = it->ptr;
+    size_t bytesUsed, bytesNeeded;
     uint64_t value;
 
     if ((flags & CborValidateShortestIntegrals) == 0)
@@ -305,8 +306,8 @@ static inline CborError validate_number(const CborValue *it, CborType type, int 
     if (err)
         return err;
 
-    size_t bytesUsed = (size_t)(ptr - it->ptr - 1);
-    size_t bytesNeeded = 0;
+    bytesUsed = (size_t)(ptr - it->ptr - 1);
+    bytesNeeded = 0;
     if (value >= Value8Bit)
         ++bytesNeeded;
     if (value > 0xffU)
@@ -320,7 +321,7 @@ static inline CborError validate_number(const CborValue *it, CborType type, int 
     return CborNoError;
 }
 
-static inline CborError validate_tag(CborValue *it, CborTag tag, int flags, int recursionLeft)
+static inline CborError validate_tag(CborValue *it, CborTag tag, uint32_t flags, int recursionLeft)
 {
     CborType type = cbor_value_get_type(it);
     const size_t knownTagCount = sizeof(knownTagData) / sizeof(knownTagData[0]);
@@ -373,9 +374,10 @@ static inline CborError validate_tag(CborValue *it, CborTag tag, int flags, int 
 }
 
 #ifndef CBOR_NO_FLOATING_POINT
-static inline CborError validate_floating_point(CborValue *it, CborType type, int flags)
+static inline CborError validate_floating_point(CborValue *it, CborType type, uint32_t flags)
 {
     CborError err;
+    int r;
     double val;
     float valf;
     uint16_t valf16;
@@ -386,7 +388,7 @@ static inline CborError validate_floating_point(CborValue *it, CborType type, in
             val = valf;
         } else {
 #  ifdef CBOR_NO_HALF_FLOAT_TYPE
-            (void)val16;
+            (void)valf16;
             return CborErrorUnsupportedType;
 #  else
             err = cbor_value_get_half_float(it, &valf16);
@@ -398,7 +400,7 @@ static inline CborError validate_floating_point(CborValue *it, CborType type, in
     }
     cbor_assert(err == CborNoError);     /* can't fail */
 
-    int r = fpclassify(val);
+    r = fpclassify(val);
     if (r == FP_NAN || r == FP_INFINITE) {
         if (flags & CborValidateFiniteFloatingPoint)
             return CborErrorExcludedValue;
@@ -435,7 +437,7 @@ static inline CborError validate_floating_point(CborValue *it, CborType type, in
 }
 #endif
 
-static CborError validate_container(CborValue *it, int containerType, int flags, int recursionLeft)
+static CborError validate_container(CborValue *it, int containerType, uint32_t flags, int recursionLeft)
 {
     CborError err;
     const uint8_t *previous = NULL;
@@ -496,7 +498,7 @@ static CborError validate_container(CborValue *it, int containerType, int flags,
     return CborNoError;
 }
 
-static CborError validate_value(CborValue *it, int flags, int recursionLeft)
+static CborError validate_value(CborValue *it, uint32_t flags, int recursionLeft)
 {
     CborError err;
     CborType type = cbor_value_get_type(it);
@@ -610,8 +612,8 @@ static CborError validate_value(CborValue *it, int flags, int recursionLeft)
         if (err)
             return err;
         break;
-    }
 #endif /* !CBOR_NO_FLOATING_POINT */
+    }
 
     case CborInvalidType:
         return CborErrorUnknownType;
@@ -635,7 +637,7 @@ static CborError validate_value(CborValue *it, int flags, int recursionLeft)
  *
  * \sa CborValidationFlags, cbor_value_validate_basic(), cbor_value_advance()
  */
-CborError cbor_value_validate(const CborValue *it, int flags)
+CborError cbor_value_validate(const CborValue *it, uint32_t flags)
 {
     CborValue value = *it;
     CborError err = validate_value(&value, flags, CBOR_PARSER_MAX_RECURSIONS);
