@@ -6,7 +6,7 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - sourceline: 'ppa:beineri/opt-qt593-trusty'
+            - sourceline: 'ppa:beineri/opt-qt596-trusty'
           packages:
             - qt59base valgrind
             - g++-7
@@ -21,7 +21,7 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - sourceline: 'ppa:beineri/opt-qt593-trusty'
+            - sourceline: 'ppa:beineri/opt-qt596-trusty'
           packages:
             - qt59base
       env:
