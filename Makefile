@@ -8,7 +8,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 
 CFLAGS = -Wall -Wextra
 LDFLAGS_GCSECTIONS = -Wl,--gc-sections
-LDFLAGS = $(if $(gc_sections-pass),$(LDFLAGS_GCSECTIONS))
+LDFLAGS += $(if $(gc_sections-pass),$(LDFLAGS_GCSECTIONS))
 
 GIT_ARCHIVE = git archive --prefix="$(PACKAGE)/" -9
 INSTALL = install
@@ -27,13 +27,6 @@ TINYCBOR_FREESTANDING_SOURCES = \
 	src/cborencoder_close_container_checked.c \
 	src/cborparser.c \
 	src/cborpretty.c \
-#
-TINYCBOR_SOURCES = \
-	$(TINYCBOR_FREESTANDING_SOURCES) \
-	src/cborparser_dup_string.c \
-	src/cborpretty_stdio.c \
-	src/cbortojson.c \
-	src/cborvalidation.c \
 #
 CBORDUMP_SOURCES = tools/cbordump/cbordump.c
 
@@ -87,6 +80,16 @@ endif
 
 -include .config
 
+ifeq ($(freestanding-pass),1)
+TINYCBOR_SOURCES = $(TINYCBOR_FREESTANDING_SOURCES)
+else
+TINYCBOR_SOURCES = \
+	$(TINYCBOR_FREESTANDING_SOURCES) \
+	src/cborparser_dup_string.c \
+	src/cborpretty_stdio.c \
+	src/cbortojson.c \
+	src/cborvalidation.c \
+#
 # if open_memstream is unavailable on the system, try to implement our own
 # version using funopen or fopencookie
 ifeq ($(open_memstream-pass),)
@@ -96,6 +99,7 @@ ifeq ($(open_memstream-pass),)
   else
     TINYCBOR_SOURCES += src/open_memstream.c
   endif
+endif
 endif
 
 # json2cbor depends on an external library (cjson)
@@ -114,7 +118,8 @@ endif
 all: .config \
 	$(if $(subst 0,,$(BUILD_STATIC)),lib/libtinycbor.a) \
 	$(if $(subst 0,,$(BUILD_SHARED)),lib/libtinycbor.so) \
-	bin/cbordump tinycbor.pc
+	$(if $(freestanding-pass),,bin/cbordump) \
+	tinycbor.pc
 all: $(if $(JSON2CBOR_SOURCES),bin/json2cbor)
 check: tests/Makefile | $(BINLIBRARY)
 	$(MAKE) -C tests check
