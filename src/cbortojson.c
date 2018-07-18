@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Intel Corporation
+** Copyright (C) 2018 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -32,11 +32,10 @@
 
 #include "cbor.h"
 #include "cborjson.h"
+#include "cborinternal_p.h"
 #include "compilersupport_p.h"
 
-#include <float.h>
 #include <inttypes.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -595,6 +594,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         break;
     }
 
+#ifndef CBOR_NO_FLOATING_POINT
     case CborDoubleType: {
         double val;
         if (false) {
@@ -606,9 +606,15 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         } else if (false) {
             uint16_t f16;
     case CborHalfFloatType:
+#  ifndef CBOR_NO_HALF_FLOAT_TYPE
             status->flags = TypeWasNotNative;
             cbor_value_get_half_float(it, &f16);
             val = decode_half(f16);
+#  else
+            (void)f16;
+            err = CborErrorUnsupportedType;
+            break;
+#  endif
         } else {
             cbor_value_get_double(it, &val);
         }
@@ -634,6 +640,13 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         }
         break;
     }
+#else
+    case CborDoubleType:
+    case CborFloatType:
+    case CborHalfFloatType:
+        err = CborErrorUnsupportedType;
+        break;
+#endif /* !CBOR_NO_FLOATING_POINT */
 
     case CborInvalidType:
         return CborErrorUnknownType;
