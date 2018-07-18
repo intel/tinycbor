@@ -9,6 +9,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 CFLAGS = -Wall -Wextra
 LDFLAGS_GCSECTIONS = -Wl,--gc-sections
 LDFLAGS += $(if $(gc_sections-pass),$(LDFLAGS_GCSECTIONS))
+LDLIBS = -lm
 
 GIT_ARCHIVE = git archive --prefix="$(PACKAGE)/" -9
 INSTALL = install
@@ -139,16 +140,16 @@ lib/libtinycbor.a: $(TINYCBOR_SOURCES:.c=.o)
 
 lib/libtinycbor.so: $(TINYCBOR_SOURCES:.c=.pic.o)
 	@$(MKDIR) -p lib
-	$(CC) -shared -Wl,-soname,libtinycbor.so.$(SOVERSION) -o lib/libtinycbor.so.$(VERSION) $(LDFLAGS) $^
+	$(CC) -shared -Wl,-soname,libtinycbor.so.$(SOVERSION) -o lib/libtinycbor.so.$(VERSION) $(LDFLAGS) $^ $(LDLIBS)
 	cd lib ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so ; ln -sf libtinycbor.so.$(VERSION) libtinycbor.so.$(SOVERSION)
 
 bin/cbordump: $(CBORDUMP_SOURCES:.c=.o) $(BINLIBRARY)
 	@$(MKDIR) -p bin
-	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS) -lm
+	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
 
 bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) $(BINLIBRARY)
 	@$(MKDIR) -p bin
-	$(CC) -o $@ $(LDFLAGS) $^ $(LDFLAGS_CJSON) $(LDLIBS) -lm
+	$(CC) -o $@ $(LDFLAGS) $^ $(LDFLAGS_CJSON) $(LDLIBS)
 
 tinycbor.pc: tinycbor.pc.in
 	$(SED) > $@ < $< \
