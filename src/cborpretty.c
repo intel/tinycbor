@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2018 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -35,11 +35,6 @@
 
 #include <inttypes.h>
 #include <string.h>
-
-#ifndef CBOR_NO_FLOATING_POINT
-#  include <float.h>
-#  include <math.h>
-#endif
 
 /**
  * \defgroup CborPretty Converting CBOR to text
@@ -149,6 +144,7 @@
  * \value CborPrettyDefaultFlags                Default conversion flags.
  */
 
+#ifndef CBOR_NO_FLOATING_POINT
 static inline bool convertToUint64(double v, uint64_t *absolute)
 {
     double supremum;
@@ -179,6 +175,7 @@ static inline bool convertToUint64(double v, uint64_t *absolute)
     *absolute = v;
     return *absolute == v;
 }
+#endif
 
 static void printRecursionLimit(CborStreamFunction stream, void *out)
 {
