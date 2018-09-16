@@ -1762,24 +1762,36 @@ void tst_Parser::strictValidation_data()
     QTest::newRow("overlong-_stringx2-0*8") << raw("\x7f\x60\x7b\0\0\0\0\0\0\0\0\xff") << int(CborValidateShortestNumbers) << CborErrorOverlongEncoding;
 
     // strict mode
-    QTest::newRow("invalid-utf8-1char") << raw("\x61\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
-    QTest::newRow("invalid-utf8-2chars-1") << raw("\x62\xc2\xc0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
-    QTest::newRow("invalid-utf8-2chars-2") << raw("\x62\xc3\xdf") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
-    QTest::newRow("invalid-utf8-2chars-3") << raw("\x62\xc7\xf0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
-    QTest::newRow("invalid-utf8-3chars-1") << raw("\x63\xe0\xa0\xc0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
-    QTest::newRow("invalid-utf8-3chars-2") << raw("\x63\xe0\xc0\xa0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
-    QTest::newRow("invalid-utf8-4chars-1") << raw("\x64\xf0\x90\x80\xc0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
-    QTest::newRow("invalid-utf8-4chars-2") << raw("\x64\xf0\x90\xc0\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
-    QTest::newRow("invalid-utf8-4chars-3") << raw("\x64\xf0\xc0\x80\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    // UTF-8 sequences with invalid continuation bytes
+    QTest::newRow("invalid-utf8-bad-continuation-1char") << raw("\x61\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-bad-continuation-2chars-1") << raw("\x62\xc2\xc0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-bad-continuation-2chars-2") << raw("\x62\xc3\xdf") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-bad-continuation-2chars-3") << raw("\x62\xc7\xf0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-bad-continuation-3chars-1") << raw("\x63\xe0\xa0\xc0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-bad-continuation-3chars-2") << raw("\x63\xe0\xc0\xa0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-bad-continuation-4chars-1") << raw("\x64\xf0\x90\x80\xc0") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-bad-continuation-4chars-2") << raw("\x64\xf0\x90\xc0\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-bad-continuation-4chars-3") << raw("\x64\xf0\xc0\x80\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    // Too short UTF-8 sequences (in an array so there's a byte after that would make it valid UTF-8 if it were part of the string)
+    QTest::newRow("invalid-utf8-too-short-2chars") << raw("\x82\x61\xc2\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-too-short-3chars-1") << raw("\x82\x61\xe0\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-too-short-3chars-2") << raw("\x82\x62\xe0\xa0\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-too-short-4chars-1") << raw("\x82\x61\xf0\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-too-short-4chars-2") << raw("\x82\x62\xf0\x90\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    QTest::newRow("invalid-utf8-too-short-4chars-3") << raw("\x82\x63\xf0\x90\x80\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    // UTF-16 surrogages encoded in UTF-8
     QTest::newRow("invalid-utf8-hi-surrogate") << raw("\x63\xed\xa0\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
     QTest::newRow("invalid-utf8-lo-surrogate") << raw("\x63\xed\xb0\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
     QTest::newRow("invalid-utf8-surrogate-pair") << raw("\x66\xed\xa0\x80\xed\xb0\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    // Non-Unicode UTF-8 sequences
     QTest::newRow("invalid-utf8-non-unicode-1") << raw("\x64\xf4\x90\x80\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
     QTest::newRow("invalid-utf8-non-unicode-2") << raw("\x65\xf8\x88\x80\x80\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
     QTest::newRow("invalid-utf8-non-unicode-3") << raw("\x66\xfc\x84\x80\x80\x80\x80") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
     QTest::newRow("invalid-utf8-non-unicode-4") << raw("\x66\xfd\xbf\xbf\xbf\xbf\xbf") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    // invalid bytes in UTF-8
     QTest::newRow("invalid-utf8-fe") << raw("\x61\xfe") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
     QTest::newRow("invalid-utf8-ff") << raw("\x61\xff") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
+    // Overlong sequences
     QTest::newRow("invalid-utf8-overlong-1-2") << raw("\x62\xc1\x81") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
     QTest::newRow("invalid-utf8-overlong-1-3") << raw("\x63\xe0\x81\x81") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
     QTest::newRow("invalid-utf8-overlong-1-4") << raw("\x64\xf0\x80\x81\x81") << int(CborValidateStrictMode) << CborErrorInvalidUtf8TextString;
