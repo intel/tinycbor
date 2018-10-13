@@ -64,7 +64,7 @@ static RetType write_to_buffer(void *cookie, const char *data, LenType len)
     if (unlikely(add_check_overflow(*b->len, len, &newsize)))
         return -1;
 
-    if (newsize > b->alloc) {
+    if (newsize >= b->alloc) { // NB! one extra byte is needed to avoid buffer overflow at close_buffer
         // make room
         size_t newalloc = newsize + newsize / 2 + 1;    // give 50% more room
         ptr = realloc(ptr, newalloc);
