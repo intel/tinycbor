@@ -15,7 +15,7 @@ static uint8_t *readfile(const char *fname, size_t *size)
     if (fstat(fileno(f), &st) == -1)
         return NULL;
     uint8_t *buf = malloc(st.st_size);
-    *size = fread(buf, st.st_size, 1, f);
+    *size = fread(buf, st.st_size, 1, f) == 1 ? st.st_size : 0;
     fclose(f);
     return buf;
 }
