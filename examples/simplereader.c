@@ -32,7 +32,7 @@ static void dumpbytes(const uint8_t *buf, size_t len)
         printf("%02X ", *buf++);
 }
 
-static bool dumprecursive(CborValue *it, int nestingLevel)
+static CborError dumprecursive(CborValue *it, int nestingLevel)
 {
     while (!cbor_value_at_end(it)) {
         CborError err;
