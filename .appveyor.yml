@@ -27,7 +27,7 @@ build_script:
     if /i "%tests%"=="1" nmake -nologo -s
 test_script:
 - cmd: >-
-    if /i "%tests%"=="1" nmake -s -nologo check
+    if /i "%tests%"=="1" nmake -s -nologo TESTARGS=-silent check
 
     if /i "%tests%"=="0" echo Tests skipped.
 artifacts:
