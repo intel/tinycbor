@@ -77,7 +77,7 @@ script:
         QMAKEFLAGS="$QMAKEFLAGS QMAKE_CXX=$CXX"
         tests/Makefile
   - grep -q freestanding-pass .config ||
-        (cd tests && make check -k
+        (cd tests && make TESTARGS=-silent check -k
         TESTRUNNER=`which valgrind 2>/dev/null`)
   - make -s clean
   - ./scripts/update-docs.sh
