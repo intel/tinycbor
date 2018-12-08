@@ -526,7 +526,10 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
             err = stream(out, "%s%" PRIu64 ".%s", val < 0 ? "-" : "", ival, suffix);
         } else {
             /* this number is definitely not a 64-bit integer */
-            err = stream(out, "%." DBL_DECIMAL_DIG_STR "g%s", val, suffix);
+            if (fpclassify(val) == FP_NAN)
+                err = stream(out, "nan");
+            else
+                err = stream(out, "%." DBL_DECIMAL_DIG_STR "g%s", val, suffix);
         }
         break;
     }
