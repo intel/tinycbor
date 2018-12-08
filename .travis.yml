@@ -27,6 +27,7 @@ matrix:
         - CFLAGS="-Oz"
         - LDFLAGS="-Wl,--no-undefined -lm"
         - QMAKEFLAGS="-config release"
+        - MAKEFLAGS=-s
     - os: linux
       addons:
         apt:
