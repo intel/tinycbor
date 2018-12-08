@@ -166,7 +166,7 @@ tinycbor.pc: tinycbor.pc.in
 		-e 's,@version@,$(VERSION),'
 
 tests/Makefile: tests/tests.pro
-	$(QMAKE) $(QMAKEFLAGS) -o $@ $<
+	cd tests && $(QMAKE) $(QMAKEFLAGS)
 
 $(PACKAGE).tar.gz: | .git
 	GIT_DIR=$(SRCDIR).git $(GIT_ARCHIVE) --format=tar.gz -o "$(PACKAGE).tar.gz" HEAD

@@ -2,6 +2,32 @@ language: cpp
 matrix:
   include:
     - os: linux
+      dist: trusty
+      addons:
+        apt:
+          packages:
+            - qtbase5-dev valgrind
+            - g++
+      env:
+        - QMAKESPEC=linux-g++
+        - EVAL="CC=gcc && CXX=g++"
+        - CFLAGS="-Os"
+        - LDFLAGS="-Wl,--no-undefined -lm"
+        - QMAKEFLAGS="-config release"
+    - os: linux
+      dist: trusty
+      addons:
+        apt:
+          packages:
+            - qtbase5-dev valgrind
+            - clang
+      env:
+        - QMAKESPEC=linux-clang
+        - EVAL="CC=clang && CXX=clang++"
+        - CFLAGS="-Oz"
+        - LDFLAGS="-Wl,--no-undefined -lm"
+        - QMAKEFLAGS="-config release"
+    - os: linux
       addons:
         apt:
           sources:
@@ -33,7 +59,6 @@ matrix:
         - LDFLAGS="-Wl,--no-undefined -lm"
         - QMAKEFLAGS="-config release"
         - MAKEFLAGS=-s
-        - TESTARGS=-silent
     - os: linux
       env:
         - QMAKESPEC=linux-gcc-freestanding

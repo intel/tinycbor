@@ -151,7 +151,7 @@ typedef QVector<QPair<QVariant, QVariant>> Map;
 Q_DECLARE_METATYPE(Map)
 QVariant make_map(const std::initializer_list<QPair<QVariant, QVariant>> &list)
 {
-    return QVariant::fromValue(Map(list));
+    return QVariant::fromValue(list.size() > 0 ? Map(list) : Map());
 }
 
 struct IndeterminateLengthArray : QVariantList { using QVariantList::QVariantList; };
@@ -161,12 +161,16 @@ Q_DECLARE_METATYPE(IndeterminateLengthMap)
 
 QVariant make_ilarray(const std::initializer_list<QVariant> &list)
 {
-    return QVariant::fromValue(IndeterminateLengthArray(list));
+    return QVariant::fromValue(
+        list.size() > 0 ? IndeterminateLengthArray(list) : IndeterminateLengthArray()
+    );
 }
 
 QVariant make_ilmap(const std::initializer_list<QPair<QVariant, QVariant>> &list)
 {
-    return QVariant::fromValue(IndeterminateLengthMap(list));
+    return QVariant::fromValue(
+        list.size() > 0 ? IndeterminateLengthMap(list) : IndeterminateLengthMap()
+    );
 }
 
 static inline bool isOomError(CborError err)
