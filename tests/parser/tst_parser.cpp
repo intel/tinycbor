@@ -112,10 +112,10 @@ static CborError qstring_printf(void *out, const char *fmt, ...)
     int buf_size = vsnprintf(&c, 1, fmt, va) + 1;
     va_end(va);
 
-    if (buf_size < 0)
+    if (buf_size <= 0)
         return CborErrorIO;
 
-    else if (buf_size == 0)
+    else if (buf_size == 1)
         return CborNoError;
 
     va_start(va, fmt);
