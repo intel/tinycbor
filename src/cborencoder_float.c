@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Break Copyright (C) 2019
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,21 @@
 **
 ****************************************************************************/
 
-#include "../../src/cborencoder.c"
-#include "../../src/cborencoder_float.c"
-#include "../../src/cborerrorstrings.c"
-#include "../../src/cborparser.c"
-#include "../../src/cborparser_dup_string.c"
-#include "../../src/cborparser_float.c"
-#include "../../src/cborvalidation.c"
+#define _BSD_SOURCE 1
+#define _DEFAULT_SOURCE 1
+#ifndef __STDC_LIMIT_MACROS
+#  define __STDC_LIMIT_MACROS 1
+#endif
 
-#include <QtTest>
+#include "cbor.h"
 
-// This is a compilation-only test.
-// All it does is verify that the four source files above
-// compile as C++ without errors.
-class tst_Cpp : public QObject
+#include "cborinternal_p.h"
+
+#ifndef CBOR_NO_HALF_FLOAT_TYPE
+CborError cbor_encode_float_as_half_float(CborEncoder *encoder, float value)
 {
-    Q_OBJECT
-};
+    uint16_t v = (uint16_t)encode_half(value);
 
-QTEST_MAIN(tst_Cpp)
-#include "tst_cpp.moc"
+    return cbor_encode_floating_point(encoder, CborHalfFloatType, &v);
+}
+#endif

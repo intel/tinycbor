@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Break Copyright (C) 2019
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,33 @@
 **
 ****************************************************************************/
 
-#include "../../src/cborencoder.c"
-#include "../../src/cborencoder_float.c"
-#include "../../src/cborerrorstrings.c"
-#include "../../src/cborparser.c"
-#include "../../src/cborparser_dup_string.c"
-#include "../../src/cborparser_float.c"
-#include "../../src/cborvalidation.c"
+#define _BSD_SOURCE 1
+#define _DEFAULT_SOURCE 1
+#ifndef __STDC_LIMIT_MACROS
+#  define __STDC_LIMIT_MACROS 1
+#endif
 
-#include <QtTest>
+#include "cbor.h"
 
-// This is a compilation-only test.
-// All it does is verify that the four source files above
-// compile as C++ without errors.
-class tst_Cpp : public QObject
+#include "cborinternal_p.h"
+
+#ifndef CBOR_NO_HALF_FLOAT_TYPE
+/**
+ * Retrieves the CBOR half-precision floating point (16-bit) value that \a
+ * value points to, converts it to the float and store it in \a result.
+ * If the iterator \a value does not point to a half-precision floating
+ * point value, the behavior is undefined, so checking with \ref
+ * cbor_value_get_type or with \ref cbor_value_is_half_float is recommended.
+ * \sa cbor_value_get_type(), cbor_value_is_valid(), cbor_value_is_half_float(), cbor_value_get_half_float(), cbor_value_get_float()
+ */
+CborError cbor_value_get_half_float_as_float(const CborValue *value, float *result)
 {
-    Q_OBJECT
-};
+    uint16_t v;
 
-QTEST_MAIN(tst_Cpp)
-#include "tst_cpp.moc"
+    v = _cbor_value_get_half_float_helper(value);
+
+    *result = (float)decode_half((unsigned short)v);
+
+    return CborNoError;
+}
+#endif

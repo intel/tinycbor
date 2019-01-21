@@ -41,6 +41,13 @@ class tst_Encoder : public QObject
 {
     Q_OBJECT
 private slots:
+    void floatAsHalfFloat_data();
+    void floatAsHalfFloat();
+    void halfFloat_data();
+    void halfFloat();
+    void floatAsHalfFloatCloseToZero_data();
+    void floatAsHalfFloatCloseToZero();
+    void floatAsHalfFloatNaN();
     void fixed_data();
     void fixed();
     void strings_data();
@@ -272,19 +279,38 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
     return CborErrorUnknownType;
 }
 
-void compare(const QVariant &input, const QByteArray &output)
+template <typename Input, typename FnUnderTest>
+void encodeOne(Input input, FnUnderTest fn_under_test, QByteArray &buffer, CborError &error)
 {
-    QByteArray buffer(output.length(), Qt::Uninitialized);
     uint8_t *bufptr = reinterpret_cast<quint8 *>(buffer.data());
     CborEncoder encoder;
     cbor_encoder_init(&encoder, bufptr, buffer.length(), 0);
 
-    QCOMPARE(encodeVariant(&encoder, input), CborNoError);
-    QCOMPARE(encoder.remaining, size_t(1));
-    QCOMPARE(cbor_encoder_get_extra_bytes_needed(&encoder), size_t(0));
+    error = fn_under_test(&encoder, input);
 
-    buffer.resize(int(cbor_encoder_get_buffer_size(&encoder, bufptr)));
+    if (error == CborNoError) {
+        QCOMPARE(encoder.remaining, size_t(1));
+        QCOMPARE(cbor_encoder_get_extra_bytes_needed(&encoder), size_t(0));
+
+        buffer.resize(int(cbor_encoder_get_buffer_size(&encoder, bufptr)));
+    }
+}
+
+template <typename Input, typename FnUnderTest>
+void compare(Input input, FnUnderTest fn_under_test, const QByteArray &output)
+{
+    QByteArray buffer(output.length(), Qt::Uninitialized);
+    CborError error;
+
+    encodeOne(input, fn_under_test, buffer, error);
+
+    QCOMPARE(error, CborNoError);
     QCOMPARE(buffer, output);
+}
+
+void compare(const QVariant &input, const QByteArray &output)
+{
+    compare(input, encodeVariant, output);
 }
 
 void addColumns()
@@ -470,6 +496,127 @@ void addArraysAndMaps()
     QTest::newRow("array-1(0)") << raw("\x81\xc1\0") << make_list(QVariant::fromValue(Tag{1, 0}));
     QTest::newRow("array-1(map)") << raw("\x81\xc1\xa0") << make_list(QVariant::fromValue(Tag{1, make_map({})}));
     QTest::newRow("map-1(2):3(4)") << raw("\xa1\xc1\2\xc3\4") << make_map({{QVariant::fromValue(Tag{1, 2}), QVariant::fromValue(Tag{3, 4})}});
+}
+
+static void addHalfFloat()
+{
+    QTest::addColumn<QByteArray>("output");
+    QTest::addColumn<unsigned>("rawInput");
+    QTest::addColumn<double>("floatInput");
+
+    QTest::newRow("+0") << raw("\x00\x00") << 0U << 0.0;
+    QTest::newRow("-0") << raw("\x80\x00") << 0x8000U << 0.0;
+
+    QTest::newRow("min.denorm") << raw("\x00\x01") << 1U << ldexp(1.0, -14) * ldexp(1.0, -10);
+    QTest::newRow("-min.denorm") << raw("\x80\x01") << 0x8001U << ldexp(-1.0, -14) * ldexp(1.0, -10);
+
+    QTest::newRow("max.denorm") << raw("\x03\xff") << 0x03ffU << ldexp(1.0, -14) * (1.0 - ldexp(1.0, -10));
+    QTest::newRow("-max.denorm") << raw("\x83\xff") << 0x83ffU << ldexp(-1.0, -14) * (1.0 - ldexp(1.0, -10));
+
+    QTest::newRow("min.norm") << raw("\x04\x00") << 0x0400U << ldexp(1.0, -14);
+    QTest::newRow("-min.norm") << raw("\x84\x00") << 0x8400U << ldexp(-1.0, -14);
+
+    QTest::newRow("1.0") << raw("\x3c\x00") << 0x3c00U << 1.0;
+    QTest::newRow("-1.0") << raw("\xbc\x00") << 0xbc00U << -1.0;
+
+    QTest::newRow("1.5") << raw("\x3e\x00") << 0x3e00U << 1.5;
+    QTest::newRow("-1.5") << raw("\xbe\x00") << 0xbe00U << -1.5;
+
+    QTest::newRow("max") << raw("\x7b\xff") << 0x7bffU << ldexp(1.0, 15) * (2.0 - ldexp(1.0, -10));
+    QTest::newRow("-max") << raw("\xfb\xff") << 0xfbffU << ldexp(-1.0, 15) * (2.0 - ldexp(1.0, -10));
+
+    QTest::newRow("inf") << raw("\x7c\x00") << 0x7c00U << myInf();
+    QTest::newRow("-inf") << raw("\xfc\x00") << 0xfc00U << myNInf();
+
+    QTest::newRow("nan1") << raw("\x7c\x01") << 0x7c01U << myNaN();
+    QTest::newRow("nan2") << raw("\xfc\x01") << 0xfc01U << myNaN();
+    QTest::newRow("nan3") << raw("\x7e\x00") << 0x7e00U << myNaN();
+    QTest::newRow("nan4") << raw("\xfe\x00") << 0xfe00U << myNaN();
+}
+
+void tst_Encoder::floatAsHalfFloat_data()
+{
+    addHalfFloat();
+}
+
+void tst_Encoder::floatAsHalfFloat()
+{
+    QFETCH(unsigned, rawInput);
+    QFETCH(double, floatInput);
+    QFETCH(QByteArray, output);
+
+    if (rawInput == 0U || rawInput == 0x8000U)
+        QSKIP("zero values are out of scope of this test case", QTest::SkipSingle);
+
+    if (qIsNaN(floatInput))
+        QSKIP("NaN values are out of scope of this test case", QTest::SkipSingle);
+
+    output.prepend('\xf9');
+
+    compare((float)floatInput, cbor_encode_float_as_half_float, output);
+}
+
+void tst_Encoder::halfFloat_data()
+{
+    addHalfFloat();
+}
+
+void tst_Encoder::halfFloat()
+{
+    QFETCH(unsigned, rawInput);
+    QFETCH(QByteArray, output);
+
+    uint16_t v = (uint16_t)rawInput;
+    output.prepend('\xf9');
+
+    compare(&v, cbor_encode_half_float, output);
+}
+
+void tst_Encoder::floatAsHalfFloatCloseToZero_data()
+{
+    QTest::addColumn<double>("floatInput");
+
+    QTest::newRow("+0") << 0.0;
+    QTest::newRow("-0") << -0.0;
+
+    QTest::newRow("below min.denorm") << ldexp(1.0, -14) * ldexp(1.0, -11);
+    QTest::newRow("above -min.denorm") << ldexp(-1.0, -14) * ldexp(1.0, -11);
+}
+
+void tst_Encoder::floatAsHalfFloatCloseToZero()
+{
+    QFETCH(double, floatInput);
+
+    QByteArray buffer(4, Qt::Uninitialized);
+    CborError error;
+
+    encodeOne((float)floatInput, cbor_encode_float_as_half_float, buffer, error);
+
+    QCOMPARE(error, CborNoError);
+
+    QVERIFY2(
+        buffer == raw("\xf9\x00\x00") || buffer == raw("\xf9\x80\x00"),
+        "Got value " + QByteArray::number(floatInput) + " encoded to: " + buffer);
+}
+
+void tst_Encoder::floatAsHalfFloatNaN()
+{
+    QByteArray buffer(4, Qt::Uninitialized);
+    CborError error;
+
+    encodeOne(myNaNf(), cbor_encode_float_as_half_float, buffer, error);
+
+    QCOMPARE(error, CborNoError);
+    QCOMPARE(buffer.size(), 3);
+
+    uint8_t ini_byte = (uint8_t)buffer[0],
+        exp = (uint8_t)buffer[1] & 0x7cU,
+        manth = (uint8_t)buffer[1] & 0x03U,
+        mantl = (uint8_t)buffer[2];
+
+    QCOMPARE((unsigned)ini_byte, 0xf9U);
+    QCOMPARE((unsigned)exp, 0x7cU);
+    QVERIFY((manth | mantl) != 0);
 }
 
 void tst_Encoder::fixed_data()

@@ -45,6 +45,8 @@ private slots:
     // parsing API
     void integers_data();
     void integers();
+    void halfFloat_data();
+    void halfFloat();
     void fixed_data();
     void fixed();
     void strings_data();
@@ -390,6 +392,80 @@ void tst_Parser::integers()
     bool inIntRange = inInt64Range && (expectedValue == int(expectedValue));
     err = cbor_value_get_int_checked(&first, &ivalue);
     QCOMPARE(err, inIntRange ? CborNoError : CborErrorDataTooLarge);
+}
+
+static void addHalfFloat()
+{
+    QTest::addColumn<QByteArray>("data");
+    QTest::addColumn<unsigned>("expectedRaw");
+    QTest::addColumn<double>("expectedValue");
+
+    QTest::newRow("+0") << raw("\x00\x00") << 0U << 0.0;
+    QTest::newRow("-0") << raw("\x80\x00") << 0x8000U << 0.0;
+
+    QTest::newRow("min.denorm") << raw("\x00\x01") << 1U << ldexp(1.0, -14) * ldexp(1.0, -10);
+    QTest::newRow("-min.denorm") << raw("\x80\x01") << 0x8001U << ldexp(-1.0, -14) * ldexp(1.0, -10);
+
+    QTest::newRow("max.denorm") << raw("\x03\xff") << 0x03ffU << ldexp(1.0, -14) * (1.0 - ldexp(1.0, -10));
+    QTest::newRow("-max.denorm") << raw("\x83\xff") << 0x83ffU << ldexp(-1.0, -14) * (1.0 - ldexp(1.0, -10));
+
+    QTest::newRow("min.norm") << raw("\x04\x00") << 0x0400U << ldexp(1.0, -14);
+    QTest::newRow("-min.norm") << raw("\x84\x00") << 0x8400U << ldexp(-1.0, -14);
+
+    QTest::newRow("1.0") << raw("\x3c\x00") << 0x3c00U << 1.0;
+    QTest::newRow("-1.0") << raw("\xbc\x00") << 0xbc00U << -1.0;
+
+    QTest::newRow("1.5") << raw("\x3e\x00") << 0x3e00U << 1.5;
+    QTest::newRow("-1.5") << raw("\xbe\x00") << 0xbe00U << -1.5;
+
+    QTest::newRow("max") << raw("\x7b\xff") << 0x7bffU << ldexp(1.0, 15) * (2.0 - ldexp(1.0, -10));
+    QTest::newRow("-max") << raw("\xfb\xff") << 0xfbffU << ldexp(-1.0, 15) * (2.0 - ldexp(1.0, -10));
+
+    QTest::newRow("inf") << raw("\x7c\x00") << 0x7c00U << double(INFINITY);
+    QTest::newRow("-inf") << raw("\xfc\x00") << 0xfc00U << double(-INFINITY);
+
+    QTest::newRow("nan") << raw("\x7c\x01") << 0x7c01U << double(NAN);
+    QTest::newRow("nan2") << raw("\xfc\x01") << 0xfc01U << double(NAN);
+    QTest::newRow("nan3") << raw("\x7e\x00") << 0x7e00U << double(NAN);
+    QTest::newRow("nan4") << raw("\xfe\x00") << 0xfe00U << double(NAN);
+}
+
+void tst_Parser::halfFloat_data()
+{
+    addHalfFloat();
+}
+
+void tst_Parser::halfFloat()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(unsigned, expectedRaw);
+    QFETCH(double, expectedValue);
+
+    CborParser parser;
+    CborValue first;
+
+    data.prepend('\xf9');
+
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+    QVERIFY(cbor_value_is_half_float(&first));
+
+    uint16_t raw;
+    cbor_value_get_half_float(&first, &raw);
+    QCOMPARE(raw, uint16_t(expectedRaw));
+
+    float value;
+    cbor_value_get_half_float_as_float(&first, &value);
+
+    const double epsilon = ldexp(1.0, -25);
+
+    if (qIsNaN(expectedValue)) {
+        QVERIFY(qIsNaN(value));
+    } else if (qIsInf(expectedValue)) {
+        QVERIFY(value == (float)expectedValue);
+    } else {
+        QVERIFY(qAbs(value - (float)expectedValue) < epsilon);
+    }
 }
 
 void tst_Parser::fixed_data()

@@ -5,8 +5,10 @@ TINYCBOR_SOURCES = \
 	src\cborerrorstrings.c \
 	src\cborencoder.c \
 	src\cborencoder_close_container_checked.c \
+	src\cborencoder_float.c \
 	src\cborparser.c \
 	src\cborparser_dup_string.c \
+	src\cborparser_float.c \
 	src\cborpretty.c \
 	src\cborpretty_stdio.c \
 	src\cborvalidation.c
@@ -14,8 +16,10 @@ TINYCBOR_OBJS = \
 	src\cborerrorstrings.obj \
 	src\cborencoder.obj \
 	src\cborencoder_close_container_checked.obj \
+	src\cborencoder_float.obj \
 	src\cborparser.obj \
 	src\cborparser_dup_string.obj \
+	src\cborparser_float.obj \
 	src\cborpretty.obj \
 	src\cborpretty_stdio.obj \
 	src\cborvalidation.obj
