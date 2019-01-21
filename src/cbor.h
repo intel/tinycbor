@@ -237,6 +237,7 @@ CBOR_INLINE_API CborError cbor_encode_undefined(CborEncoder *encoder)
 
 CBOR_INLINE_API CborError cbor_encode_half_float(CborEncoder *encoder, const void *value)
 { return cbor_encode_floating_point(encoder, CborHalfFloatType, value); }
+CBOR_API CborError cbor_encode_float_as_half_float(CborEncoder *encoder, float value);
 CBOR_INLINE_API CborError cbor_encode_float(CborEncoder *encoder, float value)
 { return cbor_encode_floating_point(encoder, CborFloatType, &value); }
 CBOR_INLINE_API CborError cbor_encode_double(CborEncoder *encoder, double value)
@@ -493,7 +494,9 @@ CBOR_API CborError cbor_value_map_find_value(const CborValue *map, const char *s
 /* Floating point */
 CBOR_INLINE_API bool cbor_value_is_half_float(const CborValue *value)
 { return value->type == CborHalfFloatType; }
+CBOR_PRIVATE_API uint16_t _cbor_value_get_half_float_helper(const CborValue *value);
 CBOR_API CborError cbor_value_get_half_float(const CborValue *value, void *result);
+CBOR_API CborError cbor_value_get_half_float_as_float(const CborValue *value, float *result);
 
 CBOR_INLINE_API bool cbor_value_is_float(const CborValue *value)
 { return value->type == CborFloatType; }
