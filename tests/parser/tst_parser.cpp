@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2019 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,23 @@
 ****************************************************************************/
 
 #define _XOPEN_SOURCE 700
+#define  _DARWIN_C_SOURCE 1         /* need MAP_ANON */
 #include <QtTest>
 #include "cbor.h"
 #include <stdio.h>
 #include <stdarg.h>
 
+#if defined(Q_OS_UNIX)
+#  include <sys/mman.h>
+#  include <unistd.h>
+#elif defined(Q_OS_WIN)
+#  define WIN32_LEAN_AND_MEAN 1
+#  define NOMINMAX 1
+#  include <windows.h>
+#endif
+
 Q_DECLARE_METATYPE(CborError)
+
 namespace QTest {
 template<> char *toString<CborError>(const CborError &err)
 {
@@ -100,6 +111,95 @@ private slots:
     void recursionLimit_data();
     void recursionLimit();
 };
+
+struct ParserWrapper
+{
+    void *realdata = nullptr;
+    uint8_t *data;
+    size_t len;
+    CborParser parser;
+    CborValue first;
+
+    ~ParserWrapper() { freeMemory(); }
+
+    CborError init(const QByteArray &ba)
+    {
+        freeMemory();
+        data = allocateMemory(ba.size());
+        memcpy(data, ba.data(), ba.size());
+        return cbor_parser_init(data, len, 0, &parser, &first);
+    }
+
+    uint8_t *allocateMemory(size_t);
+    void freeMemory();
+
+    static const size_t PageSize = 4096;
+    static inline size_t mmapAllocation(size_t n)
+    {
+        // round up and add one page
+        return (n + 2*PageSize) & ~(PageSize - 1);
+    }
+    static bool shouldUseMmap();
+};
+
+bool ParserWrapper::shouldUseMmap()
+{
+    static int v = qEnvironmentVariableIntValue("PARSER_NO_MMAP");
+    return !v;
+}
+
+uint8_t *ParserWrapper::allocateMemory(size_t n)
+{
+    len = n;
+    if (shouldUseMmap()) {
+        size_t alloc = mmapAllocation(n);
+#if defined(Q_OS_UNIX)
+        realdata = mmap(nullptr, alloc, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+        Q_ASSERT_X(realdata != MAP_FAILED, "allocateMemory", "mmap failed!");
+
+        // mark last page inaccessible
+        uint8_t *ptr = static_cast<uint8_t *>(realdata);
+        ptr += alloc - PageSize;
+        mprotect(ptr, PageSize, PROT_NONE);
+
+        ptr -= n;
+        return ptr;
+#elif defined(Q_OS_WIN)
+        // ### implement me
+        DWORD flAllocationType = MEM_COMMIT | MEM_RESERVE;
+        DWORD flProtect = PAGE_READWRITE;
+        realdata = VirtualAlloc(nullptr, alloc, flAllocationType, flProtect);
+        Q_ASSERT_X(realdata, "allocateMemory", "VirtualAlloc failed!");
+
+        // mark last page inaccessible
+        uint8_t *ptr = static_cast<uint8_t *>(realdata);
+        ptr += alloc - PageSize;
+        VirtualProtect(ptr, PageSize, PAGE_NOACCESS, nullptr);
+
+        ptr -= n;
+        return ptr;
+#endif
+    }
+    realdata = malloc(n);
+    return static_cast<uint8_t *>(realdata);
+}
+
+void ParserWrapper::freeMemory()
+{
+    if (shouldUseMmap()) {
+        if (realdata) {
+#if defined(Q_OS_UNIX)
+            size_t alloc = mmapAllocation(len);
+            munmap(realdata, alloc);
+#elif defined(Q_OS_WIN)
+            VirtualFree(realdata, 0, MEM_RELEASE);
+#endif
+        }
+        return;
+    }
+
+    free(realdata);
+}
 
 static CborError qstring_printf(void *out, const char *fmt, ...)
 {
@@ -1947,12 +2047,11 @@ void tst_Parser::strictValidation()
     QFETCH(CborError, expectedError);
 
     QString decoded;
-    CborParser parser;
-    CborValue first;
-    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
+    ParserWrapper w;
+    CborError err = w.init(data);
     QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
-    err = cbor_value_validate(&first, flags);
+    err = cbor_value_validate(&w.first, flags);
     QCOMPARE(err, expectedError);
 }
 

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Intel Corporation
+** Copyright (C) 2019 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -561,13 +561,17 @@ static CborError validate_value(CborValue *it, uint32_t flags, int recursionLeft
             return err;
 
         while (1) {
-            err = validate_number(it, type, flags);
+            CborValue next;
+            err = _cbor_value_get_string_chunk(it, &ptr, &n, &next);
             if (err)
                 return err;
+            if (ptr) {
+                err = validate_number(it, type, flags);
+                if (err)
+                    return err;
+            }
 
-            err = _cbor_value_get_string_chunk(it, &ptr, &n, it);
-            if (err)
-                return err;
+            *it = next;
             if (!ptr)
                 break;
 
