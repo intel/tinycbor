@@ -29,11 +29,11 @@ linux-gcc-freestanding:
    2718	      0	      0	   2718	    a9e	cborpretty.o (ex lib/libtinycbor.a)
 linux-gcc-no-math:
    text	   data	    bss	    dec	    hex	filename
-   1592	      0	      0	   1592	    638	cborerrorstrings.o (ex lib/libtinycbor.a)
-   1171	      0	      0	   1171	    493	cborencoder.o (ex lib/libtinycbor.a)
+   1555	      0	      0	   1555	    613	cborerrorstrings.o (ex lib/libtinycbor.a)
+   1101	      0	      0	   1101	    44d	cborencoder.o (ex lib/libtinycbor.a)
      53	      0	      0	     53	     35	cborencoder_close_container_checked.o (ex lib/libtinycbor.a)
-   3084	      0	      0	   3084	    c0c	cborparser.o (ex lib/libtinycbor.a)
-   2313	      0	      0	   2313	    909	cborpretty.o (ex lib/libtinycbor.a)
+   2940	      0	      0	   2940	    b7c	cborparser.o (ex lib/libtinycbor.a)
+   2336	      0	      0	   2336	    920	cborpretty.o (ex lib/libtinycbor.a)
 macx-clang:
 __TEXT	__DATA	__OBJC	others	dec	hex
 1733	0	0	519	2252	8cc	lib/libtinycbor.a(cborerrorstrings.o)
