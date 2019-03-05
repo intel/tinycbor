@@ -22,11 +22,11 @@ linux-g++:
    2262	      0	      0	   2262	    8d6	cborvalidation.o (ex lib/libtinycbor.a)
 linux-gcc-freestanding:
    text	   data	    bss	    dec	    hex	filename
-   1592	      0	      0	   1592	    638	cborerrorstrings.o (ex lib/libtinycbor.a)
-   1168	      0	      0	   1168	    490	cborencoder.o (ex lib/libtinycbor.a)
+   1555	      0	      0	   1555	    613	cborerrorstrings.o (ex lib/libtinycbor.a)
+   1098	      0	      0	   1098	    44a	cborencoder.o (ex lib/libtinycbor.a)
      53	      0	      0	     53	     35	cborencoder_close_container_checked.o (ex lib/libtinycbor.a)
-   3089	      0	      0	   3089	    c11	cborparser.o (ex lib/libtinycbor.a)
-   2696	      0	      0	   2696	    a88	cborpretty.o (ex lib/libtinycbor.a)
+   2944	      0	      0	   2944	    b80	cborparser.o (ex lib/libtinycbor.a)
+   2718	      0	      0	   2718	    a9e	cborpretty.o (ex lib/libtinycbor.a)
 linux-gcc-no-math:
    text	   data	    bss	    dec	    hex	filename
    1592	      0	      0	   1592	    638	cborerrorstrings.o (ex lib/libtinycbor.a)
