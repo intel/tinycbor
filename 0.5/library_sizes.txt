@@ -15,11 +15,11 @@ linux-g++:
    1315	      0	      0	   1315	    523	cborencoder.o (ex lib/libtinycbor.a)
      53	      0	      0	     53	     35	cborencoder_close_container_checked.o (ex lib/libtinycbor.a)
    3295	      0	      0	   3295	    cdf	cborparser.o (ex lib/libtinycbor.a)
-   2919	      0	      0	   2919	    b67	cborpretty.o (ex lib/libtinycbor.a)
+   2793	      0	      0	   2793	    ae9	cborpretty.o (ex lib/libtinycbor.a)
     206	      0	      0	    206	     ce	cborparser_dup_string.o (ex lib/libtinycbor.a)
     334	      0	      0	    334	    14e	cborpretty_stdio.o (ex lib/libtinycbor.a)
-   4076	      0	      0	   4076	    fec	cbortojson.o (ex lib/libtinycbor.a)
-   2668	      0	      0	   2668	    a6c	cborvalidation.o (ex lib/libtinycbor.a)
+   3962	      0	      0	   3962	    f7a	cbortojson.o (ex lib/libtinycbor.a)
+   2386	      0	      0	   2386	    952	cborvalidation.o (ex lib/libtinycbor.a)
 linux-gcc-freestanding:
    text	   data	    bss	    dec	    hex	filename
    1555	      0	      0	   1555	    613	cborerrorstrings.o (ex lib/libtinycbor.a)
