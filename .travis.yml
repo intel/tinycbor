@@ -2,45 +2,46 @@ language: cpp
 matrix:
   include:
     - os: linux
+      dist: xenial
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
-            - sourceline: 'ppa:beineri/opt-qt596-trusty'
+            - sourceline: 'ppa:beineri/opt-qt-5.12.1-xenial'
           packages:
-            - qt59base valgrind
-            - g++-7
+            - qt512base valgrind
             - doxygen
       env:
         - QMAKESPEC=linux-g++
-        - EVAL="CC=gcc-7 && CXX=g++-7"
+        - EVAL="CC=gcc && CXX=g++"
         - CFLAGS="-Os"
         - LDFLAGS="-Wl,--no-undefined -lm"
         - QMAKEFLAGS="-config release"
+        - QT_NO_CPU_FEATURE=rdrnd
     - os: linux
+      dist: xenial
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
-            - sourceline: 'ppa:beineri/opt-qt596-trusty'
+            - sourceline: 'ppa:beineri/opt-qt-5.12.1-xenial'
           packages:
-            - qt59base
+            - qt512base
       env:
         - QMAKESPEC=linux-clang
-        - EVAL="CC=clang-5.0 && CXX=clang++"
-        - PATH=$PATH:/usr/local/clang/bin
+        - EVAL="CC=clang && CXX=clang++"
         - CFLAGS="-Oz"
         - LDFLAGS="-Wl,--no-undefined -lm"
         - QMAKEFLAGS="-config release"
         - MAKEFLAGS=-s
         - TESTARGS=-silent
     - os: linux
+      dist: xenial
       env:
         - QMAKESPEC=linux-gcc-freestanding
         - EVAL="CXX=false"
         - CFLAGS="-ffreestanding -Os"
         - LDFLAGS="-Wl,--no-undefined -lm"
     - os: linux
+      dist: xenial
       env:
         - QMAKESPEC=linux-gcc-no-math
         - EVAL="CXX=false && touch src/math.h src/float.h"
@@ -77,7 +78,7 @@ script:
         QMAKEFLAGS="$QMAKEFLAGS QMAKE_CXX=$CXX"
         tests/Makefile
   - grep -q freestanding-pass .config ||
-        (cd tests && make check -k
+        (cd tests && make TESTARGS=-silent check -k
         TESTRUNNER=`which valgrind 2>/dev/null`)
   - make -s clean
   - ./scripts/update-docs.sh

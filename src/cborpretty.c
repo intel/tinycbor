@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2018 Intel Corporation
+** Copyright (C) 2019 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -422,6 +422,8 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
             }
 
             err = _cbor_value_get_string_chunk(it, &ptr, &n, it);
+            if (err)
+                return err;
             if (!ptr)
                 break;
 

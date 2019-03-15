@@ -66,7 +66,7 @@ static inline uint32_t get_utf8(const uint8_t **buffer, const uint8_t *end)
         return ~0U;
     }
 
-    if (n < charsNeeded - 1)
+    if (n < charsNeeded)
         return ~0U;
 
     /* first continuation character */

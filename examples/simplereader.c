@@ -15,7 +15,7 @@ static uint8_t *readfile(const char *fname, size_t *size)
     if (fstat(fileno(f), &st) == -1)
         return NULL;
     uint8_t *buf = malloc(st.st_size);
-    *size = fread(buf, st.st_size, 1, f);
+    *size = fread(buf, st.st_size, 1, f) == 1 ? st.st_size : 0;
     fclose(f);
     return buf;
 }
@@ -32,7 +32,7 @@ static void dumpbytes(const uint8_t *buf, size_t len)
         printf("%02X ", *buf++);
 }
 
-static bool dumprecursive(CborValue *it, int nestingLevel)
+static CborError dumprecursive(CborValue *it, int nestingLevel)
 {
     while (!cbor_value_at_end(it)) {
         CborError err;

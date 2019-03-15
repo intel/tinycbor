@@ -83,6 +83,10 @@ endif
 
 -include .config
 
+ifeq ($(wildcard .config),)
+    $(info .config file not yet created)
+endif
+
 ifeq ($(freestanding-pass),1)
 TINYCBOR_SOURCES = $(TINYCBOR_FREESTANDING_SOURCES)
 else
@@ -98,7 +102,9 @@ TINYCBOR_SOURCES = \
 ifeq ($(open_memstream-pass),)
   ifeq ($(funopen-pass)$(fopencookie-pass),)
     CFLAGS += -DWITHOUT_OPEN_MEMSTREAM
-    $(warning warning: funopen and fopencookie unavailable, open_memstream can not be implemented and conversion to JSON will not work properly!)
+    ifeq ($(wildcard .config),.config)
+        $(warning warning: funopen and fopencookie unavailable, open_memstream can not be implemented and conversion to JSON will not work properly!)
+    endif
   else
     TINYCBOR_SOURCES += src/open_memstream.c
   endif
