@@ -303,6 +303,8 @@ void compare(Input input, FnUnderTest fn_under_test, const QByteArray &output)
     CborError error;
 
     encodeOne(input, fn_under_test, buffer, error);
+    if (QTest::currentTestFailed())
+        return;
 
     QCOMPARE(error, CborNoError);
     QCOMPARE(buffer, output);
