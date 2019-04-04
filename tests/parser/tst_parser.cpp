@@ -171,7 +171,6 @@ uint8_t *ParserWrapper::allocateMemory(size_t n)
         ptr -= n;
         return ptr;
 #elif defined(Q_OS_WIN)
-        // ### implement me
         DWORD flAllocationType = MEM_COMMIT | MEM_RESERVE;
         DWORD flProtect = PAGE_READWRITE;
         realdata = VirtualAlloc(nullptr, alloc, flAllocationType, flProtect);
