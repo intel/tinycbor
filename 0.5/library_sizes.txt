@@ -23,10 +23,10 @@ linux-g++:
 linux-gcc-freestanding:
    text	   data	    bss	    dec	    hex	filename
    1555	      0	      0	   1555	    613	cborerrorstrings.o (ex lib/libtinycbor.a)
-   1098	      0	      0	   1098	    44a	cborencoder.o (ex lib/libtinycbor.a)
+   1101	      0	      0	   1101	    44d	cborencoder.o (ex lib/libtinycbor.a)
      53	      0	      0	     53	     35	cborencoder_close_container_checked.o (ex lib/libtinycbor.a)
-   2944	      0	      0	   2944	    b80	cborparser.o (ex lib/libtinycbor.a)
-   2712	      0	      0	   2712	    a98	cborpretty.o (ex lib/libtinycbor.a)
+   2940	      0	      0	   2940	    b7c	cborparser.o (ex lib/libtinycbor.a)
+   2699	      0	      0	   2699	    a8b	cborpretty.o (ex lib/libtinycbor.a)
 linux-gcc-no-math:
    text	   data	    bss	    dec	    hex	filename
    1555	      0	      0	   1555	    613	cborerrorstrings.o (ex lib/libtinycbor.a)
