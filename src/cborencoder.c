@@ -65,7 +65,7 @@
  * \code
  *      uint8_t buf[16];
  *      CborEncoder encoder;
- *      cbor_encoder_init(&encoder, &buf, sizeof(buf), 0);
+ *      cbor_encoder_init(&encoder, buf, sizeof(buf), 0);
  *      cbor_encode_int(&encoder, some_value);
  * \endcode
  *
