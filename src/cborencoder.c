@@ -203,6 +203,7 @@
 void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int flags)
 {
     encoder->data.ptr = buffer;
+    encoder->start = buffer;
     encoder->end = buffer + size;
     encoder->remaining = 2;
     encoder->flags = flags;
@@ -433,7 +434,7 @@ static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shif
  */
 
 /**
- * Appends the text string \a string of length \a length to the CBOR stream
+ * Appends the byte string \a string of length \a length to the CBOR stream
  * provided by \a encoder. CBOR requires that \a string be valid UTF-8, but
  * TinyCBOR makes no verification of correctness.
  *
@@ -445,7 +446,7 @@ CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, s
 }
 
 /**
- * Appends the byte string \a string of length \a length to the CBOR stream
+ * Appends the text string \a string of length \a length to the CBOR stream
  * provided by \a encoder. CBOR byte strings are arbitrary raw data.
  *
  * \sa cbor_encode_text_stringz, cbor_encode_text_string
@@ -640,6 +641,15 @@ CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *
  * See \ref CborEncoding for an example of using this function.
  *
  * \sa cbor_encoder_init(), cbor_encoder_get_buffer_size(), CborEncoding
+ */
+
+/**
+ * \fn void cbor_encoder_reset(CborEncoder *encoder)
+ *
+ * Reset the encoder. The encoder will now start writing from the beginning of
+ * its allocated buffer space.
+ *
+ * \sa cbor_encoder_init
  */
 
 /** @} */
