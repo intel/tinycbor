@@ -2,7 +2,7 @@
    1555	      0	      0	   1555	    613	cborerrorstrings.o (ex lib/libtinycbor.a)
    1315	      0	      0	   1315	    523	cborencoder.o (ex lib/libtinycbor.a)
      53	      0	      0	     53	     35	cborencoder_close_container_checked.o (ex lib/libtinycbor.a)
-   3299	      0	      0	   3299	    ce3	cborparser.o (ex lib/libtinycbor.a)
+   3450	      0	      0	   3450	    d7a	cborparser.o (ex lib/libtinycbor.a)
    2800	      0	      0	   2800	    af0	cborpretty.o (ex lib/libtinycbor.a)
     206	      0	      0	    206	     ce	cborparser_dup_string.o (ex lib/libtinycbor.a)
     334	      0	      0	    334	    14e	cborpretty_stdio.o (ex lib/libtinycbor.a)
