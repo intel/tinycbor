@@ -486,6 +486,20 @@ CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size
     return encode_string(encoder, length, TextStringType << MajorTypeShift, string);
 }
 
+/**
+ * Puts the data of length \a length in \a raw into to the encoding buffer of \a
+ * encoder. This function can be used if you have stored CBOR encoded data and
+ * want to push it to your current encoding buffer. Be aware, you are
+ * responsible for the data in \a raw is valid and that the validity of the
+ * resulting stream after this operation remains valid.
+ *
+ * \sa CborError cbor_encode_byte_string
+ */
+CborError cbor_encode_raw(CborEncoder *encoder, const uint8_t *raw, size_t length)
+{
+    return append_to_buffer(encoder, raw, length, CborEncoderAppendRawData);
+}
+
 #ifdef __GNUC__
 __attribute__((noinline))
 #endif
