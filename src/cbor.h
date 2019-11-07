@@ -212,7 +212,8 @@ CBOR_API const char *cbor_error_string(CborError error);
 typedef enum CborEncoderAppendType
 {
     CborEncoderAppendCborData = 0,
-    CborEncoderAppendStringData = 1
+    CborEncoderAppendStringData = 1,
+    CborEncoderAppendRawData = 2
 } CborEncoderAppendType;
 
 typedef CborError (*CborEncoderWriteFunction)(void *, const void *, size_t, CborEncoderAppendType);
@@ -251,6 +252,7 @@ CBOR_INLINE_API CborError cbor_encode_text_stringz(CborEncoder *encoder, const c
 { return cbor_encode_text_string(encoder, string, strlen(string)); }
 CBOR_API CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length);
 CBOR_API CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value);
+CBOR_API CborError cbor_encode_raw(CborEncoder *encoder, const uint8_t *raw, size_t length);
 
 CBOR_INLINE_API CborError cbor_encode_boolean(CborEncoder *encoder, bool value)
 { return cbor_encode_simple_value(encoder, (int)value - 1 + (CborBooleanType & 0x1f)); }
