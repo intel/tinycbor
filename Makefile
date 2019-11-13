@@ -1,5 +1,5 @@
 # Variables:
-prefix = /usr/local
+prefix ?= /usr/local
 exec_prefix = $(prefix)
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
