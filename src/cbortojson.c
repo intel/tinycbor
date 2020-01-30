@@ -372,7 +372,7 @@ static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags, Conve
     if (type == CborByteStringType && (flags & CborConvertByteStringsToBase64Url) == 0 &&
             (tag == CborNegativeBignumTag || tag == CborExpectedBase16Tag || tag == CborExpectedBase64Tag)) {
         char *str;
-        char *pre = "";
+        const char *pre = "";
 
         if (tag == CborNegativeBignumTag) {
             pre = "~";
