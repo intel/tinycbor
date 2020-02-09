@@ -153,9 +153,9 @@ static CborError dumprecursive(CborValue *it, int nestingLevel)
 
 int main(int argc, char **argv)
 {
-    if (argc == 1) {
+    if (argc != 2) {
         puts("simplereader <filename>");
-        return 0;
+        return 1;
     }
 
     size_t length;
