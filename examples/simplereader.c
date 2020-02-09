@@ -28,8 +28,10 @@ static void indent(int nestingLevel)
 
 static void dumpbytes(const uint8_t *buf, size_t len)
 {
+    printf("\"");
     while (len--)
-        printf("%02X ", *buf++);
+        printf("\\x%02X", *buf++);
+    printf("\"");
 }
 
 static CborError dumprecursive(CborValue *it, int nestingLevel)
