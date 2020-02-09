@@ -23,7 +23,7 @@ static uint8_t *readfile(const char *fname, size_t *size)
 static void indent(int nestingLevel)
 {
     while (nestingLevel--)
-        puts("  ");
+        printf("  ");
 }
 
 static void dumpbytes(const uint8_t *buf, size_t len)
