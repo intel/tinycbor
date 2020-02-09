@@ -87,7 +87,7 @@ static CborError dumprecursive(CborValue *it, int nestingLevel)
             err = cbor_value_dup_text_string(it, &buf, &n, it);
             if (err)
                 return err;     // parse error
-            puts(buf);
+            printf("\"%s\"\n", buf);
             free(buf);
             continue;
         }
