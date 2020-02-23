@@ -1093,7 +1093,8 @@ static uintptr_t iterate_memcmp(char *s1, const uint8_t *s2, size_t len)
 
 static uintptr_t iterate_memcpy(char *dest, const uint8_t *src, size_t len)
 {
-    return (uintptr_t)memcpy(dest, src, len);
+    memcpy(dest, src, len);
+    return (uintptr_t)dest;
 }
 
 static CborError iterate_string_chunks(const CborValue *value, char *buffer, size_t *buflen,
