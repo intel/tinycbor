@@ -26,6 +26,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+static CborError cbor_fprintf(void *out, const char *fmt, ...) __attribute__ ((format (gnu_printf, 2, 3)));
 static CborError cbor_fprintf(void *out, const char *fmt, ...)
 {
     int n;
