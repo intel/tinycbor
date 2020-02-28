@@ -935,7 +935,7 @@ CborError cbor_value_get_int_checked(const CborValue *value, int *result)
 /**
  * \fn bool cbor_value_is_byte_string(const CborValue *value)
  *
- * Returns true if the iterator \a value is valid and points to a CBOR text
+ * Returns true if the iterator \a value is valid and points to a CBOR byte
  * string. CBOR byte strings are binary data with no specified encoding or
  * format.
  *
