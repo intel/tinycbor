@@ -540,11 +540,10 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
  */
 CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
-    if (encoder->end)
-        encoder->data.ptr = containerEncoder->data.ptr;
-    else
-        encoder->data.bytes_needed = containerEncoder->data.bytes_needed;
+    // synchronise buffer state with that of the container
     encoder->end = containerEncoder->end;
+    encoder->data = containerEncoder->data;
+
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
         return append_byte_to_buffer(encoder, BreakByte);
 
@@ -553,6 +552,7 @@ CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *
 
     if (!encoder->end)
         return CborErrorOutOfMemory;    /* keep the state */
+
     return CborNoError;
 }
 
