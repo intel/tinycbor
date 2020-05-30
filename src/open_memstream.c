@@ -38,7 +38,7 @@
 #ifdef __APPLE__
 typedef int RetType;
 typedef int LenType;
-#elif __GLIBC__
+#elif __linux__
 typedef ssize_t RetType;
 typedef size_t LenType;
 #else
@@ -101,7 +101,7 @@ FILE *open_memstream(char **bufptr, size_t *lenptr)
 
 #ifdef __APPLE__
     return funopen(b, NULL, write_to_buffer, NULL, close_buffer);
-#elif __GLIBC__
+#elif __linux__
     static const cookie_io_functions_t vtable = {
         NULL,
         write_to_buffer,
