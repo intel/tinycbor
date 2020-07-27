@@ -210,8 +210,8 @@ void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int f
 
 static inline void put16(void *where, uint16_t v)
 {
-    v = cbor_htons(v);
-    memcpy(where, &v, sizeof(v));
+    uint16_t v_be = cbor_htons(v);
+    memcpy(where, &v_be, sizeof(v_be));
 }
 
 /* Note: Since this is currently only used in situations where OOM is the only
@@ -227,14 +227,14 @@ static inline bool isOomError(CborError err)
 
 static inline void put32(void *where, uint32_t v)
 {
-    v = cbor_htonl(v);
-    memcpy(where, &v, sizeof(v));
+    uint32_t v_be = cbor_htonl(v);
+    memcpy(where, &v_be, sizeof(v_be));
 }
 
 static inline void put64(void *where, uint64_t v)
 {
-    v = cbor_htonll(v);
-    memcpy(where, &v, sizeof(v));
+    uint64_t v_be = cbor_htonll(v);
+    memcpy(where, &v_be, sizeof(v_be));
 }
 
 static inline bool would_overflow(CborEncoder *encoder, size_t len)
