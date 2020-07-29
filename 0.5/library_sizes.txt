@@ -37,7 +37,7 @@ linux-gcc-no-math:
 macx-clang:
 __TEXT	__DATA	__OBJC	others	dec	hex
 1733	0	0	519	2252	8cc	lib/libtinycbor.a(cborerrorstrings.o)
-1739	0	0	3184	4923	133b	lib/libtinycbor.a(cborencoder.o)
+1739	0	0	3187	4926	133e	lib/libtinycbor.a(cborencoder.o)
 74	0	0	560	634	27a	lib/libtinycbor.a(cborencoder_close_container_checked.o)
 3769	0	0	6261	10030	272e	lib/libtinycbor.a(cborparser.o)
 3077	0	0	3649	6726	1a46	lib/libtinycbor.a(cborpretty.o)
