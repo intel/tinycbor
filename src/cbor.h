@@ -208,6 +208,7 @@ struct CborEncoder
         uint8_t *ptr;
         ptrdiff_t bytes_needed;
     } data;
+    uint8_t *start;
     const uint8_t *end;
     size_t remaining;
     int flags;
@@ -227,6 +228,7 @@ CBOR_INLINE_API CborError cbor_encode_text_stringz(CborEncoder *encoder, const c
 { return cbor_encode_text_string(encoder, string, strlen(string)); }
 CBOR_API CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length);
 CBOR_API CborError cbor_encode_floating_point(CborEncoder *encoder, CborType fpType, const void *value);
+
 
 CBOR_INLINE_API CborError cbor_encode_boolean(CborEncoder *encoder, bool value)
 { return cbor_encode_simple_value(encoder, (int)value - 1 + (CborBooleanType & 0x1f)); }
@@ -261,6 +263,9 @@ CBOR_INLINE_API size_t cbor_encoder_get_extra_bytes_needed(const CborEncoder *en
 {
     return encoder->end ? 0 : (size_t)encoder->data.bytes_needed;
 }
+
+CBOR_INLINE_API void cbor_encoder_reset(CborEncoder *encoder)
+{ encoder->data.ptr = encoder->start; }
 
 /* Parser API */
 
