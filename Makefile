@@ -10,6 +10,8 @@ CFLAGS = -Wall -Wextra
 LDFLAGS_GCSECTIONS = -Wl,--gc-sections
 LDFLAGS += $(if $(gc_sections-pass),$(LDFLAGS_GCSECTIONS))
 LDLIBS = -lm
+CFLAGS += $(CONFIGURE_FLAGS)
+LDFLAGS += $(CONFIGURE_FLAGS)
 
 GIT_ARCHIVE = git archive --prefix="$(PACKAGE)/" -9
 INSTALL = install
