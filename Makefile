@@ -115,9 +115,9 @@ endif
 all: .config \
 	$(if $(subst 0,,$(BUILD_STATIC)),lib/libtinycbor.a) \
 	$(if $(subst 0,,$(BUILD_SHARED)),lib/libtinycbor.so) \
-	$(if $(freestanding-pass),,bin/cbordump) \
+	$(if $(unistd-pass),bin/cbordump,) \
 	tinycbor.pc
-all: $(if $(JSON2CBOR_SOURCES),bin/json2cbor)
+all: $(if $(unistd-pass),$(if $(JSON2CBOR_SOURCES),bin/json2cbor),)
 check: tests/Makefile | $(BINLIBRARY)
 	$(MAKE) -C tests check
 silentcheck: | $(BINLIBRARY)

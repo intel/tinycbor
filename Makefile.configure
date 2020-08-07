@@ -1,5 +1,5 @@
 ALLTESTS = funopen fopencookie gc_sections \
-	   system-cjson cjson freestanding
+	   system-cjson cjson freestanding unistd
 MAKEFILE := $(lastword $(MAKEFILE_LIST))
 OUT :=
 
@@ -12,6 +12,8 @@ PROGRAM-freestanding += \#error Hosted implementation\n
 PROGRAM-freestanding += \#endif\n
 PROGRAM-freestanding += int main() {}
 CCFLAGS-freestanding = $(CFLAGS)
+PROGRAM-unistd = extern int dup(int fd); int main() { return dup(0); }
+CCFLAGS-unistd = $(CFLAGS)
 
 PROGRAM-cjson  = \#include <stdlib.h>\n
 PROGRAM-cjson += \#include <cjson/cJSON.h>\n
