@@ -1,0 +1,236 @@
+#######################################
+# Syntax Coloring Map For tinycbor
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+TinyCBOR	KEYWORD1	TinyCBORPlaceHolder
+Encoder		KEYWORD1	TinyCBOREncoder
+Parser		KEYWORD1	TinyCBORParser
+cborError	KEYWORD1	cborError
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+
+set_encoders	KEYWORD2
+init	KEYWORD2
+get_buffer_size	KEYWORD2
+get_extra_bytes_needed	KEYWORD2
+get_buffer	KEYWORD2
+encode_int	KEYWORD2
+encode_uint	KEYWORD2
+encode_negative_int	KEYWORD2
+encode_byte_string	KEYWORD2
+encode_text_string	KEYWORD2
+encode_text_stringz	KEYWORD2
+encode_tag	KEYWORD2
+encode_simple_value	KEYWORD2
+encode_boolean	KEYWORD2
+encode_null	KEYWORD2
+encode_undefined	KEYWORD2
+encode_floating_point	KEYWORD2
+encode_half_float	KEYWORD2
+encode_float	KEYWORD2
+encode_double	KEYWORD2
+create_array	KEYWORD2
+create_map	KEYWORD2
+close_container	KEYWORD2
+
+
+set_values	KEYWORD2
+get_error	KEYWORD2
+get_depth	KEYWORD2
+is_key	KEYWORD2
+get_value	KEYWORD2
+is_in_map	KEYWORD2
+is_in_array	KEYWORD2
+init	KEYWORD2
+at_end	KEYWORD2
+at_end_of_data	KEYWORD2
+at_end_of_container	KEYWORD2
+get_next_byte	KEYWORD2
+advance_fixed	KEYWORD2
+advance	KEYWORD2
+get_type	KEYWORD2
+is_integer	KEYWORD2
+is_unsigned_integer	KEYWORD2
+is_negative_integer	KEYWORD2
+is_byte_string	KEYWORD2
+is_text_string	KEYWORD2
+is_container	KEYWORD2
+is_array	KEYWORD2
+is_map	KEYWORD2
+is_tag	KEYWORD2
+is_simple_type	KEYWORD2
+is_boolean	KEYWORD2
+is_null	KEYWORD2
+is_undefined	KEYWORD2
+is_half_float	KEYWORD2
+is_float	KEYWORD2
+is_double	KEYWORD2
+is_length_known	KEYWORD2
+is_valid	KEYWORD2
+get_int	KEYWORD2
+get_int_checked	KEYWORD2
+get_int64	KEYWORD2
+get_int64_checked	KEYWORD2
+get_uint64	KEYWORD2
+get_raw_integer	KEYWORD2
+copy_text_string	KEYWORD2
+copy_byte_string	KEYWORD2
+dup_text_string	KEYWORD2
+dup_byte_string	KEYWORD2
+get_string_length	KEYWORD2
+text_string_equals	KEYWORD2
+get_tag	KEYWORD2
+skip_tag	KEYWORD2
+get_boolean	KEYWORD2
+get_simple_type	KEYWORD2
+get_half_float	KEYWORD2
+get_float	KEYWORD2
+get_double	KEYWORD2
+enter_container	KEYWORD2
+leave_container	KEYWORD2
+get_array_length	KEYWORD2
+get_map_length	KEYWORD2
+validate_basic	KEYWORD2
+validate	KEYWORD2
+get_null	KEYWORD2
+skip_undefined	KEYWORD2
+pretty_print	KEYWORD2
+to_json	KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+CborIntegerType	LITERAL1
+CborByteStringType	LITERAL1
+CborTextStringType	LITERAL1
+CborArrayType	LITERAL1
+CborMapType	LITERAL1
+CborTagType	LITERAL1
+CborSimpleType	LITERAL1
+CborBooleanType	LITERAL1
+CborNullType	LITERAL1
+CborUndefinedType	LITERAL1
+CborHalfFloatType	LITERAL1
+CborFloatType	LITERAL1
+CborDoubleType	LITERAL1
+
+CborInvalidType	LITERAL1
+
+CborDateTimeStringTag	LITERAL1
+CborUnixTime_tTag	LITERAL1
+CborPositiveBignumTag	LITERAL1
+CborNegativeBignumTag	LITERAL1
+CborDecimalTag	LITERAL1
+CborBigfloatTag	LITERAL1
+CborCOSE_Encrypt0Tag	LITERAL1
+CborCOSE_Mac0Tag	LITERAL1
+CborCOSE_Sign1Tag	LITERAL1
+CborExpectedBase64urlTag	LITERAL1
+CborExpectedBase64Tag	LITERAL1
+CborExpectedBase16Tag	LITERAL1
+CborEncodedCborTag	LITERAL1
+CborUrlTag	LITERAL1
+CborBase64urlTag	LITERAL1
+CborBase64Tag	LITERAL1
+CborRegularExpressionTag	LITERAL1
+CborMimeMessageTag	LITERAL1
+CborCOSE_EncryptTag	LITERAL1
+CborCOSE_MacTag	LITERAL1
+CborCOSE_SignTag	LITERAL1
+CborSignatureTag	LITERAL1
+
+
+CborNoError	LITERAL1
+
+CborUnknownError	LITERAL1
+CborErrorUnknownLength	LITERAL1
+CborErrorAdvancePastEOF	LITERAL1
+CborErrorIO	LITERAL1
+
+CborErrorGarbageAtEnd	LITERAL1
+CborErrorUnexpectedEOF	LITERAL1
+CborErrorUnexpectedBreak	LITERAL1
+CborErrorUnknownType	LITERAL1
+CborErrorIllegalType	LITERAL1
+CborErrorIllegalNumber	LITERAL1
+CborErrorIllegalSimpleType	LITERAL1
+
+CborErrorUnknownSimpleType	LITERAL1
+CborErrorUnknownTag	LITERAL1
+CborErrorInappropriateTagForType	LITERAL1
+CborErrorDuplicateObjectKeys	LITERAL1
+CborErrorInvalidUtf8TextString	LITERAL1
+CborErrorExcludedType	LITERAL1
+CborErrorExcludedValue	LITERAL1
+CborErrorImproperValue	LITERAL1
+CborErrorOverlongEncoding	LITERAL1
+CborErrorMapKeyNotString	LITERAL1
+CborErrorMapNotSorted	LITERAL1
+CborErrorMapKeysNotUnique	LITERAL1
+
+CborErrorTooManyItems	LITERAL1
+CborErrorTooFewItems	LITERAL1
+
+CborErrorDataTooLarge	LITERAL1
+CborErrorNestingTooDeep	LITERAL1
+CborErrorUnsupportedType	LITERAL1
+
+CborErrorJsonObjectKeyIsAggregate	LITERAL1
+CborErrorJsonObjectKeyNotString	LITERAL1
+CborErrorJsonNotImplemented	LITERAL1
+
+CborErrorOutOfMemory	LITERAL1
+CborErrorInternalError	LITERAL1
+
+
+CborIteratorFlag_IntegerValueTooLarge	LITERAL1
+CborIteratorFlag_NegativeInteger	LITERAL1
+CborIteratorFlag_IteratingStringChunks	LITERAL1
+CborIteratorFlag_UnknownLength	LITERAL1
+CborIteratorFlag_ContainerIsMap	LITERAL1
+CborIteratorFlag_NextIsMapKey	LITERAL1
+CborValidateShortestIntegrals	LITERAL1
+CborValidateShortestFloatingPoint	LITERAL1
+CborValidateShortestNumbers	LITERAL1
+CborValidateNoIndeterminateLength	LITERAL1
+CborValidateMapIsSorted	LITERAL1
+
+CborValidateCanonicalFormat	LITERAL1
+
+CborValidateMapKeysAreUnique	LITERAL1
+CborValidateTagUse	LITERAL1
+CborValidateUtf8	LITERAL1
+
+CborValidateStrictMode	LITERAL1
+
+CborValidateMapKeysAreString	LITERAL1
+CborValidateNoUndefined	LITERAL1
+CborValidateNoTags	LITERAL1
+CborValidateFiniteFloatingPoint	LITERAL1
+
+CborValidateNoUnknownSimpleTypesSA	LITERAL1
+CborValidateNoUnknownSimpleTypes	LITERAL1
+CborValidateNoUnknownTagsSA	LITERAL1
+CborValidateNoUnknownTagsSR	LITERAL1
+CborValidateNoUnknownTags	LITERAL1
+
+CborValidateCompleteData	LITERAL1
+CborValidateStrictest	LITERAL1
+CborValidateBasic	LITERAL1
+CborPrettyNumericEncodingIndicators	LITERAL1
+CborPrettyTextualEncodingIndicators	LITERAL1
+CborPrettyIndicateIndeterminateLength	LITERAL1
+CborPrettyIndicateIndetermineLength	LITERAL1
+CborPrettyIndicateOverlongNumbers	LITERAL1
+CborPrettyShowStringFragments	LITERAL1
+CborPrettyMergeStringFragments	LITERAL1
+CborPrettyDefaultFlags	LITERAL1
