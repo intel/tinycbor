@@ -27,7 +27,25 @@
 #include "cborjson.h"
 #include <locale.h>
 
-extern "C" FILE *open_memstream(char **bufptr, size_t *sizeptr);
+static CborError qstring_stream(void *out, const char *fmt, ...)
+{
+    int n;
+
+    QString* qstr = (QString*)out;
+
+    QString str;
+
+    va_list list;
+    va_start(list, fmt);
+    str.vsprintf(fmt, list);
+    va_end(list);
+
+    qstr->append(str);
+    n = str.length();
+
+    return n < 0 ? CborErrorIO : CborNoError;
+}
+
 
 class tst_ToJson : public QObject
 {
@@ -197,15 +215,11 @@ void addEmptyContainersData()
 
 CborError parseOne(CborValue *it, QString *parsed, int flags)
 {
-    char *buffer;
-    size_t size;
+    QString buffer;
+    CborError err = cbor_value_to_json_stream(qstring_stream, &buffer, it, flags);
 
-    FILE *f = open_memstream(&buffer, &size);
-    CborError err = cbor_value_to_json_advance(f, it, flags);
-    fclose(f);
+    *parsed = buffer;
 
-    *parsed = QString::fromLatin1(buffer);
-    free(buffer);
     return err;
 }
 
