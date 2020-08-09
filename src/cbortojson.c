@@ -147,7 +147,7 @@
  * the keys for the metadata clash with existing keys in the JSON map.
  */
 
-extern FILE *open_memstream(char **bufptr, size_t *sizeptr);
+#define IF_NO_ERROR(e, proc) do { if(!e) { e = proc; } } while(0)
 
 enum ConversionStatusFlags {
     TypeWasNotNative            = 0x100,    /* anything but strings, boolean, null, arrays and maps */
@@ -397,28 +397,6 @@ static CborError tagged_value_to_json(CborStreamFunction stream, void *out, Cbor
     return err;
 }
 
-static CborError stringify_map_key(char **key, CborValue *it, int flags, CborType type)
-{
-    (void)flags;    /* unused */
-    (void)type;     /* unused */
-#ifdef WITHOUT_OPEN_MEMSTREAM
-    (void)key;      /* unused */
-    (void)it;       /* unused */
-    return CborErrorJsonNotImplemented;
-#else
-    size_t size;
-
-    FILE *memstream = open_memstream(key, &size);
-    if (memstream == NULL)
-        return CborErrorOutOfMemory;        /* could also be EMFILE, but it's unlikely */
-    CborError err = cbor_value_to_pretty_advance(memstream, it);
-
-    if (unlikely(fclose(memstream) < 0 || *key == NULL))
-        return CborErrorInternalError;
-    return err;
-#endif
-}
-
 static CborError array_to_json(CborStreamFunction stream, void *out, CborValue *it, int flags, ConversionStatus *status)
 {
     const char *comma = "";
@@ -434,32 +412,49 @@ static CborError array_to_json(CborStreamFunction stream, void *out, CborValue *
     return CborNoError;
 }
 
+static CborError put_string_to_stream(CborStreamFunction stream, void* out, CborValue *it)
+{
+    char *string = NULL;
+    size_t n = 0;
+    CborError err = cbor_value_dup_text_string(it, &string, &n, it);
+    if (err)
+        return err;
+
+    err = stream(out, "%s", string);
+    free(string);
+
+    return err;
+}
+
 static CborError map_to_json(CborStreamFunction stream, void *out, CborValue *it, int flags, ConversionStatus *status)
 {
     const char *comma = "";
-    CborError err;
+    CborError err = CborNoError;
     while (!cbor_value_at_end(it)) {
-        char *key;
+        /* Remember the iterator position for re-read the key value */
+        CborValue it_key = *it;
+
         if (stream(out, "%s", comma))
             return CborErrorIO;
         comma = ",";
 
+        /* first, print the key */
         CborType keyType = cbor_value_get_type(it);
         if (likely(keyType == CborTextStringType)) {
-            size_t n = 0;
-            err = cbor_value_dup_text_string(it, &key, &n, it);
+            IF_NO_ERROR(err, stream(out, "\""));
+            IF_NO_ERROR(err, put_string_to_stream(stream, out, it) );
+            IF_NO_ERROR(err, stream(out, "\":"));
+
+            if (err)
+                return CborErrorIO;
         } else if (flags & CborConvertStringifyMapKeys) {
-            err = stringify_map_key(&key, it, flags, keyType);
+            IF_NO_ERROR(err, stream(out, "\""));
+            IF_NO_ERROR(err, cbor_value_to_pretty_stream(stream, out, it, CborPrettyDefaultFlags));
+            IF_NO_ERROR(err, stream(out, "\":"));
+            if (err)
+                return err;
         } else {
             return CborErrorJsonObjectKeyNotString;
-        }
-        if (err)
-            return err;
-
-        /* first, print the key */
-        if (stream(out, "\"%s\":", key) < 0) {
-            free(key);
-            return CborErrorIO;
         }
 
         /* then, print the value */
@@ -469,18 +464,31 @@ static CborError map_to_json(CborStreamFunction stream, void *out, CborValue *it
         /* finally, print any metadata we may have */
         if (flags & CborConvertAddMetadata) {
             if (!err && keyType != CborTextStringType) {
-                if (stream(out, ",\"%s$keycbordump\":true", key) < 0)
+                /* Might be read the key again in the next if-clause, keep this. */
+                CborValue tmpval = it_key;
+                IF_NO_ERROR(err, stream(out, ",\""));
+                IF_NO_ERROR(err, cbor_value_to_pretty_stream(stream, out, &tmpval, CborPrettyDefaultFlags));
+                IF_NO_ERROR(err, stream(out, "$keycbordump\":true"));
+
+                if(err)
                     err = CborErrorIO;
             }
             if (!err && status->flags) {
-                if (stream(out, ",\"%s$cbor\":{", key) < 0 ||
-                        add_value_metadata(stream, out, valueType, status) != CborNoError ||
-                        stream(out, "%c", '}'))
+                IF_NO_ERROR(err, stream(out, ",\""));
+                if (keyType == CborTextStringType) {
+                    IF_NO_ERROR(err, put_string_to_stream(stream, out, &it_key));
+                } else {
+                    IF_NO_ERROR(err, cbor_value_to_pretty_stream(stream, out, &it_key, CborPrettyDefaultFlags));
+                }
+                IF_NO_ERROR(err, stream(out, "$cbor\":{"));
+                IF_NO_ERROR(err, add_value_metadata(stream, out, valueType, status));
+                IF_NO_ERROR(err, stream(out, "%c", '}'));
+
+                if(err)
                     err = CborErrorIO;
             }
         }
 
-        free(key);
         if (err)
             return err;
     }
