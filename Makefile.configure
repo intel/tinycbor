@@ -1,9 +1,8 @@
-ALLTESTS = open_memstream funopen fopencookie gc_sections \
+ALLTESTS = funopen fopencookie gc_sections \
 	   system-cjson cjson freestanding
 MAKEFILE := $(lastword $(MAKEFILE_LIST))
 OUT :=
 
-PROGRAM-open_memstream = extern int open_memstream(); int main() { return open_memstream(); }
 PROGRAM-funopen = extern int funopen(); int main() { return funopen(); }
 PROGRAM-fopencookie = extern int fopencookie(); int main() { return fopencookie(); }
 PROGRAM-gc_sections = int main() {}
