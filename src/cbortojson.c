@@ -535,6 +535,10 @@ static CborError value_to_json(CborStreamFunction stream, void *out, CborValue *
         double num;     /* JS numbers are IEEE double precision */
         uint64_t val;
         cbor_value_get_raw_integer(it, &val);    /* can't fail */
+#if __AVR__
+#define U64_DBL_CORRECT_ROUND_MAX 18446743523953737727ULL
+        if(val > U64_DBL_CORRECT_ROUND_MAX) val = U64_DBL_CORRECT_ROUND_MAX;
+#endif
         num = (double)val;
 
         if (cbor_value_is_negative_integer(it)) {
