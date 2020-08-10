@@ -144,6 +144,8 @@
  * \value CborPrettyDefaultFlags                Default conversion flags.
  */
 
+#define IF_NO_ERROR(e, proc) { do { if(!e) { e = proc; } } while(0); }
+
 #ifndef CBOR_NO_FLOATING_POINT
 static inline bool convertToUint64(double v, uint64_t *absolute)
 {
@@ -374,12 +376,13 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
         cbor_value_get_raw_integer(it, &val);    /* can't fail */
 
         if (cbor_value_is_unsigned_integer(it)) {
-            err = stream(out, "%" PRIu64, val);
+            err = UINT64_DEC_TO_STREAM(stream, out, val);
         } else {
             /* CBOR stores the negative number X as -1 - X
              * (that is, -1 is stored as 0, -2 as 1 and so forth) */
             if (++val) {                /* unsigned overflow may happen */
-                err = stream(out, "-%" PRIu64, val);
+                IF_NO_ERROR(err, stream(out, "-"));
+                IF_NO_ERROR(err, UINT64_DEC_TO_STREAM(stream, out, val));
             } else {
                 /* overflown
                  *   0xffff`ffff`ffff`ffff + 1 =
@@ -451,7 +454,8 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
     case CborTagType: {
         CborTag tag;
         cbor_value_get_tag(it, &tag);       /* can't fail */
-        err = stream(out, "%" PRIu64 "%s(", tag, get_indicator(it, flags));
+        IF_NO_ERROR(err, UINT64_DEC_TO_STREAM(stream, out, tag));
+        IF_NO_ERROR(err, stream(out, "%s(", get_indicator(it, flags)));
         if (!err)
             err = cbor_value_advance_fixed(it);
         if (!err && recursionsLeft)
@@ -525,7 +529,9 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
         if (convertToUint64(val, &ival)) {
             /* this double value fits in a 64-bit integer, so show it as such
              * (followed by a floating point suffix, to disambiguate) */
-            err = stream(out, "%s%" PRIu64 ".%s", val < 0 ? "-" : "", ival, suffix);
+            IF_NO_ERROR(err, stream(out, "%s", val < 0 ? "-" : ""));
+            IF_NO_ERROR(err, UINT64_DEC_TO_STREAM(stream, out, ival));
+            IF_NO_ERROR(err, stream(out, ".%s", suffix));
         } else {
             /* this number is definitely not a 64-bit integer */
             err = stream(out, "%." DBL_DECIMAL_DIG_STR "g%s", val, suffix);

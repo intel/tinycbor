@@ -104,6 +104,42 @@ static inline double decode_half(unsigned short half)
 #  define CBOR_PARSER_MAX_RECURSIONS 1024
 #endif
 
+static inline CborError uint64_dec_stream(CborStreamFunction stream, void *out, uint64_t val) {
+    static const char digits[] = "0123456789";
+
+    size_t col = 0;
+    for(uint64_t order = 10000000000000000000ULL; order > 0; order /= 10) {
+        uint64_t num = val / order;
+        val -= (num * order);
+
+        if(col==0 && num==0) continue;
+
+        col++;
+        CborError err = stream(out, "%c", digits[num]);
+        if(err) return err;
+    }
+    if(col == 0) stream(out, "0");
+
+    return CborNoError;
+}
+
+static inline CborError uint64_hex_stream(CborStreamFunction stream, void *out, const uint64_t val) {
+    static const char digits[] = "0123456789abcdef";
+
+    size_t col = 0;
+    for(uint8_t order = 64; order > 0; order -= 4) {
+        uint8_t num = (uint8_t)(val>>(order-4) & 0xF);
+        if(col==0 && num==0) continue;
+
+        col++;
+        CborError err = stream(out, "%c", digits[num]);
+        if(err) return err;
+    }
+    if(col == 0) stream(out, "0");
+
+    return CborNoError;
+}
+
 #if defined(__WITH_AVRLIBC__)
 
 #ifndef fpclassify
@@ -112,10 +148,14 @@ static inline double decode_half(unsigned short half)
 #define FP_ZERO 2
 #define FP_SUBNORMAL 3
 #define FP_NORMAL 4
-
 #define fpclassify(x) __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, (x))
 #endif
 
+#define UINT64_DEC_TO_STREAM(x, y, z) uint64_dec_stream(x, y, z)
+#define UINT64_HEX_TO_STREAM(x, y, z) uint64_hex_stream(x, y, z)
+#else
+#define UINT64_DEC_TO_STREAM(x, y, z) x(y, "%" PRIu64, z)
+#define UINT64_HEX_TO_STREAM(x, y, z) x(y, "%" PRIx64, z)
 #endif
 
 /*

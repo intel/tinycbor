@@ -227,7 +227,7 @@ static CborError generic_dump_base64(char **result, CborValue *it, const char al
             val = cbor_ntohl(val);
 #endif
         } else {
-            val = (in[i] << 16) | (in[i + 1] << 8) | in[i + 2];
+            val = (((uint_least32_t)in[i]) << 16) | (in[i + 1] << 8) | in[i + 2];
         }
 
         /* write 4 chars x 6 bits = 24 bits */
@@ -284,14 +284,18 @@ static CborError dump_bytestring_base64url(char **result, CborValue *it)
 
 static CborError add_value_metadata(CborStreamFunction stream, void *out, CborType type, const ConversionStatus *status)
 {
+    CborError err = CborNoError;
     int flags = status->flags;
     if (flags & TypeWasTagged) {
         /* extract the tagged type, which may be JSON native */
         type = flags & FinalTypeMask;
         flags &= ~(FinalTypeMask | TypeWasTagged);
 
-        if (stream(out, "\"tag\":\"%" PRIu64 "\"%s", status->lastTag,
-                    flags & ~TypeWasTagged ? "," : ""))
+        IF_NO_ERROR(err, stream(out, "\"tag\":\""));
+        IF_NO_ERROR(err, UINT64_DEC_TO_STREAM(stream, out, status->lastTag));
+        IF_NO_ERROR(err, stream(out, "\"%s", flags & ~TypeWasTagged ? "," : ""));
+
+        if (err)
             return CborErrorIO;
     }
 
@@ -308,10 +312,14 @@ static CborError add_value_metadata(CborStreamFunction stream, void *out, CborTy
     if (flags & NumberWasInfinite)
         if (stream(out, ",\"v\":\"%sinf\"", flags & NumberWasNegative ? "-" : ""))
             return CborErrorIO;
-    if (flags & NumberPrecisionWasLost)
-        if (stream(out, ",\"v\":\"%c%" PRIx64 "\"", flags & NumberWasNegative ? '-' : '+',
-                    status->originalNumber))
+    if (flags & NumberPrecisionWasLost) {
+        IF_NO_ERROR(err, stream(out, ",\"v\":\"%c", flags & NumberWasNegative ? '-' : '+'));
+        IF_NO_ERROR(err, UINT64_HEX_TO_STREAM(stream, out, status->originalNumber));
+        IF_NO_ERROR(err, stream(out, "\""));
+
+        if(err)
             return CborErrorIO;
+    }
     if (type == CborSimpleType)
         if (stream(out, ",\"v\":%d", (int)status->originalNumber))
             return CborErrorIO;
@@ -344,7 +352,10 @@ static CborError tagged_value_to_json(CborStreamFunction stream, void *out, Cbor
         if (err)
             return err;
 
-        if (stream(out, "{\"tag%" PRIu64 "\":", tag))
+        IF_NO_ERROR(err, stream(out, "{\"tag"));
+        IF_NO_ERROR(err, UINT64_DEC_TO_STREAM(stream, out, tag));
+        IF_NO_ERROR(err, stream(out, "\":"));
+        if (err)
             return CborErrorIO;
 
         CborType type = cbor_value_get_type(it);
@@ -352,9 +363,13 @@ static CborError tagged_value_to_json(CborStreamFunction stream, void *out, Cbor
         if (err)
             return err;
         if (flags & CborConvertAddMetadata && status->flags) {
-            if (stream(out, ",\"tag%" PRIu64 "$cbor\":{", tag) ||
-                    add_value_metadata(stream, out, type, status) != CborNoError ||
-                    stream(out, "%c", '}'))
+            IF_NO_ERROR(err, stream(out, ",\"tag"));
+            IF_NO_ERROR(err, UINT64_DEC_TO_STREAM(stream, out, tag));
+            IF_NO_ERROR(err, stream(out, "$cbor\":{"));
+            IF_NO_ERROR(err, add_value_metadata(stream, out, type, status));
+            IF_NO_ERROR(err, stream(out, "%c", '}'));
+
+            if (err)
                 return CborErrorIO;
         }
         if (stream(out, "%c", '}'))
@@ -497,7 +512,7 @@ static CborError map_to_json(CborStreamFunction stream, void *out, CborValue *it
 
 static CborError value_to_json(CborStreamFunction stream, void *out, CborValue *it, int flags, CborType type, ConversionStatus *status)
 {
-    CborError err;
+    CborError err = CborNoError;
     status->flags = 0;
 
     switch (type) {
@@ -553,7 +568,19 @@ static CborError value_to_json(CborStreamFunction stream, void *out, CborValue *
                 status->originalNumber = val;
             }
         }
-        if (stream(out, "%.0f", num))  /* this number has no fraction, so no decimal points please */
+
+#ifndef __WITH_AVRLIBC__
+        IF_NO_ERROR(err, (stream(out, "%.0f", num)));  /* this number has no fraction, so no decimal points please */
+#else
+        if(num < 0) {
+            IF_NO_ERROR(err, stream(out, "%c", '-'));
+            IF_NO_ERROR(err, UINT64_DEC_TO_STREAM(stream, out, num * (-1)));
+        }
+        else {
+            IF_NO_ERROR(err, UINT64_DEC_TO_STREAM(stream, out, num));
+        }
+#endif
+        if(err)
             return CborErrorIO;
         break;
     }
@@ -642,7 +669,9 @@ static CborError value_to_json(CborStreamFunction stream, void *out, CborValue *
             uint64_t ival = (uint64_t)fabs(val);
             if ((double)ival == fabs(val)) {
                 /* print as integer so we get the full precision */
-                r = stream(out, "%s%" PRIu64, val < 0 ? "-" : "", ival);
+                r = 0;
+                IF_NO_ERROR(r, stream(out, "%s", val < 0 ? "-" : ""));
+                IF_NO_ERROR(r, UINT64_DEC_TO_STREAM(stream, out, ival));
                 status->flags |= TypeWasNotNative;   /* mark this integer number as a double */
             } else {
                 /* this number is definitely not a 64-bit integer */
