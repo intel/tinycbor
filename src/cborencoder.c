@@ -433,11 +433,10 @@ static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shif
  */
 
 /**
- * Appends the text string \a string of length \a length to the CBOR stream
- * provided by \a encoder. CBOR requires that \a string be valid UTF-8, but
- * TinyCBOR makes no verification of correctness.
+ * Appends the byte string \a string of length \a length to the CBOR stream
+ * provided by \a encoder. CBOR byte strings are arbitrary raw data.
  *
- * \sa CborError cbor_encode_text_stringz, cbor_encode_byte_string
+ * \sa cbor_encode_text_stringz, cbor_encode_text_string
  */
 CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length)
 {
@@ -445,10 +444,11 @@ CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, s
 }
 
 /**
- * Appends the byte string \a string of length \a length to the CBOR stream
- * provided by \a encoder. CBOR byte strings are arbitrary raw data.
+ * Appends the text string \a string of length \a length to the CBOR stream
+ * provided by \a encoder. CBOR requires that \a string be valid UTF-8, but
+ * TinyCBOR makes no verification of correctness.
  *
- * \sa cbor_encode_text_stringz, cbor_encode_text_string
+ * \sa CborError cbor_encode_text_stringz, cbor_encode_byte_string
  */
 CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size_t length)
 {
