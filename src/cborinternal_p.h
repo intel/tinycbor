@@ -104,6 +104,20 @@ static inline double decode_half(unsigned short half)
 #  define CBOR_PARSER_MAX_RECURSIONS 1024
 #endif
 
+#if defined(__WITH_AVRLIBC__)
+
+#ifndef fpclassify
+#define FP_NAN 0
+#define FP_INFINITE 1
+#define FP_ZERO 2
+#define FP_SUBNORMAL 3
+#define FP_NORMAL 4
+
+#define fpclassify(x) __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, (x))
+#endif
+
+#endif
+
 /*
  * CBOR Major types
  * Encoded in the high 3 bits of the descriptor byte
