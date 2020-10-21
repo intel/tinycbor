@@ -43,8 +43,6 @@ endif
 INSTALL_TARGETS += $(bindir)/cbordump
 ifeq ($(BUILD_SHARED),1)
 BINLIBRARY=lib/libtinycbor.so
-INSTALL_TARGETS += $(libdir)/libtinycbor.so
-INSTALL_TARGETS += $(libdir)/libtinycbor.so.$(SOVERSION)
 INSTALL_TARGETS += $(libdir)/libtinycbor.so.$(VERSION)
 endif
 ifeq ($(BUILD_STATIC),1)
@@ -190,8 +188,15 @@ install-strip:
 	$(MAKE) -f $(MAKEFILE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
 install: $(INSTALL_TARGETS:%=$(DESTDIR)%)
+ifeq ($(BUILD_SHARED),1)
+	ln -sf libtinycbor.so.$(VERSION) $(DESTDIR)$(libdir)/libtinycbor.so
+	ln -sf libtinycbor.so.$(VERSION) $(DESTDIR)$(libdir)/libtinycbor.so.$(SOVERSION)
+endif
+
 uninstall:
 	$(RM) $(INSTALL_TARGETS:%=$(DESTDIR)%)
+	$(RM) $(DESTDIR)$(libdir)/libtinycbor.so
+	$(RM) $(DESTDIR)$(libdir)/libtinycbor.so.$(SOVERSION)
 
 mostlyclean:
 	$(RM) $(TINYCBOR_SOURCES:.c=.o)
