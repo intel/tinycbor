@@ -3,4 +3,4 @@
    1098	      0	      0	   1098	    44a	cborencoder.o (ex lib/libtinycbor.a)
      53	      0	      0	     53	     35	cborencoder_close_container_checked.o (ex lib/libtinycbor.a)
    3098	      0	      0	   3098	    c1a	cborparser.o (ex lib/libtinycbor.a)
-   2713	      0	      0	   2713	    a99	cborpretty.o (ex lib/libtinycbor.a)
+   2715	      0	      0	   2715	    a9b	cborpretty.o (ex lib/libtinycbor.a)
