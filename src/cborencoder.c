@@ -65,7 +65,7 @@
  * \code
  *      uint8_t buf[16];
  *      CborEncoder encoder;
- *      cbor_encoder_init(&encoder, &buf, sizeof(buf), 0);
+ *      cbor_encoder_init(&encoder, buf, sizeof(buf), 0);
  *      cbor_encode_int(&encoder, some_value);
  * \endcode
  *
@@ -117,16 +117,16 @@
  *      CborEncoder encoder, mapEncoder;
  *      cbor_encoder_init(&encoder, buf, sizeof(buf), 0);
  *      err = cbor_encoder_create_map(&encoder, &mapEncoder, 1);
- *      if (!err)
+ *      if (err)
  *          return err;
  *      err = cbor_encode_text_stringz(&mapEncoder, "foo");
- *      if (!err)
+ *      if (err)
  *          return err;
  *      err = cbor_encode_boolean(&mapEncoder, some_value);
- *      if (!err)
+ *      if (err)
  *          return err;
  *      err = cbor_encoder_close_container_checked(&encoder, &mapEncoder);
- *      if (!err)
+ *      if (err)
  *          return err;
  *
  *      size_t len = cbor_encoder_get_buffer_size(&encoder, buf);
@@ -157,7 +157,7 @@
  *
  *         cbor_encoder_init(&encoder, buf, size, 0);
  *         err = cbor_encoder_create_array(&encoder, &arrayEncoder, n);
- *         cbor_assert(err);         // can't fail, the buffer is always big enough
+ *         cbor_assert(!err);         // can't fail, the buffer is always big enough
  *
  *         for (i = 0; i < n; ++i) {
  *             err = cbor_encode_text_stringz(&arrayEncoder, strings[i]);
@@ -166,7 +166,7 @@
  *         }
  *
  *         err = cbor_encoder_close_container_checked(&encoder, &arrayEncoder);
- *         cbor_assert(err);         // shouldn't fail!
+ *         cbor_assert(!err);         // shouldn't fail!
  *
  *         more_bytes = cbor_encoder_get_extra_bytes_needed(encoder);
  *         if (more_size) {
@@ -210,8 +210,8 @@ void cbor_encoder_init(CborEncoder *encoder, uint8_t *buffer, size_t size, int f
 
 static inline void put16(void *where, uint16_t v)
 {
-    v = cbor_htons(v);
-    memcpy(where, &v, sizeof(v));
+    uint16_t v_be = cbor_htons(v);
+    memcpy(where, &v_be, sizeof(v_be));
 }
 
 /* Note: Since this is currently only used in situations where OOM is the only
@@ -227,14 +227,14 @@ static inline bool isOomError(CborError err)
 
 static inline void put32(void *where, uint32_t v)
 {
-    v = cbor_htonl(v);
-    memcpy(where, &v, sizeof(v));
+    uint32_t v_be = cbor_htonl(v);
+    memcpy(where, &v_be, sizeof(v_be));
 }
 
 static inline void put64(void *where, uint64_t v)
 {
-    v = cbor_htonll(v);
-    memcpy(where, &v, sizeof(v));
+    uint64_t v_be = cbor_htonll(v);
+    memcpy(where, &v_be, sizeof(v_be));
 }
 
 static inline bool would_overflow(CborEncoder *encoder, size_t len)
@@ -433,11 +433,10 @@ static CborError encode_string(CborEncoder *encoder, size_t length, uint8_t shif
  */
 
 /**
- * Appends the text string \a string of length \a length to the CBOR stream
- * provided by \a encoder. CBOR requires that \a string be valid UTF-8, but
- * TinyCBOR makes no verification of correctness.
+ * Appends the byte string \a string of length \a length to the CBOR stream
+ * provided by \a encoder. CBOR byte strings are arbitrary raw data.
  *
- * \sa CborError cbor_encode_text_stringz, cbor_encode_byte_string
+ * \sa cbor_encode_text_stringz, cbor_encode_text_string
  */
 CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, size_t length)
 {
@@ -445,10 +444,11 @@ CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, s
 }
 
 /**
- * Appends the byte string \a string of length \a length to the CBOR stream
- * provided by \a encoder. CBOR byte strings are arbitrary raw data.
+ * Appends the text string \a string of length \a length to the CBOR stream
+ * provided by \a encoder. CBOR requires that \a string be valid UTF-8, but
+ * TinyCBOR makes no verification of correctness.
  *
- * \sa cbor_encode_text_stringz, cbor_encode_text_string
+ * \sa CborError cbor_encode_text_stringz, cbor_encode_byte_string
  */
 CborError cbor_encode_text_string(CborEncoder *encoder, const char *string, size_t length)
 {
@@ -540,11 +540,10 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
  */
 CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
 {
-    if (encoder->end)
-        encoder->data.ptr = containerEncoder->data.ptr;
-    else
-        encoder->data.bytes_needed = containerEncoder->data.bytes_needed;
+    // synchronise buffer state with that of the container
     encoder->end = containerEncoder->end;
+    encoder->data = containerEncoder->data;
+
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
         return append_byte_to_buffer(encoder, BreakByte);
 
@@ -553,6 +552,7 @@ CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *
 
     if (!encoder->end)
         return CborErrorOutOfMemory;    /* keep the state */
+
     return CborNoError;
 }
 
