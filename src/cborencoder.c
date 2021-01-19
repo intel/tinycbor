@@ -510,7 +510,7 @@ CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEnco
  * The number of pair of items inserted into the map must be exactly \a length
  * items, otherwise the stream is invalid. If the number is not known
  * when creating the map, the constant \ref CborIndefiniteLength may be passed as
- * length instead.
+ * length instead, and an indefinite length map is created.
  *
  * \b{Implementation limitation:} TinyCBOR cannot encode more than SIZE_MAX/2
  * key-value pairs in the stream. If the length \a length is larger than this
