@@ -482,7 +482,7 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
 }
 
 /**
- * Creates a CBOR array in the CBOR stream provided by \a encoder and
+ * Creates a CBOR array in the CBOR stream provided by \a parentEncoder and
  * initializes \a arrayEncoder so that items can be added to the array using
  * the CborEncoder functions. The array must be terminated by calling either
  * cbor_encoder_close_container() or cbor_encoder_close_container_checked()
@@ -495,13 +495,13 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
  *
  * \sa cbor_encoder_create_map
  */
-CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEncoder, size_t length)
+CborError cbor_encoder_create_array(CborEncoder *parentEncoder, CborEncoder *arrayEncoder, size_t length)
 {
-    return create_container(encoder, arrayEncoder, length, ArrayType << MajorTypeShift);
+    return create_container(parentEncoder, arrayEncoder, length, ArrayType << MajorTypeShift);
 }
 
 /**
- * Creates a CBOR map in the CBOR stream provided by \a encoder and
+ * Creates a CBOR map in the CBOR stream provided by \a parentEncoder and
  * initializes \a mapEncoder so that items can be added to the map using
  * the CborEncoder functions. The map must be terminated by calling either
  * cbor_encoder_close_container() or cbor_encoder_close_container_checked()
@@ -519,11 +519,11 @@ CborError cbor_encoder_create_array(CborEncoder *encoder, CborEncoder *arrayEnco
  *
  * \sa cbor_encoder_create_array
  */
-CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder, size_t length)
+CborError cbor_encoder_create_map(CborEncoder *parentEncoder, CborEncoder *mapEncoder, size_t length)
 {
     if (length != CborIndefiniteLength && length > SIZE_MAX / 2)
         return CborErrorDataTooLarge;
-    return create_container(encoder, mapEncoder, length, MapType << MajorTypeShift);
+    return create_container(parentEncoder, mapEncoder, length, MapType << MajorTypeShift);
 }
 
 /**
@@ -538,19 +538,19 @@ CborError cbor_encoder_create_map(CborEncoder *encoder, CborEncoder *mapEncoder,
  *
  * \sa cbor_encoder_create_array(), cbor_encoder_create_map()
  */
-CborError cbor_encoder_close_container(CborEncoder *encoder, const CborEncoder *containerEncoder)
+CborError cbor_encoder_close_container(CborEncoder *parentEncoder, const CborEncoder *containerEncoder)
 {
     // synchronise buffer state with that of the container
-    encoder->end = containerEncoder->end;
-    encoder->data = containerEncoder->data;
+    parentEncoder->end = containerEncoder->end;
+    parentEncoder->data = containerEncoder->data;
 
     if (containerEncoder->flags & CborIteratorFlag_UnknownLength)
-        return append_byte_to_buffer(encoder, BreakByte);
+        return append_byte_to_buffer(parentEncoder, BreakByte);
 
     if (containerEncoder->remaining != 1)
         return containerEncoder->remaining == 0 ? CborErrorTooManyItems : CborErrorTooFewItems;
 
-    if (!encoder->end)
+    if (!parentEncoder->end)
         return CborErrorOutOfMemory;    /* keep the state */
 
     return CborNoError;
