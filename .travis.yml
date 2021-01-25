@@ -1,3 +1,11 @@
+env:
+  - BUILD_DOCS=false
+jobs:
+  include:
+    - # only build docs on master
+      if: branch = master
+      env: BUILD_DOCS=true
+
 language: cpp
 matrix:
   include:
@@ -81,4 +89,5 @@ script:
         (cd tests && make TESTARGS=-silent check -k
         TESTRUNNER=`which valgrind 2>/dev/null`)
   - make -s clean
-  - ./scripts/update-docs.sh
+  - [ $BUILD_DOCS ] && ./scripts/update-docs.sh
+
