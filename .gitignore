@@ -79,3 +79,5 @@ src/cjson
 src/doxygen.log
 !/Makefile
 .config
+build/
+.vscode/
