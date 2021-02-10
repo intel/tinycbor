@@ -33,16 +33,8 @@ ExternalProject_Add(cjson
     CMAKE_ARGS -DBUILD_SHARED_AND_STATIC_LIBS=ON
 )
 
-find_library(CJSON_LIB
-    NAME
-        libcjson.a
-    HINTS
-        "/usr/lib"
-        "/usr/local/lib"
-)
-
 target_link_libraries(json2cbor
     PRIVATE
-        ${CJSON_LIB}
+        libcjson.a
         intel::tinycbor
 )
