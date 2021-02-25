@@ -43,5 +43,5 @@ __TEXT	__DATA	__OBJC	others	dec	hex
 3077	0	0	3659	6736	1a50	lib/libtinycbor.a(cborpretty.o)
 203	0	0	571	774	306	lib/libtinycbor.a(cborparser_dup_string.o)
 379	0	0	754	1133	46d	lib/libtinycbor.a(cborpretty_stdio.o)
-3876	0	0	4543	8419	20e3	lib/libtinycbor.a(cbortojson.o)
+3928	0	0	4547	8475	211b	lib/libtinycbor.a(cbortojson.o)
 2624	0	0	3568	6192	1830	lib/libtinycbor.a(cborvalidation.o)
