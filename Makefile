@@ -93,18 +93,6 @@ TINYCBOR_SOURCES = \
 	src/cbortojson.c \
 	src/cborvalidation.c \
 #
-# if open_memstream is unavailable on the system, try to implement our own
-# version using funopen or fopencookie
-ifeq ($(open_memstream-pass),)
-  ifeq ($(funopen-pass)$(fopencookie-pass),)
-    CFLAGS += -DWITHOUT_OPEN_MEMSTREAM
-    ifeq ($(wildcard .config),.config)
-        $(warning warning: funopen and fopencookie unavailable, open_memstream can not be implemented and conversion to JSON will not work properly!)
-    endif
-  else
-    TINYCBOR_SOURCES += src/open_memstream.c
-  endif
-endif
 endif
 
 # json2cbor depends on an external library (cjson)

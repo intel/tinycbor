@@ -47,6 +47,7 @@ enum CborToJsonFlags
     CborConvertDefaultFlags = 0
 };
 
+CBOR_API CborError cbor_value_to_json_stream(CborStreamFunction stream, void* token, CborValue *it, int flags);
 CBOR_API CborError cbor_value_to_json_advance(FILE *out, CborValue *value, int flags);
 CBOR_INLINE_API CborError cbor_value_to_json(FILE *out, const CborValue *value, int flags)
 {

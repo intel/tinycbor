@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 /**
  * \defgroup CborToJson Converting CBOR to JSON
@@ -146,7 +147,7 @@
  * the keys for the metadata clash with existing keys in the JSON map.
  */
 
-extern FILE *open_memstream(char **bufptr, size_t *sizeptr);
+#define IF_NO_ERROR(e, proc) do { if(!e) { e = proc; } } while(0)
 
 enum ConversionStatusFlags {
     TypeWasNotNative            = 0x100,    /* anything but strings, boolean, null, arrays and maps */
@@ -165,7 +166,7 @@ typedef struct ConversionStatus {
     int flags;
 } ConversionStatus;
 
-static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType type, ConversionStatus *status);
+static CborError value_to_json(CborStreamFunction stream, void *token, CborValue *it, int flags, CborType type, ConversionStatus *status);
 
 static CborError dump_bytestring_base16(char **result, CborValue *it)
 {
@@ -290,7 +291,7 @@ static CborError dump_bytestring_base64url(char **result, CborValue *it)
     return generic_dump_base64(result, it, alphabet);
 }
 
-static CborError add_value_metadata(FILE *out, CborType type, const ConversionStatus *status)
+static CborError add_value_metadata(CborStreamFunction stream, void *out, CborType type, const ConversionStatus *status)
 {
     int flags = status->flags;
     if (flags & TypeWasTagged) {
@@ -298,8 +299,8 @@ static CborError add_value_metadata(FILE *out, CborType type, const ConversionSt
         type = flags & FinalTypeMask;
         flags &= ~(FinalTypeMask | TypeWasTagged);
 
-        if (fprintf(out, "\"tag\":\"%" PRIu64 "\"%s", status->lastTag,
-                    flags & ~TypeWasTagged ? "," : "") < 0)
+        if (stream(out, "\"tag\":\"%" PRIu64 "\"%s", status->lastTag,
+                    flags & ~TypeWasTagged ? "," : ""))
             return CborErrorIO;
     }
 
@@ -307,21 +308,21 @@ static CborError add_value_metadata(FILE *out, CborType type, const ConversionSt
         return CborNoError;
 
     /* print at least the type */
-    if (fprintf(out, "\"t\":%d", type) < 0)
+    if (stream(out, "\"t\":%d", type))
         return CborErrorIO;
 
     if (flags & NumberWasNaN)
-        if (fprintf(out, ",\"v\":\"nan\"") < 0)
+        if (stream(out, ",\"v\":\"nan\""))
             return CborErrorIO;
     if (flags & NumberWasInfinite)
-        if (fprintf(out, ",\"v\":\"%sinf\"", flags & NumberWasNegative ? "-" : "") < 0)
+        if (stream(out, ",\"v\":\"%sinf\"", flags & NumberWasNegative ? "-" : ""))
             return CborErrorIO;
     if (flags & NumberPrecisionWasLost)
-        if (fprintf(out, ",\"v\":\"%c%" PRIx64 "\"", flags & NumberWasNegative ? '-' : '+',
-                    status->originalNumber) < 0)
+        if (stream(out, ",\"v\":\"%c%" PRIx64 "\"", flags & NumberWasNegative ? '-' : '+',
+                    status->originalNumber))
             return CborErrorIO;
     if (type == CborSimpleType)
-        if (fprintf(out, ",\"v\":%d", (int)status->originalNumber) < 0)
+        if (stream(out, ",\"v\":%d", (int)status->originalNumber))
             return CborErrorIO;
     return CborNoError;
 }
@@ -341,7 +342,7 @@ static CborError find_tagged_type(CborValue *it, CborTag *tag, CborType *type)
     return err;
 }
 
-static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags, ConversionStatus *status)
+static CborError tagged_value_to_json(CborStreamFunction stream, void *out, CborValue *it, int flags, ConversionStatus *status)
 {
     CborTag tag;
     CborError err;
@@ -352,20 +353,20 @@ static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags, Conve
         if (err)
             return err;
 
-        if (fprintf(out, "{\"tag%" PRIu64 "\":", tag) < 0)
+        if (stream(out, "{\"tag%" PRIu64 "\":", tag))
             return CborErrorIO;
 
         CborType type = cbor_value_get_type(it);
-        err = value_to_json(out, it, flags, type, status);
+        err = value_to_json(stream, out, it, flags, type, status);
         if (err)
             return err;
         if (flags & CborConvertAddMetadata && status->flags) {
-            if (fprintf(out, ",\"tag%" PRIu64 "$cbor\":{", tag) < 0 ||
-                    add_value_metadata(out, type, status) != CborNoError ||
-                    fputc('}', out) < 0)
+            if (stream(out, ",\"tag%" PRIu64 "$cbor\":{", tag) ||
+                    add_value_metadata(stream, out, type, status) != CborNoError ||
+                    stream(out, "%c", '}'))
                 return CborErrorIO;
         }
-        if (fputc('}', out) < 0)
+        if (stream(out, "%c", '}'))
             return CborErrorIO;
         status->flags = TypeWasNotNative | CborTagType;
         return CborNoError;
@@ -393,109 +394,117 @@ static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags, Conve
         }
         if (err)
             return err;
-        err = fprintf(out, "\"%s%s\"", pre, str) < 0 ? CborErrorIO : CborNoError;
+        err = stream(out, "\"%s%s\"", pre, str);
         free(str);
         status->flags = TypeWasNotNative | TypeWasTagged | CborByteStringType;
         return err;
     }
 
     /* no special handling */
-    err = value_to_json(out, it, flags, type, status);
+    err = value_to_json(stream, out, it, flags, type, status);
     status->flags |= TypeWasTagged | type;
     return err;
 }
 
-static CborError stringify_map_key(char **key, CborValue *it, int flags, CborType type)
-{
-    (void)flags;    /* unused */
-    (void)type;     /* unused */
-#ifdef WITHOUT_OPEN_MEMSTREAM
-    (void)key;      /* unused */
-    (void)it;       /* unused */
-    return CborErrorJsonNotImplemented;
-#else
-    size_t size;
-
-    FILE *memstream = open_memstream(key, &size);
-    if (memstream == NULL)
-        return CborErrorOutOfMemory;        /* could also be EMFILE, but it's unlikely */
-    CborError err = cbor_value_to_pretty_advance(memstream, it);
-
-    if (unlikely(fclose(memstream) < 0 || *key == NULL))
-        return CborErrorInternalError;
-    return err;
-#endif
-}
-
-static CborError array_to_json(FILE *out, CborValue *it, int flags, ConversionStatus *status)
+static CborError array_to_json(CborStreamFunction stream, void *out, CborValue *it, int flags, ConversionStatus *status)
 {
     const char *comma = "";
     while (!cbor_value_at_end(it)) {
-        if (fprintf(out, "%s", comma) < 0)
+        if (stream(out, "%s", comma))
             return CborErrorIO;
         comma = ",";
 
-        CborError err = value_to_json(out, it, flags, cbor_value_get_type(it), status);
+        CborError err = value_to_json(stream, out, it, flags, cbor_value_get_type(it), status);
         if (err)
             return err;
     }
     return CborNoError;
 }
 
-static CborError map_to_json(FILE *out, CborValue *it, int flags, ConversionStatus *status)
+static CborError put_string_to_stream(CborStreamFunction stream, void* out, CborValue *it)
+{
+    char *string = NULL;
+    size_t n = 0;
+    CborError err = cbor_value_dup_text_string(it, &string, &n, it);
+    if (err)
+        return err;
+
+    err = stream(out, "%s", string);
+    free(string);
+
+    return err;
+}
+
+static CborError map_to_json(CborStreamFunction stream, void *out, CborValue *it, int flags, ConversionStatus *status)
 {
     const char *comma = "";
-    CborError err;
+    CborError err = CborNoError;
     while (!cbor_value_at_end(it)) {
-        char *key;
-        if (fprintf(out, "%s", comma) < 0)
+        /* Remember the iterator position for re-read the key value */
+        CborValue it_key = *it;
+
+        if (stream(out, "%s", comma))
             return CborErrorIO;
         comma = ",";
 
+        /* first, print the key */
         CborType keyType = cbor_value_get_type(it);
         if (likely(keyType == CborTextStringType)) {
-            size_t n = 0;
-            err = cbor_value_dup_text_string(it, &key, &n, it);
+            IF_NO_ERROR(err, stream(out, "\""));
+            IF_NO_ERROR(err, put_string_to_stream(stream, out, it) );
+            IF_NO_ERROR(err, stream(out, "\":"));
+
+            if (err)
+                return CborErrorIO;
         } else if (flags & CborConvertStringifyMapKeys) {
-            err = stringify_map_key(&key, it, flags, keyType);
+            IF_NO_ERROR(err, stream(out, "\""));
+            IF_NO_ERROR(err, cbor_value_to_pretty_stream(stream, out, it, CborPrettyDefaultFlags));
+            IF_NO_ERROR(err, stream(out, "\":"));
+            if (err)
+                return err;
         } else {
             return CborErrorJsonObjectKeyNotString;
-        }
-        if (err)
-            return err;
-
-        /* first, print the key */
-        if (fprintf(out, "\"%s\":", key) < 0) {
-            free(key);
-            return CborErrorIO;
         }
 
         /* then, print the value */
         CborType valueType = cbor_value_get_type(it);
-        err = value_to_json(out, it, flags, valueType, status);
+        err = value_to_json(stream, out, it, flags, valueType, status);
 
         /* finally, print any metadata we may have */
         if (flags & CborConvertAddMetadata) {
             if (!err && keyType != CborTextStringType) {
-                if (fprintf(out, ",\"%s$keycbordump\":true", key) < 0)
+                /* Might be read the key again in the next if-clause, keep this. */
+                CborValue tmpval = it_key;
+                IF_NO_ERROR(err, stream(out, ",\""));
+                IF_NO_ERROR(err, cbor_value_to_pretty_stream(stream, out, &tmpval, CborPrettyDefaultFlags));
+                IF_NO_ERROR(err, stream(out, "$keycbordump\":true"));
+
+                if(err)
                     err = CborErrorIO;
             }
             if (!err && status->flags) {
-                if (fprintf(out, ",\"%s$cbor\":{", key) < 0 ||
-                        add_value_metadata(out, valueType, status) != CborNoError ||
-                        fputc('}', out) < 0)
+                IF_NO_ERROR(err, stream(out, ",\""));
+                if (keyType == CborTextStringType) {
+                    IF_NO_ERROR(err, put_string_to_stream(stream, out, &it_key));
+                } else {
+                    IF_NO_ERROR(err, cbor_value_to_pretty_stream(stream, out, &it_key, CborPrettyDefaultFlags));
+                }
+                IF_NO_ERROR(err, stream(out, "$cbor\":{"));
+                IF_NO_ERROR(err, add_value_metadata(stream, out, valueType, status));
+                IF_NO_ERROR(err, stream(out, "%c", '}'));
+
+                if(err)
                     err = CborErrorIO;
             }
         }
 
-        free(key);
         if (err)
             return err;
     }
     return CborNoError;
 }
 
-static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType type, ConversionStatus *status)
+static CborError value_to_json(CborStreamFunction stream, void *out, CborValue *it, int flags, CborType type, ConversionStatus *status)
 {
     CborError err;
     status->flags = 0;
@@ -510,18 +519,18 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
             it->ptr = recursed.ptr;
             return err;       /* parse error */
         }
-        if (fputc(type == CborArrayType ? '[' : '{', out) < 0)
+        if (stream(out, "%c", (type == CborArrayType ? '[' : '{') ))
             return CborErrorIO;
 
         err = (type == CborArrayType) ?
-                  array_to_json(out, &recursed, flags, status) :
-                  map_to_json(out, &recursed, flags, status);
+                  array_to_json(stream, out, &recursed, flags, status) :
+                  map_to_json(stream, out, &recursed, flags, status);
         if (err) {
             it->ptr = recursed.ptr;
             return err;       /* parse error */
         }
 
-        if (fputc(type == CborArrayType ? ']' : '}', out) < 0)
+        if (stream(out, "%c", (type == CborArrayType ? ']' : '}') ))
             return CborErrorIO;
         err = cbor_value_leave_container(it, &recursed);
         if (err)
@@ -549,7 +558,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
                 status->originalNumber = val;
             }
         }
-        if (fprintf(out, "%.0f", num) < 0)  /* this number has no fraction, so no decimal points please */
+        if (stream(out, "%.0f", num))  /* this number has no fraction, so no decimal points please */
             return CborErrorIO;
         break;
     }
@@ -566,39 +575,39 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         }
         if (err)
             return err;
-        err = (fprintf(out, "\"%s\"", str) < 0) ? CborErrorIO : CborNoError;
+        err = (stream(out, "\"%s\"", str));
         free(str);
         return err;
     }
 
     case CborTagType:
-        return tagged_value_to_json(out, it, flags, status);
+        return tagged_value_to_json(stream, out, it, flags, status);
 
     case CborSimpleType: {
         uint8_t simple_type;
         cbor_value_get_simple_type(it, &simple_type);  /* can't fail */
         status->flags = TypeWasNotNative;
         status->originalNumber = simple_type;
-        if (fprintf(out, "\"simple(%" PRIu8 ")\"", simple_type) < 0)
+        if (stream(out, "\"simple(%" PRIu8 ")\"", simple_type))
             return CborErrorIO;
         break;
     }
 
     case CborNullType:
-        if (fprintf(out, "null") < 0)
+        if (stream(out, "null"))
             return CborErrorIO;
         break;
 
     case CborUndefinedType:
         status->flags = TypeWasNotNative;
-        if (fprintf(out, "\"undefined\"") < 0)
+        if (stream(out, "\"undefined\""))
             return CborErrorIO;
         break;
 
     case CborBooleanType: {
         bool val;
         cbor_value_get_boolean(it, &val);       /* can't fail */
-        if (fprintf(out, val ? "true" : "false") < 0)
+        if (stream(out, val ? "true" : "false"))
             return CborErrorIO;
         break;
     }
@@ -630,7 +639,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
 
         int r = fpclassify(val);
         if (r == FP_NAN || r == FP_INFINITE) {
-            if (fprintf(out, "null") < 0)
+            if (stream(out, "null"))
                 return CborErrorIO;
             status->flags |= r == FP_NAN ? NumberWasNaN :
                                            NumberWasInfinite | (val < 0 ? NumberWasNegative : 0);
@@ -638,13 +647,13 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
             uint64_t ival = (uint64_t)fabs(val);
             if ((double)ival == fabs(val)) {
                 /* print as integer so we get the full precision */
-                r = fprintf(out, "%s%" PRIu64, val < 0 ? "-" : "", ival);
+                r = stream(out, "%s%" PRIu64, val < 0 ? "-" : "", ival);
                 status->flags |= TypeWasNotNative;   /* mark this integer number as a double */
             } else {
                 /* this number is definitely not a 64-bit integer */
-                r = fprintf(out, "%." DBL_DECIMAL_DIG_STR "g", val);
+                r = stream(out, "%." DBL_DECIMAL_DIG_STR "g", val);
             }
-            if (r < 0)
+            if (r)
                 return CborErrorIO;
         }
         break;
@@ -690,6 +699,40 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
  */
 
 /**
+ * Converts the current CBOR type pointed by \a value to JSON and writes that
+ * to the stream by calling the \a streamFunction. If an error occurs,
+ * this function returns an error code similar to \ref CborParsing.
+ * The \a flags parameter indicates one or more of the flags from CborToJsonFlags
+ * that control the conversion.
+ *
+ * If no error ocurred, this function advances \a value to the next element.
+ *
+ * The \a streamFunction function will be called with the \a token value as the
+ * first parameter and a printf-style format string as the second, with a variable
+ * number of further parameters.
+ *
+ * \sa cbor_value_to_pretty_stream(), cbor_value_to_json_advance()
+ */
+
+CborError cbor_value_to_json_stream(CborStreamFunction streamFunction, void *token, CborValue *value, int flags)
+{
+    ConversionStatus status;
+    return value_to_json(streamFunction, token, value, flags, cbor_value_get_type(value), &status);
+}
+
+static CborError cborjson_fprintf(void *out, const char *fmt, ...)
+{
+    int n;
+
+    va_list list;
+    va_start(list, fmt);
+    n = vfprintf((FILE *)out, fmt, list);
+    va_end(list);
+
+    return n < 0 ? CborErrorIO : CborNoError;
+}
+
+/**
  * Converts the current CBOR type pointed to by \a value to JSON and writes that
  * to the \a out stream. If an error occurs, this function returns an error
  * code similar to CborParsing. The \a flags parameter indicates one or more of
@@ -702,7 +745,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
 CborError cbor_value_to_json_advance(FILE *out, CborValue *value, int flags)
 {
     ConversionStatus status;
-    return value_to_json(out, value, flags, cbor_value_get_type(value), &status);
+    return value_to_json(cborjson_fprintf, out, value, flags, cbor_value_get_type(value), &status);
 }
 
 /** @} */
