@@ -990,22 +990,44 @@ static void chunkedStringTest(const QByteArray &data, const QString &concatenate
         err = cbor_value_calculate_string_length(&copy, &n);
         QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
 
-        QByteArray buffer(n, Qt::Uninitialized);
+        size_t nn = n;
+        QByteArray buffer(n + 1, Qt::Uninitialized);
+        QByteArray buffer2(n + 1, Qt::Uninitialized);
+        buffer[int(n)] = 0xff;
+        buffer2[int(n)] = 0xff;
         QString formatted;
         if (cbor_value_is_byte_string(&copy)) {
-            err = cbor_value_copy_byte_string(&copy, (uint8_t *)buffer.data(), &n, nullptr);
+            err = cbor_value_copy_byte_string(&copy, (uint8_t *)buffer.data(), &nn, nullptr);
             QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
-            QCOMPARE(int(n), buffer.size());
+            QCOMPARE(nn, n);
 
-            formatted = QString::fromLatin1("h'" + buffer.toHex() + '\'');
+            formatted = QString::fromLatin1("h'" + QByteArray::fromRawData(buffer.data(), n).toHex() + '\'');
+
+            // repeat by allowing the null termination
+            nn = n + 1;
+            err = cbor_value_copy_byte_string(&copy, (uint8_t *)buffer2.data(), &nn, nullptr);
         } else {
             err = cbor_value_copy_text_string(&copy, buffer.data(), &n, nullptr);
             QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
-            QCOMPARE(int(n), buffer.size());
+            QCOMPARE(nn, n);
 
             formatted = '"' + QString::fromUtf8(buffer.data(), n) + '"';
+
+            // repeat by allowing the null termination
+            nn = n + 1;
+            err = cbor_value_copy_text_string(&copy, buffer2.data(), &nn, nullptr);
         }
+        QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
         QCOMPARE(formatted, concatenated);
+
+        // verify terminators
+        QCOMPARE(buffer.at(n), char(0xff));
+        QCOMPARE(buffer2.at(n), '\0');
+        QCOMPARE(nn, n);
+
+        buffer.truncate(n);
+        buffer2.truncate(n);
+        QCOMPARE(buffer2, buffer);
     }
 
     // confirm that the extra string we appended is still here
