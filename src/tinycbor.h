@@ -10,7 +10,22 @@
 #define TINYCBOR_MAXDEPTH 4
 #endif
 
+/******************************************************
+ * This conditional branch is for supporting new APIs
+ * that use the arduino namespace.
+ * It is assume that Arduino.h is already loaded.
+ * Including this file from cpp files,
+ * Arduino.h may not be loaded.
+ * It it need to load Arduino.h befor including
+ * this file in such case.
+******************************************************/
+#ifdef ARDUINO_API_VERSION
+namespace arduino {
 class Print;
+}
+#else
+class Print;
+#endif
 
 class TinyCBOREncoder {
   CborEncoder *mEncoders;
@@ -155,8 +170,13 @@ public:
   inline nullptr_t get_null() { advance_fixed(); return nullptr; }
   inline int skip_undefined() { return advance_fixed(); }
 
+#ifdef ARDUINO_API_VERSION
+  int pretty_print(arduino::Print& print, int flags=CborPrettyDefaultFlags);
+  int to_json(arduino::Print &print, int flags=CborConvertDefaultFlags);
+#else
   int pretty_print(Print& print, int flags=CborPrettyDefaultFlags);
   int to_json(Print &print, int flags=CborConvertDefaultFlags);
+#endif
 };
 
 class TinyCBORError {

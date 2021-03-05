@@ -1,5 +1,5 @@
+#include <Arduino.h>
 #include <tinycbor.h>
-#include <Print.h>
 #include <stdarg.h>
 #include <cborjson.h>
 
@@ -13,7 +13,11 @@ struct TinyCBORPlaceHolder<TINYCBOR_MAXDEPTH> TinyCBOR = { tinycbor_initializer,
 
 static CborError print_printf(void *out, const char *format, ...)
 {
+#ifdef ARDUINO_API_VERSION
+  arduino::Print* print = reinterpret_cast<arduino::Print*>(out);
+#else
   Print* print = reinterpret_cast<Print*>(out);
+#endif
 
   char buf[256];
   int len;
@@ -70,12 +74,20 @@ int TinyCBORParser::leave_container()
   return _set_err(cbor_value_leave_container(&mValues[mNestLevel], &mValues[mNestLevel+1]));
 }
 
+#ifdef ARDUINO_API_VERSION
+int TinyCBORParser::pretty_print(arduino::Print& print, int flags)
+#else
 int TinyCBORParser::pretty_print(Print& print, int flags)
+#endif
 {
   return cbor_value_to_pretty_stream(print_printf, &print, &mValues[mNestLevel], flags);
 }
 
+#ifdef ARDUINO_API_VERSION
+int TinyCBORParser::to_json(arduino::Print& print, int flags)
+#else
 int TinyCBORParser::to_json(Print& print, int flags)
+#endif
 {
   return cbor_value_to_json_stream(print_printf, &print, &mValues[mNestLevel], flags);
 }
