@@ -1217,6 +1217,29 @@ CborError _cbor_value_copy_string(const CborValue *value, void *buffer,
                  copied_all ? CborNoError : CborErrorOutOfMemory;
 }
 
+CborError _cbor_value_ptr_string(const CborValue *value, void **ptr,
+                                 size_t *len, CborValue *next)
+{
+    CborError err;
+    CborValue tmp;
+
+    cbor_assert(cbor_value_is_length_known(value));
+    if (!next)
+        next = &tmp;
+    *next = *value;
+
+    err = extract_length(next->parser, &next->ptr, len);
+    if (err)
+        return err;
+    if (*len > (size_t)(next->parser->end - next->ptr))
+        return CborErrorUnexpectedEOF;
+
+    *ptr = (void *)next->ptr;
+    next->ptr += *len;
+
+    return CborNoError;
+}
+
 /**
  * Compares the entry \a value with the string \a string and stores the result
  * in \a result. If the value is different from \a string \a result will
