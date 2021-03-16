@@ -425,6 +425,8 @@ CBOR_PRIVATE_API CborError _cbor_value_copy_string(const CborValue *value, void 
                                                    size_t *buflen, CborValue *next);
 CBOR_PRIVATE_API CborError _cbor_value_dup_string(const CborValue *value, void **buffer,
                                                   size_t *buflen, CborValue *next);
+CBOR_PRIVATE_API CborError _cbor_value_ptr_string(const CborValue *value, void **ptr,
+                                                  size_t *len, CborValue *next);
 
 CBOR_API CborError cbor_value_calculate_string_length(const CborValue *value, size_t *length);
 
@@ -452,6 +454,19 @@ CBOR_INLINE_API CborError cbor_value_dup_byte_string(const CborValue *value, uin
 {
     assert(cbor_value_is_byte_string(value));
     return _cbor_value_dup_string(value, (void **)buffer, buflen, next);
+}
+
+CBOR_INLINE_API CborError cbor_value_ptr_text_string(const CborValue *value, char **ptr,
+                                                     size_t *len, CborValue *next)
+{
+    assert(cbor_value_is_text_string(value));
+    return _cbor_value_ptr_string(value, (void **)ptr, len, next);
+}
+CBOR_INLINE_API CborError cbor_value_ptr_byte_string(const CborValue *value, uint8_t **ptr,
+                                                     size_t *len, CborValue *next)
+{
+    assert(cbor_value_is_byte_string(value));
+    return _cbor_value_ptr_string(value, (void **)ptr, len, next);
 }
 
 CBOR_API CborError cbor_value_text_string_equals(const CborValue *value, const char *string, bool *result);
