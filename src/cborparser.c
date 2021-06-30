@@ -332,6 +332,14 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
     return read_uint32(value, 1);
 }
 
+static void cbor_parser_init_common(CborParser *parser, CborValue *it)
+{
+    memset(parser, 0, sizeof(*parser));
+    it->parser = parser;
+    it->remaining = 1;      /* there's one type altogether, usually an array or map */
+    it->flags = 0;
+}
+
 /**
  * Initializes the CBOR parser for parsing \a size bytes beginning at \a
  * buffer. Parsing will use flags set in \a flags. The iterator to the first
@@ -344,24 +352,19 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
  */
 CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, CborParser *parser, CborValue *it)
 {
-    memset(parser, 0, sizeof(*parser));
+    cbor_parser_init_common(parser, it);
     parser->source.end = buffer + size;
     parser->flags = (enum CborParserGlobalFlags)flags;
-    it->parser = parser;
     it->source.ptr = buffer;
-    it->remaining = 1;      /* there's one type altogether, usually an array or map */
-    it->flags = 0;
     return preparse_value(it);
 }
 
 CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *token)
 {
-    memset(parser, 0, sizeof(*parser));
+    cbor_parser_init_common(parser, it);
     parser->source.ops = ops;
     parser->flags = CborParserFlag_ExternalSource;
-    it->parser = parser;
     it->source.token = token;
-    it->remaining = 1;
     return preparse_value(it);
 }
 
