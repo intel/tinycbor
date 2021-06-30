@@ -359,6 +359,23 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, C
     return preparse_value(it);
 }
 
+/**
+ * Initializes the CBOR parser for parsing a document that is read by an
+ * abstract reader interface defined by \a ops. The iterator to the first
+ * element is returned in \a it.
+ *
+ * The \a parser structure needs to remain valid throughout the decoding
+ * process. It is not thread-safe to share one CborParser among multiple
+ * threads iterating at the same time, but the object can be copied so multiple
+ * threads can iterate.
+ *
+ * The \a ops structure defines functions that implement the read process from
+ * the buffer given, see \ref CborParserOperations for further details.
+ *
+ * The \a token is passed as the first argument to all
+ * \ref CborParserOperations methods, and may be used to pass additional
+ * context information to the reader implementation.
+ */
 CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *token)
 {
     cbor_parser_init_common(parser, it);
