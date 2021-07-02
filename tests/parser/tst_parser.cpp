@@ -766,20 +766,20 @@ struct Input {
 
 static const CborParserOperations byteArrayOps = {
     /* can_read_bytes = */ [](const CborValue *value, size_t len) {
-        auto input = static_cast<Input *>(value->source.token);
+        auto input = static_cast<Input *>(value->parser->data.ctx);
         return input->data.size() - input->consumed >= int(len);
     },
     /* read_bytes = */ [](const CborValue *value, void *dst, size_t offset, size_t len) {
-        auto input = static_cast<Input *>(value->source.token);
+        auto input = static_cast<Input *>(value->parser->data.ctx);
         return memcpy(dst, input->data.constData() + input->consumed + offset, len);
     },
     /* advance_bytes = */ [](CborValue *value, size_t len) {
-        auto input = static_cast<Input *>(value->source.token);
+        auto input = static_cast<Input *>(value->parser->data.ctx);
         input->consumed += int(len);
     },
     /* transfer_string = */ [](CborValue *value, const void **userptr, size_t offset, size_t len) {
         // ###
-        auto input = static_cast<Input *>(value->source.token);
+        auto input = static_cast<Input *>(value->parser->data.ctx);
         if (input->data.size() - input->consumed < int(len + offset))
             return CborErrorUnexpectedEOF;
         input->consumed += int(offset);

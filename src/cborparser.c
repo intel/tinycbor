@@ -381,7 +381,7 @@ CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborPa
     cbor_parser_init_common(parser, it);
     parser->ops = ops;
     parser->flags = CborParserFlag_ExternalSource;
-    it->source.token = token;
+    parser->data.ctx = token;
     return preparse_value(it);
 }
 
