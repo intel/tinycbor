@@ -353,7 +353,7 @@ static void cbor_parser_init_common(CborParser *parser, CborValue *it)
 CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, CborParser *parser, CborValue *it)
 {
     cbor_parser_init_common(parser, it);
-    parser->source.end = buffer + size;
+    parser->data.end = buffer + size;
     parser->flags = (enum CborParserGlobalFlags)flags;
     it->source.ptr = buffer;
     return preparse_value(it);
@@ -379,7 +379,7 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, C
 CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *token)
 {
     cbor_parser_init_common(parser, it);
-    parser->source.ops = ops;
+    parser->ops = ops;
     parser->flags = CborParserFlag_ExternalSource;
     it->source.token = token;
     return preparse_value(it);

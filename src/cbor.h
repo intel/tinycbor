@@ -394,8 +394,9 @@ struct CborParser
 {
     union {
         const uint8_t *end;
-        const struct CborParserOperations *ops;
-    } source;
+        void *ctx;
+    } data;
+    const struct CborParserOperations *ops;
     enum CborParserGlobalFlags flags;
 };
 typedef struct CborParser CborParser;
