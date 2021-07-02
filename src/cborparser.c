@@ -439,8 +439,8 @@ CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborPa
     memset(parser, 0, sizeof(*parser));
     parser->ops = ops;
     parser->flags = CborParserFlag_ExternalSource;
+    parser->data.ctx = token;
     it->parser = parser;
-    it->source.token = token;
     it->remaining = 1;
     return preparse_value(it);
 }
