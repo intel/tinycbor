@@ -408,7 +408,7 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
 CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, CborParser *parser, CborValue *it)
 {
     memset(parser, 0, sizeof(*parser));
-    parser->source.end = buffer + size;
+    parser->data.end = buffer + size;
     parser->flags = (enum CborParserGlobalFlags)flags;
     it->parser = parser;
     it->source.ptr = buffer;
@@ -437,7 +437,7 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, C
 CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *token)
 {
     memset(parser, 0, sizeof(*parser));
-    parser->source.ops = ops;
+    parser->ops = ops;
     parser->flags = CborParserFlag_ExternalSource;
     it->parser = parser;
     it->source.token = token;
