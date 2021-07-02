@@ -323,10 +323,10 @@ struct CborValue;
 
 struct CborParserOperations
 {
-    bool (*can_read_bytes)(void *token, size_t len);
-    void *(*read_bytes)(void *token, void *dst, size_t offset, size_t len);
-    void (*advance_bytes)(void *token, size_t len);
-    CborError (*transfer_string)(void *token, const void **userptr, size_t offset, size_t len);
+    bool (*can_read_bytes)(const struct CborValue *value, size_t len);
+    void *(*read_bytes)(const struct CborValue *value, void *dst, size_t offset, size_t len);
+    void (*advance_bytes)(struct CborValue *value, size_t len);
+    CborError (*transfer_string)(struct CborValue *value, const void **userptr, size_t offset, size_t len);
 };
 
 struct CborParser

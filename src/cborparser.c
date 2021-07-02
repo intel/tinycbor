@@ -146,9 +146,7 @@
  * called before \ref read_bytes and \ref transfer_bytes to ensure it is safe
  * to read the requested number of bytes from the reader.
  *
- * \param   token   An opaque object passed to \ref cbor_parser_init_reader
- *                  that may be used to pass context information between the
- *                  \ref CborParserOperations methods.
+ * \param   value   The CBOR value being parsed.
  *
  * \param   len     The number of bytes sought.
  *
@@ -162,9 +160,7 @@
  * the current read position and copies them to \a dst.  The read pointer
  * is *NOT* modified by this operation.
  *
- * \param   token   An opaque object passed to \ref cbor_parser_init_reader
- *                  that may be used to pass context information between the
- *                  \ref CborParserOperations methods.
+ * \param   value   The CBOR value being parsed.
  *
  * \param   dst     The buffer the read bytes will be copied to.
  *
@@ -179,9 +175,10 @@
  * Skips past \a len bytes from the reader without reading them.  The read
  * pointer is advanced in the process.
  *
- * \param   token   An opaque object passed to \ref cbor_parser_init_reader
- *                  that may be used to pass context information between the
- *                  \ref CborParserOperations methods.
+ * Skips past \a len bytes from the reader without reading them.  The read
+ * pointer is advanced in the process.
+ *
+ * \param   value   The CBOR value being parsed.
  *
  * \param   len     The number of bytes skipped.
  *
@@ -195,9 +192,7 @@
  * This routine is used for accessing strings embedded in CBOR documents
  * (both text and binary strings).
  *
- * \param   token   An opaque object passed to \ref cbor_parser_init_reader
- *                  that may be used to pass context information between the
- *                  \ref CborParserOperations methods.
+ * \param   value   The CBOR value being parsed.
  *
  * \param   userptr The pointer that will be updated to reference the location
  *                  of the data in the buffer.
