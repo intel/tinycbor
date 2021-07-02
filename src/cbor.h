@@ -334,25 +334,21 @@ struct CborParserOperations
      * called before \ref read_bytes and \ref transfer_bytes to ensure it is safe
      * to read the requested number of bytes from the reader.
      *
-     * \param   token   An opaque object passed to \ref cbor_parser_init_reader
-     *                  that may be used to pass context information between the
-     *                  \ref CborParserOperations methods.
+     * \param   value   The CBOR value being parsed.
      *
      * \param   len     The number of bytes sought.
      *
      * \retval  true    \a len bytes may be read from the reader.
      * \retval  false   Insufficient data is available to be read at this time.
      */
-    bool (*can_read_bytes)(void *token, size_t len);
+    bool (*can_read_bytes)(const struct CborValue *value, size_t len);
 
     /**
      * Reads \a len bytes from the reader starting at \a offset bytes from
      * the current read position and copies them to \a dst.  The read pointer
      * is *NOT* modified by this operation.
      *
-     * \param   token   An opaque object passed to \ref cbor_parser_init_reader
-     *                  that may be used to pass context information between the
-     *                  \ref CborParserOperations methods.
+     * \param   value   The CBOR value being parsed.
      *
      * \param   dst     The buffer the read bytes will be copied to.
      *
@@ -361,19 +357,17 @@ struct CborParserOperations
      *
      * \param   len     The number of bytes sought.
      */
-    void *(*read_bytes)(void *token, void *dst, size_t offset, size_t len);
+    void *(*read_bytes)(const struct CborValue *value, void *dst, size_t offset, size_t len);
 
     /**
      * Skips past \a len bytes from the reader without reading them.  The read
      * pointer is advanced in the process.
      *
-     * \param   token   An opaque object passed to \ref cbor_parser_init_reader
-     *                  that may be used to pass context information between the
-     *                  \ref CborParserOperations methods.
+     * \param   value   The CBOR value being parsed.
      *
      * \param   len     The number of bytes skipped.
      */
-    void (*advance_bytes)(void *token, size_t len);
+    void (*advance_bytes)(struct CborValue *value, size_t len);
 
     /**
      * Overwrite the user-supplied pointer \a userptr with the address where the
@@ -383,9 +377,7 @@ struct CborParserOperations
      * This routine is used for accessing strings embedded in CBOR documents
      * (both text and binary strings).
      *
-     * \param   token   An opaque object passed to \ref cbor_parser_init_reader
-     *                  that may be used to pass context information between the
-     *                  \ref CborParserOperations methods.
+     * \param   value   The CBOR value being parsed.
      *
      * \param   userptr The pointer that will be updated to reference the location
      *                  of the data in the buffer.
@@ -395,7 +387,7 @@ struct CborParserOperations
      *
      * \param   len     The number of bytes sought.
      */
-    CborError (*transfer_string)(void *token, const void **userptr, size_t offset, size_t len);
+    CborError (*transfer_string)(struct CborValue *value, const void **userptr, size_t offset, size_t len);
 };
 
 struct CborParser
