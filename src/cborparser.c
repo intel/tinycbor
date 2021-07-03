@@ -372,16 +372,19 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, C
  * The \a ops structure defines functions that implement the read process from
  * the buffer given, see \ref CborParserOperations for further details.
  *
- * The \a token is passed as the first argument to all
- * \ref CborParserOperations methods, and may be used to pass additional
- * context information to the reader implementation.
+ * The \a ctx is stored in the \ref CborParser object as `data.ctx` and may be
+ * used however the reader implementation sees fit.  For cursor-specific
+ * context information, the \ref CborValue `source.token` union member is
+ * initialised to `NULL` and may be used however the reader implementation
+ * sees fit.
  */
-CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *token)
+CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *ctx)
 {
     cbor_parser_init_common(parser, it);
     parser->ops = ops;
     parser->flags = CborParserFlag_ExternalSource;
-    parser->data.ctx = token;
+    parser->data.ctx = ctx;
+    it->source.token = NULL;
     return preparse_value(it);
 }
 
