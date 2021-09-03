@@ -90,6 +90,9 @@ private slots:
     void tooBigMaps();
     void illegalSimpleType_data();
     void illegalSimpleType();
+
+    void encodeRaw_data() { tags_data(); }
+    void encodeRaw();
 };
 
 #include "tst_encoder.moc"
@@ -617,6 +620,24 @@ void tst_Encoder::illegalSimpleType()
     CborEncoder encoder;
     cbor_encoder_init(&encoder, buf, sizeof(buf), 0);
     QCOMPARE(cbor_encode_simple_value(&encoder, type), CborErrorIllegalSimpleType);
+}
+
+void tst_Encoder::encodeRaw()
+{
+    QFETCH(QVariant, input);
+    QFETCH(QByteArray, output);
+
+    // just confirm it copies the data
+    QByteArray buffer(output.length(), Qt::Uninitialized);
+
+    uint8_t *bufptr = reinterpret_cast<quint8 *>(buffer.data());
+    CborEncoder encoder;
+    cbor_encoder_init(&encoder, bufptr, buffer.length(), 0);
+
+    CborError error = cbor_encode_raw(&encoder, reinterpret_cast<quint8 *>(output.data()),
+                                      output.size());
+    QCOMPARE(error, CborNoError);
+    QCOMPARE(buffer, output);
 }
 
 QTEST_MAIN(tst_Encoder)
