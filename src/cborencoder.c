@@ -491,7 +491,7 @@ static CborError create_container(CborEncoder *encoder, CborEncoder *container, 
  * The number of items inserted into the array must be exactly \a length items,
  * otherwise the stream is invalid. If the number of items is not known when
  * creating the array, the constant \ref CborIndefiniteLength may be passed as
- * length instead.
+ * length instead, and an indefinite length array is created.
  *
  * \sa cbor_encoder_create_map
  */
