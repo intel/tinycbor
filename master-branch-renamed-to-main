@@ -1,0 +1,3 @@
+The branch named 'master' is renamed to 'main'.
+
+  git checkout main
