@@ -236,7 +236,10 @@ tag: distcheck
 .SECONDARY:
 
 cflags := $(CPPFLAGS) -I$(SRCDIR)src
-cflags += -std=gnu99 $(CFLAGS)
+cflags += -std=gnu99 $(CFLAGS) \
+	-Werror=incompatible-pointer-types \
+	-Werror=implicit-function-declaration \
+	-Werror=int-conversion
 %.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
 	$(CC) $(cflags) $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
