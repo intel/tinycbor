@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 tuple="$TRAVIS_BRANCH${TRAVIS_TAG:+tag:$TRAVIS_TAG},$TRAVIS_PULL_REQUEST"
 case "$tuple" in
-    dev,false|master,false|tag:*)
+    dev,false|main,false|tag:*)
         ;;
     *)
         exit 0

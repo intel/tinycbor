@@ -15,6 +15,8 @@ static uint8_t *readfile(const char *fname, size_t *size)
     if (fstat(fileno(f), &st) == -1)
         return NULL;
     uint8_t *buf = malloc(st.st_size);
+    if (buf == NULL)
+        return NULL;
     *size = fread(buf, st.st_size, 1, f) == 1 ? st.st_size : 0;
     fclose(f);
     return buf;
@@ -23,13 +25,15 @@ static uint8_t *readfile(const char *fname, size_t *size)
 static void indent(int nestingLevel)
 {
     while (nestingLevel--)
-        puts("  ");
+        printf("  ");
 }
 
 static void dumpbytes(const uint8_t *buf, size_t len)
 {
+    printf("\"");
     while (len--)
-        printf("%02X ", *buf++);
+        printf("\\x%02X", *buf++);
+    printf("\"");
 }
 
 static CborError dumprecursive(CborValue *it, int nestingLevel)
@@ -85,7 +89,7 @@ static CborError dumprecursive(CborValue *it, int nestingLevel)
             err = cbor_value_dup_text_string(it, &buf, &n, it);
             if (err)
                 return err;     // parse error
-            puts(buf);
+            printf("\"%s\"\n", buf);
             free(buf);
             continue;
         }
@@ -153,9 +157,9 @@ static CborError dumprecursive(CborValue *it, int nestingLevel)
 
 int main(int argc, char **argv)
 {
-    if (argc == 1) {
+    if (argc != 2) {
         puts("simplereader <filename>");
-        return 0;
+        return 1;
     }
 
     size_t length;
