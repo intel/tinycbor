@@ -2,8 +2,8 @@ env:
   - BUILD_DOCS=false
 jobs:
   include:
-    - # only build docs on master
-      if: branch = master
+    - # only build docs on main
+      if: branch = main
       env: BUILD_DOCS=true
 
 language: cpp
