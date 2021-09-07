@@ -141,6 +141,75 @@
  * \endif
  */
 
+/**
+ * \struct CborParserOperations
+ *
+ * Defines an interface for abstract document readers.  This structure is used
+ * in conjunction with \ref cbor_parser_init_reader to define how the various
+ * required operations are to be implemented.
+ *
+ *
+ * \var CborParserOperations::can_read_bytes
+ *
+ * Determines whether \a len bytes may be read from the reader.  This is
+ * called before \ref read_bytes and \ref transfer_bytes to ensure it is safe
+ * to read the requested number of bytes from the reader.
+ *
+ * \param   value   The CBOR value being parsed.
+ *
+ * \param   len     The number of bytes sought.
+ *
+ * \retval  true    \a len bytes may be read from the reader.
+ * \retval  false   Insufficient data is available to be read at this time.
+ *
+ *
+ * \var CborParserOperations::read_bytes
+ *
+ * Reads \a len bytes from the reader starting at \a offset bytes from
+ * the current read position and copies them to \a dst.  The read pointer
+ * is *NOT* modified by this operation.
+ *
+ * \param   value   The CBOR value being parsed.
+ *
+ * \param   dst     The buffer the read bytes will be copied to.
+ *
+ * \param   offset  The starting position for the read relative to the
+ *                  current read position.
+ *
+ * \param   len     The number of bytes sought.
+ *
+ *
+ * \var CborParserOperations::advance_bytes
+ *
+ * Skips past \a len bytes from the reader without reading them.  The read
+ * pointer is advanced in the process.
+ *
+ * \param   value   The CBOR value being parsed.
+ *
+ * \param   len     The number of bytes skipped.
+ *
+ *
+ * \var CborParserOperations::transfer_string
+ *
+ * Overwrite the user-supplied pointer \a userptr with the address where the
+ * data indicated by \a offset is located, then advance the read pointer
+ * \a len bytes beyond that point.
+ *
+ * This routine is used for accessing strings embedded in CBOR documents
+ * (both text and binary strings).
+ *
+ * \param   value   The CBOR value being parsed.
+ *
+ * \param   userptr The pointer that will be updated to reference the location
+ *                  of the data in the buffer.
+ *
+ * \param   offset  The starting position for the read relative to the
+ *                  current read position.
+ *
+ * \param   len     The number of bytes sought.
+ */
+
+
 static uint64_t extract_number_and_advance(CborValue *it)
 {
     /* This function is only called after we've verified that the number
