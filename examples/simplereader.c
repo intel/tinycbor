@@ -4,7 +4,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 
 static uint8_t *readfile(const char *fname, size_t *size)
 {
