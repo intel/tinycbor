@@ -27,9 +27,9 @@ sink:
 configure: $(foreach it,$(ALLTESTS),check-$(it))
 
 check-%:
-	@echo $(subst check-,,$@)-tested := 1 $(OUT)
+	@echo $(subst check-,,$@)-tested := 1 >>$(OUT)
 	$(if $(V),,@)if printf "$($(subst check-,PROGRAM-,$@))" | \
 	    $(CC) -xc $($(subst check-,CCFLAGS-,$@)) -o /dev/null - $(if $(V),,>/dev/null 2>&1); \
 	then \
-	    echo $(subst check-,,$@)-pass := 1 $(OUT); \
+	    echo $(subst check-,,$@)-pass := 1 >>$(OUT); \
 	fi
