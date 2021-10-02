@@ -134,7 +134,7 @@ silentcheck: | $(BINLIBRARY)
 	TESTARGS=-silent $(MAKE) -f $(MAKEFILE) -s check
 configure: .config
 .config: Makefile.configure
-	$(MAKE) -f $(SRCDIR)Makefile.configure OUT='>&9' configure 9> $@
+	$(MAKE) -f $(SRCDIR)Makefile.configure OUT='$@' configure
 
 lib/libtinycbor-freestanding.a: $(TINYCBOR_FREESTANDING_SOURCES:.c=.o)
 	@$(MKDIR) -p lib
