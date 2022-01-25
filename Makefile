@@ -240,6 +240,7 @@ cflags += -std=gnu99 $(CFLAGS)
 
 ifneq ($(DISABLE_WERROR),1)
 cflags += \
+	-Werror=discarded-qualifiers \
 	-Werror=incompatible-pointer-types \
 	-Werror=implicit-function-declaration \
 	-Werror=int-conversion
