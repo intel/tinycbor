@@ -1460,6 +1460,137 @@ error:
 }
 
 /**
+ * Attempts to find the value in map \a map that corresponds to the integer key
+ * entry \a integer. If the iterator \a value does not point to a CBOR map, the
+ * behaviour is undefined, so checking with \ref cbor_value_get_type or \ref
+ * cbor_value_is_map is recommended.
+ *
+ * If the item is found, it is stored in \a result. If no item is found
+ * matching the key, then \a result will contain an element of type \ref
+ * CborInvalidType. Matching is performed using integer compare.
+ *
+ * This function has a time complexity of O(n) where n is the number of
+ * elements in the map to be searched. In addition, this function is has O(n)
+ * memory requirement based on the number of nested containers (maps or arrays)
+ * found as elements of this map.
+ *
+ * \sa cbor_value_is_valid(), cbor_value_advance()
+ */
+CborError cbor_value_map_find_value_by_int (const CborValue *map, int key, CborValue *element)
+{
+    CborError err;
+
+    cbor_assert (cbor_value_is_map(map));
+    err = cbor_value_enter_container(map, element);
+    if (err) {
+        goto error;
+    }
+
+    while (!cbor_value_at_end(element)) {
+        /* find the non-tag so we can compare */
+        err = cbor_value_skip_tag(element);
+        if (err) {
+            goto error;
+        }
+        if (cbor_value_is_integer(element)) {
+            int result;
+            err = cbor_value_get_int_checked (element, &result);
+            if (err) {
+                goto error;
+            }
+            if (key == result) {
+                /* found */
+                err = cbor_value_advance(element);
+                if (err) {
+                    goto error;
+                }
+                return preparse_value(element);
+            }
+        }
+        /* skip this key */
+        err = cbor_value_advance(element);
+        if (err) {
+            goto error;
+        }
+
+        /* skip this value */
+        err = cbor_value_skip_tag(element);
+        if (err) {
+            goto error;
+        }
+        err = cbor_value_advance(element);
+        if (err) {
+            goto error;
+        }
+    }
+
+    /* not found */
+    element->type = CborInvalidType;
+    return CborNoError;
+
+error:
+    element->type = CborInvalidType;
+    return err;
+}
+
+/**
+ * Attempts to find the value in array \a array that corresponds to the index
+ * entry \a index. If the iterator \a value does not point to a CBOR array, the
+ * behaviour is undefined, so checking with \ref cbor_value_get_type or \ref
+ * cbor_value_is_array is recommended.
+ *
+ * If the item is found, it is stored in \a result. If no item is found
+ * matching the index, then \a result will contain an element of type \ref
+ * CborInvalidType. index is started from 0.
+ *
+ * This function has a time complexity of O(n) where n is the number of
+ * elements in the map to be searched. In addition, this function is has O(n)
+ * memory requirement based on the number of nested containers (maps or arrays)
+ * found as elements of this map.
+ *
+ * \sa cbor_value_is_valid(), cbor_value_advance()
+ */
+CborError cbor_value_array_get_value_by_index (const CborValue *array, size_t index, CborValue *element)
+{
+    CborError err;
+    size_t current_index;
+
+    cbor_assert (cbor_value_is_array(array));
+    err = cbor_value_enter_container(array, element);
+    if (err) {
+        goto error;
+    }
+
+    current_index = 0;
+    while (!cbor_value_at_end(element)) {
+        /* find the non-tag so we can compare */
+        err = cbor_value_skip_tag(element);
+        if (err) {
+            goto error;
+        }
+
+        if (index == current_index) {
+            return preparse_value(element);
+        } else {
+            /* skip this key */
+            err = cbor_value_advance(element);
+            if (err) {
+                goto error;
+            }
+            current_index ++;
+        }
+    }
+
+    /* not found */
+    element->type = CborInvalidType;
+    return CborNoError;
+
+error:
+    element->type = CborInvalidType;
+    return err;
+}
+
+/**
  * \fn bool cbor_value_is_float(const CborValue *value)
  *
  * Returns true if the iterator \a value is valid and points to a CBOR

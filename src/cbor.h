@@ -591,6 +591,10 @@ CBOR_INLINE_API CborError cbor_value_get_map_length(const CborValue *value, size
 
 CBOR_API CborError cbor_value_map_find_value(const CborValue *map, const char *string, CborValue *element);
 
+CBOR_API CborError cbor_value_map_find_value_by_int (const CborValue *map, int key, CborValue *element);
+
+CBOR_API CborError cbor_value_array_get_value_by_index (const CborValue *array, size_t index, CborValue *element);
+
 /* Floating point */
 CBOR_INLINE_API bool cbor_value_is_half_float(const CborValue *value)
 { return value->type == CborHalfFloatType; }
