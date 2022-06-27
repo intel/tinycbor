@@ -25,7 +25,6 @@
 #define _BSD_SOURCE 1
 #define _DEFAULT_SOURCE 1
 #define _GNU_SOURCE 1
-#define _POSIX_C_SOURCE 200809L
 #ifndef __STDC_LIMIT_MACROS
 #  define __STDC_LIMIT_MACROS 1
 #endif
