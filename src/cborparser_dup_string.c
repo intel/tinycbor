@@ -34,7 +34,14 @@
 
 #include "cbor.h"
 #include "compilersupport_p.h"
-#include <stdlib.h>
+
+#if defined(CBOR_CUSTOM_ALLOC_INCLUDE)
+#  include CBOR_CUSTOM_ALLOC_INCLUDE
+#else
+#  include <stdlib.h>
+#  define cbor_malloc malloc
+#  define cbor_free   free
+#endif
 
 /**
  * \fn CborError cbor_value_dup_text_string(const CborValue *value, char **buffer, size_t *buflen, CborValue *next)
@@ -105,14 +112,14 @@ CborError _cbor_value_dup_string(const CborValue *value, void **buffer, size_t *
         return err;
 
     ++*buflen;
-    *buffer = malloc(*buflen);
+    *buffer = cbor_malloc(*buflen);
     if (!*buffer) {
         /* out of memory */
         return CborErrorOutOfMemory;
     }
     err = _cbor_value_copy_string(value, *buffer, buflen, next);
     if (err) {
-        free(*buffer);
+        cbor_free(*buffer);
         return err;
     }
     return CborNoError;
