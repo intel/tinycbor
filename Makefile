@@ -134,7 +134,7 @@ silentcheck: | $(BINLIBRARY)
 	TESTARGS=-silent $(MAKE) -f $(MAKEFILE) -s check
 configure: .config
 .config: Makefile.configure
-	$(MAKE) -f $(SRCDIR)Makefile.configure OUT='>&9' configure 9> $@
+	$(MAKE) -f $(SRCDIR)Makefile.configure OUT='$@' configure
 
 lib/libtinycbor-freestanding.a: $(TINYCBOR_FREESTANDING_SOURCES:.c=.o)
 	@$(MKDIR) -p lib
@@ -236,10 +236,16 @@ tag: distcheck
 .SECONDARY:
 
 cflags := $(CPPFLAGS) -I$(SRCDIR)src
-cflags += -std=gnu99 $(CFLAGS) \
+cflags += -std=gnu99 $(CFLAGS)
+
+ifneq ($(DISABLE_WERROR),1)
+cflags += \
+	-Werror=discarded-qualifiers \
 	-Werror=incompatible-pointer-types \
 	-Werror=implicit-function-declaration \
 	-Werror=int-conversion
+endif
+
 %.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
 	$(CC) $(cflags) $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
