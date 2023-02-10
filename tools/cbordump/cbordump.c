@@ -47,7 +47,7 @@ void printerror(CborError err, const char *fname)
     exit(EXIT_FAILURE);
 }
 
-void dumpFile(FILE *in, const char *fname, bool printJosn, int flags)
+void dumpFile(FILE *in, const char *fname, bool printJson, int flags)
 {
     static const size_t chunklen = 16 * 1024;
     static size_t bufsize = 0;
@@ -72,7 +72,7 @@ void dumpFile(FILE *in, const char *fname, bool printJosn, int flags)
     CborValue value;
     CborError err = cbor_parser_init(buffer, buflen, 0, &parser, &value);
     if (!err) {
-        if (printJosn)
+        if (printJson)
             err = cbor_value_to_json_advance(stdout, &value, flags);
         else
             err = cbor_value_to_pretty_advance_flags(stdout, &value, flags);
