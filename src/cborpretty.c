@@ -314,7 +314,10 @@ static CborError container_to_pretty(CborStreamFunction stream, void *out, CborV
 
     if (!recursionsLeft) {
         printRecursionLimit(stream, out);
-        return err;     /* do allow the dumping to continue */
+        while (!cbor_value_at_end(it) && !err) {
+            err = cbor_value_advance(it);
+        }
+        return err;     /* do allow the dumping to continue (if the advance was OK) */
     }
 
     while (!cbor_value_at_end(it) && !err) {
