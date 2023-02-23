@@ -28,6 +28,7 @@
 #ifndef __STDC_LIMIT_MACROS
 #  define __STDC_LIMIT_MACROS 1
 #endif
+#define __STDC_WANT_IEC_60559_TYPES_EXT__
 
 #include "cbor.h"
 #include "cborjson.h"
