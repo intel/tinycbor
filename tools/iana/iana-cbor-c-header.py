@@ -552,6 +552,10 @@ def iana_cbor_tag_parse_csv(csv_content: str, typedef_enum_name: str):
             continue
         if not cbor_tag or "unassigned" in data_item.lower() or "reserved" in semantics.lower():
             continue
+        if "always invalid" in semantics.lower():
+            # Always invalid; see Section 10.1,[draft-bormann-cbor-notable-tags-02]
+            # The purpose of these tag number registrations is to enable the tag numbers to be reserved for internal use by implementation 
+            continue
         if "-" in cbor_tag: # is a range of value
             continue
         # Add to enum list
