@@ -141,7 +141,7 @@ typedef enum CborKnownTags {
   // COSE Single Signer Data Object; Ref: [RFC9052]
   CborCOSE_Sign1Tag = 18,
   // COSE standalone V2 countersignature; Ref: [RFC9338]
-  CborKnownCoseStandaloneV2CountersignatureTag = 19,
+  CborCoseStandaloneV2CountersignatureTag = 19,
   // Expected conversion to base64url encoding; see Section 3.4.5.2; Ref: [RFC8949]
   CborExpectedBase64urlTag = 21,
   // Expected conversion to base64 encoding; see Section 3.4.5.2; Ref: [RFC8949]
@@ -153,19 +153,19 @@ typedef enum CborKnownTags {
   // Encoded CBOR data item; see Section 3.4.5.1; Ref: [RFC8949]
   CborEncodedCborTag = 24,
   // reference the nth previously seen string; Ref: [http://cbor.schmorp.de/stringref][Marc_A._Lehmann]
-  CborKnownRefTheNthPrevSeenStringTag = 25,
+  CborRefTheNthPrevSeenStringTag = 25,
   // Serialised Perl object with classname and constructor arguments; Ref: [http://cbor.schmorp.de/perl-object][Marc_A._Lehmann]
-  CborKnownSerialisedPerlObjWithClassnameConstructorArgTag = 26,
+  CborSerialisedPerlObjWithClassnameConstructorArgTag = 26,
   // Serialised language-independent object with type name and constructor arguments; Ref: [http://cbor.schmorp.de/generic-object][Marc_A._Lehmann]
-  CborKnownSerialisedLangIndepObjWithTypeNameConstructorArgTag = 27,
+  CborSerialisedLangIndepObjWithTypeNameConstructorArgTag = 27,
   // mark value as (potentially) shared; Ref: [http://cbor.schmorp.de/value-sharing][Marc_A._Lehmann]
-  CborKnownMarkValueAsSharedTag = 28,
+  CborMarkValueAsSharedTag = 28,
   // reference nth marked value; Ref: [http://cbor.schmorp.de/value-sharing][Marc_A._Lehmann]
-  CborKnownRefNthMarkedValueTag = 29,
+  CborRefNthMarkedValueTag = 29,
   // Rational number; Ref: [http://peteroupc.github.io/CBOR/rational.html][Peter_Occil]
-  CborKnownRationalNumberTag = 30,
+  CborRationalNumberTag = 30,
   // Absent value in a CBOR Array; Ref: [https://github.com/svaarala/cbor-specs/blob/master/cbor-absent-tag.rst][Sami_Vaarala]
-  CborKnownAbsentValueInACborArrayTag = 31,
+  CborAbsentValueInACborArrayTag = 31,
   // URI; see Section 3.4.5.3; Ref: [RFC8949]
   CborUrlTag = 32,
   // base64url; see Section 3.4.5.3; Ref: [RFC8949]
@@ -177,81 +177,81 @@ typedef enum CborKnownTags {
   // MIME message; see Section 3.4.5.3; Ref: [RFC8949]
   CborMimeMessageTag = 36,
   // Binary UUID ([RFC4122, Section 4.1.2]); Ref: [https://github.com/lucas-clemente/cbor-specs/blob/master/uuid.md][Lucas_Clemente]
-  CborKnownBinaryUuidTag = 37,
+  CborBinaryUuidTag = 37,
   // Language-tagged string; Ref: [RFC9290, Appendix A]
-  CborKnownLanguageTaggedStringTag = 38,
+  CborLanguageTaggedStringTag = 38,
   // Identifier; Ref: [https://github.com/lucas-clemente/cbor-specs/blob/master/id.md][Lucas_Clemente]
-  CborKnownIdTag = 39,
+  CborIdTag = 39,
   // Multi-dimensional Array, row-major order; Ref: [RFC8746]
-  CborKnownMultiDimensionalArrayRowMajorOrderTag = 40,
+  CborMultiDimensionalArrayRowMajorOrderTag = 40,
   // Homogeneous Array; Ref: [RFC8746]
-  CborKnownHomogeneousArrayTag = 41,
+  CborHomogeneousArrayTag = 41,
   // IPLD content identifier; Ref: [https://github.com/ipld/cid-cbor/][Volker_Mische]
-  CborKnownIpldContentIdTag = 42,
+  CborIpldContentIdTag = 42,
   // YANG bits datatype; see Section 6.7.; Ref: [RFC9254]
-  CborKnownYangBitsDatatypeTag = 43,
+  CborYangBitsDatatypeTag = 43,
   // YANG enumeration datatype; see Section 6.6.; Ref: [RFC9254]
-  CborKnownYangEnumerationDatatypeTag = 44,
+  CborYangEnumerationDatatypeTag = 44,
   // YANG identityref datatype; see Section 6.10.; Ref: [RFC9254]
-  CborKnownYangIdentityrefDatatypeTag = 45,
+  CborYangIdentityrefDatatypeTag = 45,
   // YANG instance-identifier datatype; see Section 6.13.; Ref: [RFC9254]
-  CborKnownYangInstanceIdDatatypeTag = 46,
+  CborYangInstanceIdDatatypeTag = 46,
   // YANG Schema Item iDentifier (sid); see Section 3.2.; Ref: [RFC9254]
-  CborKnownYangSchemaItemIdTag = 47,
+  CborYangSchemaItemIdTag = 47,
   // IPv4, [prefixlen,IPv4], [IPv4,prefixpart]; Ref: [RFC9164]
-  CborKnownIpv4Tag = 52,
+  CborIpv4Tag = 52,
   // IPv6, [prefixlen,IPv6], [IPv6,prefixpart]; Ref: [RFC9164]
-  CborKnownIpv6Tag = 54,
+  CborIpv6Tag = 54,
   // CBOR Web Token (CWT); Ref: [RFC8392][Michael_B._Jones]
-  CborKnownCborWebTokenTag = 61,
+  CborCborWebTokenTag = 61,
   // Encoded CBOR Sequence [RFC8742]; Ref: [draft-bormann-cbor-notable-tags-02, Section 2.1]
-  CborKnownEncodedCborSequenceTag = 63,
+  CborEncodedCborSequenceTag = 63,
   // uint8 Typed Array; Ref: [RFC8746]
-  CborKnownUint8TypedArrayTag = 64,
+  CborUint8TypedArrayTag = 64,
   // uint16, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownUint16BigEndianTypedArrayTag = 65,
+  CborUint16BigEndianTypedArrayTag = 65,
   // uint32, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownUint32BigEndianTypedArrayTag = 66,
+  CborUint32BigEndianTypedArrayTag = 66,
   // uint64, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownUint64BigEndianTypedArrayTag = 67,
+  CborUint64BigEndianTypedArrayTag = 67,
   // uint8 Typed Array, clamped arithmetic; Ref: [RFC8746]
-  CborKnownUint8TypedArrayClampedArithmeticTag = 68,
+  CborUint8TypedArrayClampedArithmeticTag = 68,
   // uint16, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownUint16LittleEndianTypedArrayTag = 69,
+  CborUint16LittleEndianTypedArrayTag = 69,
   // uint32, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownUint32LittleEndianTypedArrayTag = 70,
+  CborUint32LittleEndianTypedArrayTag = 70,
   // uint64, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownUint64LittleEndianTypedArrayTag = 71,
+  CborUint64LittleEndianTypedArrayTag = 71,
   // sint8 Typed Array; Ref: [RFC8746]
-  CborKnownSint8TypedArrayTag = 72,
+  CborSint8TypedArrayTag = 72,
   // sint16, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownSint16BigEndianTypedArrayTag = 73,
+  CborSint16BigEndianTypedArrayTag = 73,
   // sint32, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownSint32BigEndianTypedArrayTag = 74,
+  CborSint32BigEndianTypedArrayTag = 74,
   // sint64, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownSint64BigEndianTypedArrayTag = 75,
+  CborSint64BigEndianTypedArrayTag = 75,
   // sint16, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownSint16LittleEndianTypedArrayTag = 77,
+  CborSint16LittleEndianTypedArrayTag = 77,
   // sint32, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownSint32LittleEndianTypedArrayTag = 78,
+  CborSint32LittleEndianTypedArrayTag = 78,
   // sint64, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownSint64LittleEndianTypedArrayTag = 79,
+  CborSint64LittleEndianTypedArrayTag = 79,
   // IEEE 754 binary16, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownIeee754Binary16BigEndianTypedArrayTag = 80,
+  CborIeee754Binary16BigEndianTypedArrayTag = 80,
   // IEEE 754 binary32, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownIeee754Binary32BigEndianTypedArrayTag = 81,
+  CborIeee754Binary32BigEndianTypedArrayTag = 81,
   // IEEE 754 binary64, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownIeee754Binary64BigEndianTypedArrayTag = 82,
+  CborIeee754Binary64BigEndianTypedArrayTag = 82,
   // IEEE 754 binary128, big endian, Typed Array; Ref: [RFC8746]
-  CborKnownIeee754Binary128BigEndianTypedArrayTag = 83,
+  CborIeee754Binary128BigEndianTypedArrayTag = 83,
   // IEEE 754 binary16, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownIeee754Binary16LittleEndianTypedArrayTag = 84,
+  CborIeee754Binary16LittleEndianTypedArrayTag = 84,
   // IEEE 754 binary32, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownIeee754Binary32LittleEndianTypedArrayTag = 85,
+  CborIeee754Binary32LittleEndianTypedArrayTag = 85,
   // IEEE 754 binary64, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownIeee754Binary64LittleEndianTypedArrayTag = 86,
+  CborIeee754Binary64LittleEndianTypedArrayTag = 86,
   // IEEE 754 binary128, little endian, Typed Array; Ref: [RFC8746]
-  CborKnownIeee754Binary128LittleEndianTypedArrayTag = 87,
+  CborIeee754Binary128LittleEndianTypedArrayTag = 87,
   // COSE Encrypted Data Object; Ref: [RFC9052]
   CborCOSE_EncryptTag = 96,
   // COSE MACed Data Object; Ref: [RFC9052]
@@ -259,319 +259,319 @@ typedef enum CborKnownTags {
   // COSE Signed Data Object; Ref: [RFC9052]
   CborCOSE_SignTag = 98,
   // Number of days since the epoch date 1970-01-01; Ref: [RFC8943]
-  CborKnownNumberOfDaysSinceTheEpochDate19700101Tag = 100,
+  CborNumberOfDaysSinceTheEpochDate19700101Tag = 100,
   // alternatives as given by the uint + 128; see Section 9.1; Ref: [draft-bormann-cbor-notable-tags-07]
-  CborKnownAlternativesAsGivenByTheUintPlus128Tag = 101,
+  CborAlternativesAsGivenByTheUintPlus128Tag = 101,
   // Geographic Coordinates; Ref: [https://github.com/allthingstalk/cbor/blob/master/CBOR-Tag103-Geographic-Coordinates.md][Danilo_Vidovic]
-  CborKnownGeographicCoordinatesTag = 103,
+  CborGeographicCoordinatesTag = 103,
   // Geographic Coordinate Reference System WKT or EPSG number; Ref: [draft-clarke-cbor-crs]
-  CborKnownGeoCoordRefSystemWktOrEpsgNumTag = 104,
+  CborGeoCoordRefSystemWktOrEpsgNumTag = 104,
   // relative object identifier (BER encoding); SDNV [RFC6256] sequence; Ref: [RFC9090]
-  CborKnownRelativeObjectIdTag = 110,
+  CborRelativeObjectIdTag = 110,
   // object identifier (BER encoding); Ref: [RFC9090]
-  CborKnownObjectIdTag = 111,
+  CborObjectIdTag = 111,
   // object identifier (BER encoding), relative to 1.3.6.1.4.1; Ref: [RFC9090]
-  CborKnownObjectIdRelativeTo136141Tag = 112,
+  CborObjectIdRelativeTo136141Tag = 112,
   // Internet of Things Data Point; Ref: [https://github.com/allthingstalk/cbor/blob/master/CBOR-Tag120-Internet-of-Things-Data-Points.md][Danilo_Vidovic]
-  CborKnownInternetOfThingsDataPointTag = 120,
+  CborInternetOfThingsDataPointTag = 120,
   // Gordian Envelope; Ref: [draft-mcnally-envelope-05]
-  CborKnownGordianEnvelopeTag = 200,
+  CborGordianEnvelopeTag = 200,
   // mark value as having string references; Ref: [http://cbor.schmorp.de/stringref][Marc_A._Lehmann]
-  CborKnownMarkValueAsHavingStringReferencesTag = 256,
+  CborMarkValueAsHavingStringReferencesTag = 256,
   // Binary MIME message; Ref: [http://peteroupc.github.io/CBOR/binarymime.html][Peter_Occil]
-  CborKnownBinaryMimeMsgTag = 257,
+  CborBinaryMimeMsgTag = 257,
   // Mathematical finite set; Ref: [https://github.com/input-output-hk/cbor-sets-spec/blob/master/CBOR_SETS.md][Alfredo_Di_Napoli]
-  CborKnownMathematicalFiniteSetTag = 258,
+  CborMathematicalFiniteSetTag = 258,
   // Map datatype with key-value operations (e.g. `.get()/.set()/.delete()`); Ref: [https://github.com/shanewholloway/js-cbor-codec/blob/master/docs/CBOR-259-spec--explicit-maps.md][Shane_Holloway]
-  CborKnownMapDatatypeWithKeyValOpSetDeleteTag = 259,
+  CborMapDatatypeWithKeyValOpSetDeleteTag = 259,
   // Network Address (IPv4 or IPv6 or MAC Address) (DEPRECATED in favor of 52 and 54        for IP addresses); Ref: [http://www.employees.org/~ravir/cbor-network.txt][Ravi_Raju][RFC9164]
-  CborKnownNetworkAddressTag = 260,
+  CborNetworkAddressTag = 260,
   // Network Address Prefix (IPv4 or IPv6 Address + Mask Length) (DEPRECATED in favor of 52 and 54        for IP addresses); Ref: [https://github.com/toravir/CBOR-Tag-Specs/blob/master/networkPrefix.md][Ravi_Raju][RFC9164]
-  CborKnownNetworkAddressPrefixTag = 261,
+  CborNetworkAddressPrefixTag = 261,
   // Embedded JSON Object; Ref: [https://github.com/toravir/CBOR-Tag-Specs/blob/master/embeddedJSON.md][Ravi_Raju]
-  CborKnownEmbeddedJsonObjectTag = 262,
+  CborEmbeddedJsonObjectTag = 262,
   // Hexadecimal string; Ref: [https://github.com/toravir/CBOR-Tag-Specs/blob/master/hexString.md][Ravi_Raju]
-  CborKnownHexadecimalStringTag = 263,
+  CborHexadecimalStringTag = 263,
   // Decimal fraction with arbitrary exponent; Ref: [http://peteroupc.github.io/CBOR/bigfrac.html][Peter_Occil]
-  CborKnownDecimalFractionWithArbitraryExponentTag = 264,
+  CborDecimalFractionWithArbitraryExponentTag = 264,
   // Bigfloat with arbitrary exponent; Ref: [http://peteroupc.github.io/CBOR/bigfrac.html][Peter_Occil]
-  CborKnownBigfloatWithArbitraryExponentTag = 265,
+  CborBigfloatWithArbitraryExponentTag = 265,
   // Internationalized resource identifier (IRI); Ref: [https://peteroupc.github.io/CBOR/iri.html][Peter_Occil]
-  CborKnownInternationalizedResourceIdTag = 266,
+  CborInternationalizedResourceIdTag = 266,
   // Internationalized resource identifier reference (IRI reference); Ref: [https://peteroupc.github.io/CBOR/iri.html][Peter_Occil]
-  CborKnownInternationalizedResourceIdRefTag = 267,
+  CborInternationalizedResourceIdRefTag = 267,
   // Extended decimal fraction; Ref: [https://peteroupc.github.io/CBOR/extended.html][Peter_Occil]
-  CborKnownExtendedDecimalFractionTag = 268,
+  CborExtendedDecimalFractionTag = 268,
   // Extended bigfloat; Ref: [https://peteroupc.github.io/CBOR/extended.html][Peter_Occil]
-  CborKnownExtendedBigfloatTag = 269,
+  CborExtendedBigfloatTag = 269,
   // Extended rational number; Ref: [https://peteroupc.github.io/CBOR/extended.html][Peter_Occil]
-  CborKnownExtendedRationalNumberTag = 270,
+  CborExtendedRationalNumberTag = 270,
   // DDoS Open Threat Signaling (DOTS) signal channel object, as defined in [RFC9132]; Ref: [RFC9132]
-  CborKnownDdosOpenThreatSignalingSigChnObjTag = 271,
+  CborDdosOpenThreatSignalingSigChnObjTag = 271,
   // Non-UTF-8 CESU-8 string; Ref: [https://github.com/svaarala/cbor-specs/blob/master/cbor-nonutf8-string-tags.rst][Sami_Vaarala]
-  CborKnownNonUtf8Cesu8StringTag = 272,
+  CborNonUtf8Cesu8StringTag = 272,
   // Non-UTF-8 WTF-8 string; Ref: [https://github.com/svaarala/cbor-specs/blob/master/cbor-nonutf8-string-tags.rst][Sami_Vaarala]
-  CborKnownNonUtf8Wtf8StringTag = 273,
+  CborNonUtf8Wtf8StringTag = 273,
   // Non-UTF-8 MUTF-8 string; Ref: [https://github.com/svaarala/cbor-specs/blob/master/cbor-nonutf8-string-tags.rst][Sami_Vaarala]
-  CborKnownNonUtf8Mutf8StringTag = 274,
+  CborNonUtf8Mutf8StringTag = 274,
   // Map contains only keys that are of type Text String (major type 3); Ref: [https://github.com/ecorm/cbor-tag-text-key-map][Emile_Cormier]
-  CborKnownMapContainsOnlyKeysThatAreOfTypeTxtStrTag = 275,
+  CborMapContainsOnlyKeysThatAreOfTypeTxtStrTag = 275,
   // ERIS binary read capability; Ref: [http://purl.org/eris]
-  CborKnownErisBinaryReadCapabilityTag = 276,
+  CborErisBinaryReadCapabilityTag = 276,
   // Universal Geographical Area Description (GAD) shape; see Section 5; Ref: [TS 23.032][Mathew_Meins]
-  CborKnownUniversalGeoAreaDescriptionShapeTag = 277,
+  CborUniversalGeoAreaDescriptionShapeTag = 277,
   // Universal Geographical Area Description (GAD) description of velocity; see Section 8; Ref: [TS 23.032][Mathew_Meins]
-  CborKnownUniversalGeoAreaDescriptionDescriptionOfVelocityTag = 278,
+  CborUniversalGeoAreaDescriptionDescriptionOfVelocityTag = 278,
   // extended time; Ref: [draft-bormann-cbor-time-tag-01]
-  CborKnownExtendedTimeTag = 1001,
+  CborExtendedTimeTag = 1001,
   // duration; Ref: [draft-bormann-cbor-time-tag-01]
-  CborKnownDurationTag = 1002,
+  CborDurationTag = 1002,
   // period; Ref: [draft-bormann-cbor-time-tag-01]
-  CborKnownPeriodTag = 1003,
+  CborPeriodTag = 1003,
   // [RFC3339] full-date string; Ref: [RFC8943]
-  CborKnownFullDateStringTag = 1004,
+  CborFullDateStringTag = 1004,
   // Object type identifier; Ref: [draft-rundgren-cotx-04]
-  CborKnownObjectTypeIdTag = 1010,
+  CborObjectTypeIdTag = 1010,
   // Multi-dimensional Array, column-major order; Ref: [RFC8746]
-  CborKnownMultiDimensionalArrayColumnMajorOrderTag = 1040,
+  CborMultiDimensionalArrayColumnMajorOrderTag = 1040,
   // [COSE algorithm identifier, Base Hash value]; Ref: [draft-bormann-cbor-notable-tags-09, Section 3.1.1]
-  CborKnownCoseAlgorithmIdBaseHashValueTag = 18556,
+  CborCoseAlgorithmIdBaseHashValueTag = 18556,
   // I-Regexp; Ref: [draft-bormann-cbor-notable-tags-09, Section 2.1][draft-ietf-jsonpath-iregexp-08]
-  CborKnownIRegexpTag = 21065,
+  CborIRegexpTag = 21065,
   // ECMAScript RegExp [https://262.ecma-international.org/14.0/#sec-regexp-regular-expression-objects]; Ref: [https://github.com/hildjj/cbor-specs/blob/main/regexp.md][Joe_Hildebrand]
-  CborKnownEcmascriptRegexpTag = 21066,
+  CborEcmascriptRegexpTag = 21066,
   // hint that indicates an additional level of indirection; Ref: [http://cbor.schmorp.de/indirection][Marc_A._Lehmann]
-  CborKnownHintThatIndicatesAnAddLvlOfIndirectionTag = 22098,
+  CborHintThatIndicatesAnAddLvlOfIndirectionTag = 22098,
   // Capture [3]; Ref: [https://github.com/japhb/cbor-specs/blob/main/capture.md][Geoffrey_Broadwell]
-  CborKnownCaptureTag = 25441,
+  CborCaptureTag = 25441,
 
   /* 32768-18446744073709551615 : First Come First Served */
   // Identifier for a FHIR constant; Ref: [Stefan_Genchev]
-  CborKnownIdForAFhirConstantTag = 32768,
+  CborIdForAFhirConstantTag = 32768,
   // External reference; Ref: [https://gitlab.com/Hawk777/cbor-specs/-/blob/main/external-reference.md][Christopher_Head]
-  CborKnownExternalRefTag = 32769,
+  CborExternalRefTag = 32769,
   // A confidentiality clearance. The key value pairs of the map are defined in ADatP-4774.4; Ref: [Aidan_Murdock]
-  CborKnownAConfidentialityClearanceTag = 42600,
+  CborAConfidentialityClearanceTag = 42600,
   // A metadata binding. The elements of the array are defined in AdatP-4778.5. The tag is also used as part of the magic number in on-disk detached and encapsulating bindings.; Ref: [Aidan_Murdock]
-  CborKnownAMetadataBindingTag = 42601,
+  CborAMetadataBindingTag = 42601,
   // A collection of NCMS metadata elements. The key value pairs of the map are defined in AdatP-5636.4; Ref: [Aidan_Murdock]
-  CborKnownACollectionOfNcmsMetadataElementsTag = 42602,
+  CborACollectionOfNcmsMetadataElementsTag = 42602,
   // Single complex number: array elements are real (I) and imaginary (Q) components; Ref: [Saajan_Chana]
-  CborKnownSingleComplexNumberTag = 43000,
+  CborSingleComplexNumberTag = 43000,
   // Array of complex numbers in interleaved form: complex value k is stored with real (I) part at array index 2k and imaginary (Q) part at index (2k + 1); Ref: [Saajan_Chana]
-  CborKnownArrayOfComplexNumbersInInterleavedFormTag = 43001,
+  CborArrayOfComplexNumbersInInterleavedFormTag = 43001,
   // PlatformV_IS_ID; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvIsIdTag = 50000,
+  CborPlatformvIsIdTag = 50000,
   // PlatformV_IS_NAME; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvIsNameTag = 50001,
+  CborPlatformvIsNameTag = 50001,
   // PlatformV_IS_VALUE; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvIsValueTag = 50002,
+  CborPlatformvIsValueTag = 50002,
   // PlatformV_HAS_COMPOSITE_VALUE; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvHasCompositeValueTag = 50003,
+  CborPlatformvHasCompositeValueTag = 50003,
   // PlatformV_HAS_MAPPED_VALUE; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvHasMappedValueTag = 50004,
+  CborPlatformvHasMappedValueTag = 50004,
   // PlatformV_HAS_OBJ_ID; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvHasObjIdTag = 50005,
+  CborPlatformvHasObjIdTag = 50005,
   // PlatformV_HAS_OBJ_TAG; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvHasObjTagTag = 50006,
+  CborPlatformvHasObjTagTag = 50006,
   // PlatformV_HAS_CHILD; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvHasChildTag = 50007,
+  CborPlatformvHasChildTag = 50007,
   // PlatformV_HAS_PROPERTY; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvHasPropertyTag = 50008,
+  CborPlatformvHasPropertyTag = 50008,
   // PlatformV_HAS_META; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvHasMetaTag = 50009,
+  CborPlatformvHasMetaTag = 50009,
   // PlatformV_HAS_EVENT; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvHasEventTag = 50010,
+  CborPlatformvHasEventTag = 50010,
   // PlatformV_HAS_ACTION; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvHasActionTag = 50011,
+  CborPlatformvHasActionTag = 50011,
   // PlatformV_IS_TYPE; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
-  CborKnownPlatformvIsTypeTag = 50012,
+  CborPlatformvIsTypeTag = 50012,
   // Self-described CBOR; see Section 3.4.6; Ref: [RFC8949]
   CborSignatureTag = 55799,
   // indicates that the file contains CBOR Sequences; Ref: [RFC9277]
-  CborKnownIndicatesThatFileContainsCborSequencesTag = 55800,
+  CborIndicatesThatFileContainsCborSequencesTag = 55800,
   // indicates that the file starts with a CBOR-Labeled Non-CBOR Data label.; Ref: [RFC9277]
-  CborKnownIndicatesThatFileStartsWithCborLabeledNonCborDataLabelTag = 55801,
+  CborIndicatesThatFileStartsWithCborLabeledNonCborDataLabelTag = 55801,
   // Compressed byte string; Ref: [https://github.com/dectris/documentation/blob/main/cbor/dectris-compression-tag.md][Kal_Conley]
-  CborKnownCompressedByteStringTag = 56500,
+  CborCompressedByteStringTag = 56500,
   // Identify and define a set of record structures (each a sequence of property names) that can be referenced as tags in the included value (and the scope for the record tag definitions); Ref: [https://github.com/kriszyp/cbor-records][Kris_Zyp]
-  CborKnownIdentDefineSetOfRecStrctThatCanBeRefAsTagsInIncValTag = 57342,
+  CborIdentDefineSetOfRecStrctThatCanBeRefAsTagsInIncValTag = 57342,
   // Identify and define a record structure (a sequence of property names), and use that record structure definition to interpret the included values.; Ref: [https://github.com/kriszyp/cbor-records][Kris_Zyp]
-  CborKnownIdentDefineRecStrctUseThatRecStrctDefInterpretIncValsTag = 57343,
+  CborIdentDefineRecStrctUseThatRecStrctDefInterpretIncValsTag = 57343,
   // The tagged CBOR array contains attestation evidence data with an Intel TEE quote.; Ref: [Shanwei_Cen]
-  CborKnownTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeQuoteTag = 60000,
+  CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeQuoteTag = 60000,
   // The tagged CBOR array contains attestation evidence data with an Intel TEE report.; Ref: [Shanwei_Cen]
-  CborKnownTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeRptTag = 60001,
+  CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeRptTag = 60001,
   // The tagged CBOR array contains attestation evidence data with an Intel SGX report.; Ref: [Shanwei_Cen]
-  CborKnownTaggedCborArrayContainsAttestEvidenceDataWithAnIntelSgxRptTag = 60002,
+  CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelSgxRptTag = 60002,
   // always invalid; see Section 10.1; Ref: [draft-bormann-cbor-notable-tags-02]
-  CborKnownAlwaysInvalidTag = 65535,
+  CborAlwaysInvalidTag = 65535,
   // RAINS Message; Ref: [https://britram.github.io/rains-prototype][Brian_Trammell]
-  CborKnownRainsMsgTag = 15309736,
+  CborRainsMsgTag = 15309736,
   // A CBOR encoded Openswan configuration file, as stored on disk forunit test cases.; Ref: [Michael_Richardson][Samir_Hussain]
-  CborKnownCborEncOpenswanConfigFileAsStoredOnDiskForunitTestCasesTag = 1330664270,
+  CborCborEncOpenswanConfigFileAsStoredOnDiskForunitTestCasesTag = 1330664270,
   // Concise Software Identifier (CoSWID); Ref: [RFC9393]
-  CborKnownConciseSoftwareIdTag = 1398229316,
+  CborConciseSoftwareIdTag = 1398229316,
   // Array of content-addressed blocks and ERIS read capabilities; Ref: [Endo_Renberg]
-  CborKnownArrayOfContentAddrBlocksErisReadCapTag = 1701996915,
+  CborArrayOfContentAddrBlocksErisReadCapTag = 1701996915,
   // ERIS-FS image header; Ref: [Endo_Renberg]
-  CborKnownErisFsImageHeaderTag = 1701996916,
+  CborErisFsImageHeaderTag = 1701996916,
   // always invalid; see Section 10.1; Ref: [draft-bormann-cbor-notable-tags-02]
-  CborKnownAlwaysInvalidTag = 4294967295,
+  CborAlwaysInvalidTag = 4294967295,
   // Intel FPGA SPDM Manifest; Ref: [Andrew_Draper]
-  CborKnownIntelFpgaSpdmManifestTag = 4294967296,
+  CborIntelFpgaSpdmManifestTag = 4294967296,
   // always invalid; Section 10.1; Ref: [draft-bormann-cbor-notable-tags-02]
-  CborKnownAlwaysInvalidTag = 18446744073709551615
+  CborAlwaysInvalidTag = 18446744073709551615
 } CborKnownTags;
 
 /* Start of cbor known tag feature flag autogenerated section */
 /* #define the constants so we can check with #ifdef */
+#define CborACollectionOfNcmsMetadataElementsTag CborACollectionOfNcmsMetadataElementsTag
+#define CborAConfidentialityClearanceTag CborAConfidentialityClearanceTag
+#define CborAMetadataBindingTag CborAMetadataBindingTag
+#define CborAbsentValueInACborArrayTag CborAbsentValueInACborArrayTag
+#define CborAlternativesAsGivenByTheUintPlus128Tag CborAlternativesAsGivenByTheUintPlus128Tag
+#define CborAlwaysInvalidTag CborAlwaysInvalidTag
+#define CborArrayOfComplexNumbersInInterleavedFormTag CborArrayOfComplexNumbersInInterleavedFormTag
+#define CborArrayOfContentAddrBlocksErisReadCapTag CborArrayOfContentAddrBlocksErisReadCapTag
 #define CborBase64Tag CborBase64Tag
 #define CborBase64urlTag CborBase64urlTag
 #define CborBigfloatTag CborBigfloatTag
+#define CborBigfloatWithArbitraryExponentTag CborBigfloatWithArbitraryExponentTag
+#define CborBinaryMimeMsgTag CborBinaryMimeMsgTag
+#define CborBinaryUuidTag CborBinaryUuidTag
 #define CborCOSE_Encrypt0Tag CborCOSE_Encrypt0Tag
 #define CborCOSE_EncryptTag CborCOSE_EncryptTag
 #define CborCOSE_Mac0Tag CborCOSE_Mac0Tag
 #define CborCOSE_MacTag CborCOSE_MacTag
 #define CborCOSE_Sign1Tag CborCOSE_Sign1Tag
 #define CborCOSE_SignTag CborCOSE_SignTag
+#define CborCaptureTag CborCaptureTag
+#define CborCborEncOpenswanConfigFileAsStoredOnDiskForunitTestCasesTag CborCborEncOpenswanConfigFileAsStoredOnDiskForunitTestCasesTag
+#define CborCborWebTokenTag CborCborWebTokenTag
+#define CborCompressedByteStringTag CborCompressedByteStringTag
+#define CborConciseSoftwareIdTag CborConciseSoftwareIdTag
+#define CborCoseAlgorithmIdBaseHashValueTag CborCoseAlgorithmIdBaseHashValueTag
+#define CborCoseStandaloneV2CountersignatureTag CborCoseStandaloneV2CountersignatureTag
 #define CborDateTimeStringTag CborDateTimeStringTag
+#define CborDdosOpenThreatSignalingSigChnObjTag CborDdosOpenThreatSignalingSigChnObjTag
+#define CborDecimalFractionWithArbitraryExponentTag CborDecimalFractionWithArbitraryExponentTag
 #define CborDecimalTag CborDecimalTag
+#define CborDurationTag CborDurationTag
+#define CborEcmascriptRegexpTag CborEcmascriptRegexpTag
+#define CborEmbeddedJsonObjectTag CborEmbeddedJsonObjectTag
+#define CborEncodedCborSequenceTag CborEncodedCborSequenceTag
 #define CborEncodedCborTag CborEncodedCborTag
+#define CborErisBinaryReadCapabilityTag CborErisBinaryReadCapabilityTag
+#define CborErisFsImageHeaderTag CborErisFsImageHeaderTag
 #define CborExpectedBase16Tag CborExpectedBase16Tag
 #define CborExpectedBase64Tag CborExpectedBase64Tag
 #define CborExpectedBase64urlTag CborExpectedBase64urlTag
-#define CborKnownACollectionOfNcmsMetadataElementsTag CborKnownACollectionOfNcmsMetadataElementsTag
-#define CborKnownAConfidentialityClearanceTag CborKnownAConfidentialityClearanceTag
-#define CborKnownAMetadataBindingTag CborKnownAMetadataBindingTag
-#define CborKnownAbsentValueInACborArrayTag CborKnownAbsentValueInACborArrayTag
-#define CborKnownAlternativesAsGivenByTheUintPlus128Tag CborKnownAlternativesAsGivenByTheUintPlus128Tag
-#define CborKnownAlwaysInvalidTag CborKnownAlwaysInvalidTag
-#define CborKnownArrayOfComplexNumbersInInterleavedFormTag CborKnownArrayOfComplexNumbersInInterleavedFormTag
-#define CborKnownArrayOfContentAddrBlocksErisReadCapTag CborKnownArrayOfContentAddrBlocksErisReadCapTag
-#define CborKnownBigfloatWithArbitraryExponentTag CborKnownBigfloatWithArbitraryExponentTag
-#define CborKnownBinaryMimeMsgTag CborKnownBinaryMimeMsgTag
-#define CborKnownBinaryUuidTag CborKnownBinaryUuidTag
-#define CborKnownCaptureTag CborKnownCaptureTag
-#define CborKnownCborEncOpenswanConfigFileAsStoredOnDiskForunitTestCasesTag CborKnownCborEncOpenswanConfigFileAsStoredOnDiskForunitTestCasesTag
-#define CborKnownCborWebTokenTag CborKnownCborWebTokenTag
-#define CborKnownCompressedByteStringTag CborKnownCompressedByteStringTag
-#define CborKnownConciseSoftwareIdTag CborKnownConciseSoftwareIdTag
-#define CborKnownCoseAlgorithmIdBaseHashValueTag CborKnownCoseAlgorithmIdBaseHashValueTag
-#define CborKnownCoseStandaloneV2CountersignatureTag CborKnownCoseStandaloneV2CountersignatureTag
-#define CborKnownDdosOpenThreatSignalingSigChnObjTag CborKnownDdosOpenThreatSignalingSigChnObjTag
-#define CborKnownDecimalFractionWithArbitraryExponentTag CborKnownDecimalFractionWithArbitraryExponentTag
-#define CborKnownDurationTag CborKnownDurationTag
-#define CborKnownEcmascriptRegexpTag CborKnownEcmascriptRegexpTag
-#define CborKnownEmbeddedJsonObjectTag CborKnownEmbeddedJsonObjectTag
-#define CborKnownEncodedCborSequenceTag CborKnownEncodedCborSequenceTag
-#define CborKnownErisBinaryReadCapabilityTag CborKnownErisBinaryReadCapabilityTag
-#define CborKnownErisFsImageHeaderTag CborKnownErisFsImageHeaderTag
-#define CborKnownExtendedBigfloatTag CborKnownExtendedBigfloatTag
-#define CborKnownExtendedDecimalFractionTag CborKnownExtendedDecimalFractionTag
-#define CborKnownExtendedRationalNumberTag CborKnownExtendedRationalNumberTag
-#define CborKnownExtendedTimeTag CborKnownExtendedTimeTag
-#define CborKnownExternalRefTag CborKnownExternalRefTag
-#define CborKnownFullDateStringTag CborKnownFullDateStringTag
-#define CborKnownGeoCoordRefSystemWktOrEpsgNumTag CborKnownGeoCoordRefSystemWktOrEpsgNumTag
-#define CborKnownGeographicCoordinatesTag CborKnownGeographicCoordinatesTag
-#define CborKnownGordianEnvelopeTag CborKnownGordianEnvelopeTag
-#define CborKnownHexadecimalStringTag CborKnownHexadecimalStringTag
-#define CborKnownHintThatIndicatesAnAddLvlOfIndirectionTag CborKnownHintThatIndicatesAnAddLvlOfIndirectionTag
-#define CborKnownHomogeneousArrayTag CborKnownHomogeneousArrayTag
-#define CborKnownIRegexpTag CborKnownIRegexpTag
-#define CborKnownIdForAFhirConstantTag CborKnownIdForAFhirConstantTag
-#define CborKnownIdTag CborKnownIdTag
-#define CborKnownIdentDefineRecStrctUseThatRecStrctDefInterpretIncValsTag CborKnownIdentDefineRecStrctUseThatRecStrctDefInterpretIncValsTag
-#define CborKnownIdentDefineSetOfRecStrctThatCanBeRefAsTagsInIncValTag CborKnownIdentDefineSetOfRecStrctThatCanBeRefAsTagsInIncValTag
-#define CborKnownIeee754Binary128BigEndianTypedArrayTag CborKnownIeee754Binary128BigEndianTypedArrayTag
-#define CborKnownIeee754Binary128LittleEndianTypedArrayTag CborKnownIeee754Binary128LittleEndianTypedArrayTag
-#define CborKnownIeee754Binary16BigEndianTypedArrayTag CborKnownIeee754Binary16BigEndianTypedArrayTag
-#define CborKnownIeee754Binary16LittleEndianTypedArrayTag CborKnownIeee754Binary16LittleEndianTypedArrayTag
-#define CborKnownIeee754Binary32BigEndianTypedArrayTag CborKnownIeee754Binary32BigEndianTypedArrayTag
-#define CborKnownIeee754Binary32LittleEndianTypedArrayTag CborKnownIeee754Binary32LittleEndianTypedArrayTag
-#define CborKnownIeee754Binary64BigEndianTypedArrayTag CborKnownIeee754Binary64BigEndianTypedArrayTag
-#define CborKnownIeee754Binary64LittleEndianTypedArrayTag CborKnownIeee754Binary64LittleEndianTypedArrayTag
-#define CborKnownIndicatesThatFileContainsCborSequencesTag CborKnownIndicatesThatFileContainsCborSequencesTag
-#define CborKnownIndicatesThatFileStartsWithCborLabeledNonCborDataLabelTag CborKnownIndicatesThatFileStartsWithCborLabeledNonCborDataLabelTag
-#define CborKnownIntelFpgaSpdmManifestTag CborKnownIntelFpgaSpdmManifestTag
-#define CborKnownInternationalizedResourceIdRefTag CborKnownInternationalizedResourceIdRefTag
-#define CborKnownInternationalizedResourceIdTag CborKnownInternationalizedResourceIdTag
-#define CborKnownInternetOfThingsDataPointTag CborKnownInternetOfThingsDataPointTag
-#define CborKnownIpldContentIdTag CborKnownIpldContentIdTag
-#define CborKnownIpv4Tag CborKnownIpv4Tag
-#define CborKnownIpv6Tag CborKnownIpv6Tag
-#define CborKnownLanguageTaggedStringTag CborKnownLanguageTaggedStringTag
-#define CborKnownMapContainsOnlyKeysThatAreOfTypeTxtStrTag CborKnownMapContainsOnlyKeysThatAreOfTypeTxtStrTag
-#define CborKnownMapDatatypeWithKeyValOpSetDeleteTag CborKnownMapDatatypeWithKeyValOpSetDeleteTag
-#define CborKnownMarkValueAsHavingStringReferencesTag CborKnownMarkValueAsHavingStringReferencesTag
-#define CborKnownMarkValueAsSharedTag CborKnownMarkValueAsSharedTag
-#define CborKnownMathematicalFiniteSetTag CborKnownMathematicalFiniteSetTag
-#define CborKnownMultiDimensionalArrayColumnMajorOrderTag CborKnownMultiDimensionalArrayColumnMajorOrderTag
-#define CborKnownMultiDimensionalArrayRowMajorOrderTag CborKnownMultiDimensionalArrayRowMajorOrderTag
-#define CborKnownNetworkAddressPrefixTag CborKnownNetworkAddressPrefixTag
-#define CborKnownNetworkAddressTag CborKnownNetworkAddressTag
-#define CborKnownNonUtf8Cesu8StringTag CborKnownNonUtf8Cesu8StringTag
-#define CborKnownNonUtf8Mutf8StringTag CborKnownNonUtf8Mutf8StringTag
-#define CborKnownNonUtf8Wtf8StringTag CborKnownNonUtf8Wtf8StringTag
-#define CborKnownNumberOfDaysSinceTheEpochDate19700101Tag CborKnownNumberOfDaysSinceTheEpochDate19700101Tag
-#define CborKnownObjectIdRelativeTo136141Tag CborKnownObjectIdRelativeTo136141Tag
-#define CborKnownObjectIdTag CborKnownObjectIdTag
-#define CborKnownObjectTypeIdTag CborKnownObjectTypeIdTag
-#define CborKnownPeriodTag CborKnownPeriodTag
-#define CborKnownPlatformvHasActionTag CborKnownPlatformvHasActionTag
-#define CborKnownPlatformvHasChildTag CborKnownPlatformvHasChildTag
-#define CborKnownPlatformvHasCompositeValueTag CborKnownPlatformvHasCompositeValueTag
-#define CborKnownPlatformvHasEventTag CborKnownPlatformvHasEventTag
-#define CborKnownPlatformvHasMappedValueTag CborKnownPlatformvHasMappedValueTag
-#define CborKnownPlatformvHasMetaTag CborKnownPlatformvHasMetaTag
-#define CborKnownPlatformvHasObjIdTag CborKnownPlatformvHasObjIdTag
-#define CborKnownPlatformvHasObjTagTag CborKnownPlatformvHasObjTagTag
-#define CborKnownPlatformvHasPropertyTag CborKnownPlatformvHasPropertyTag
-#define CborKnownPlatformvIsIdTag CborKnownPlatformvIsIdTag
-#define CborKnownPlatformvIsNameTag CborKnownPlatformvIsNameTag
-#define CborKnownPlatformvIsTypeTag CborKnownPlatformvIsTypeTag
-#define CborKnownPlatformvIsValueTag CborKnownPlatformvIsValueTag
-#define CborKnownRainsMsgTag CborKnownRainsMsgTag
-#define CborKnownRationalNumberTag CborKnownRationalNumberTag
-#define CborKnownRefNthMarkedValueTag CborKnownRefNthMarkedValueTag
-#define CborKnownRefTheNthPrevSeenStringTag CborKnownRefTheNthPrevSeenStringTag
-#define CborKnownRelativeObjectIdTag CborKnownRelativeObjectIdTag
-#define CborKnownSerialisedLangIndepObjWithTypeNameConstructorArgTag CborKnownSerialisedLangIndepObjWithTypeNameConstructorArgTag
-#define CborKnownSerialisedPerlObjWithClassnameConstructorArgTag CborKnownSerialisedPerlObjWithClassnameConstructorArgTag
-#define CborKnownSingleComplexNumberTag CborKnownSingleComplexNumberTag
-#define CborKnownSint16BigEndianTypedArrayTag CborKnownSint16BigEndianTypedArrayTag
-#define CborKnownSint16LittleEndianTypedArrayTag CborKnownSint16LittleEndianTypedArrayTag
-#define CborKnownSint32BigEndianTypedArrayTag CborKnownSint32BigEndianTypedArrayTag
-#define CborKnownSint32LittleEndianTypedArrayTag CborKnownSint32LittleEndianTypedArrayTag
-#define CborKnownSint64BigEndianTypedArrayTag CborKnownSint64BigEndianTypedArrayTag
-#define CborKnownSint64LittleEndianTypedArrayTag CborKnownSint64LittleEndianTypedArrayTag
-#define CborKnownSint8TypedArrayTag CborKnownSint8TypedArrayTag
-#define CborKnownTaggedCborArrayContainsAttestEvidenceDataWithAnIntelSgxRptTag CborKnownTaggedCborArrayContainsAttestEvidenceDataWithAnIntelSgxRptTag
-#define CborKnownTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeQuoteTag CborKnownTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeQuoteTag
-#define CborKnownTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeRptTag CborKnownTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeRptTag
-#define CborKnownUint16BigEndianTypedArrayTag CborKnownUint16BigEndianTypedArrayTag
-#define CborKnownUint16LittleEndianTypedArrayTag CborKnownUint16LittleEndianTypedArrayTag
-#define CborKnownUint32BigEndianTypedArrayTag CborKnownUint32BigEndianTypedArrayTag
-#define CborKnownUint32LittleEndianTypedArrayTag CborKnownUint32LittleEndianTypedArrayTag
-#define CborKnownUint64BigEndianTypedArrayTag CborKnownUint64BigEndianTypedArrayTag
-#define CborKnownUint64LittleEndianTypedArrayTag CborKnownUint64LittleEndianTypedArrayTag
-#define CborKnownUint8TypedArrayClampedArithmeticTag CborKnownUint8TypedArrayClampedArithmeticTag
-#define CborKnownUint8TypedArrayTag CborKnownUint8TypedArrayTag
-#define CborKnownUniversalGeoAreaDescriptionDescriptionOfVelocityTag CborKnownUniversalGeoAreaDescriptionDescriptionOfVelocityTag
-#define CborKnownUniversalGeoAreaDescriptionShapeTag CborKnownUniversalGeoAreaDescriptionShapeTag
-#define CborKnownYangBitsDatatypeTag CborKnownYangBitsDatatypeTag
-#define CborKnownYangEnumerationDatatypeTag CborKnownYangEnumerationDatatypeTag
-#define CborKnownYangIdentityrefDatatypeTag CborKnownYangIdentityrefDatatypeTag
-#define CborKnownYangInstanceIdDatatypeTag CborKnownYangInstanceIdDatatypeTag
-#define CborKnownYangSchemaItemIdTag CborKnownYangSchemaItemIdTag
+#define CborExtendedBigfloatTag CborExtendedBigfloatTag
+#define CborExtendedDecimalFractionTag CborExtendedDecimalFractionTag
+#define CborExtendedRationalNumberTag CborExtendedRationalNumberTag
+#define CborExtendedTimeTag CborExtendedTimeTag
+#define CborExternalRefTag CborExternalRefTag
+#define CborFullDateStringTag CborFullDateStringTag
+#define CborGeoCoordRefSystemWktOrEpsgNumTag CborGeoCoordRefSystemWktOrEpsgNumTag
+#define CborGeographicCoordinatesTag CborGeographicCoordinatesTag
+#define CborGordianEnvelopeTag CborGordianEnvelopeTag
+#define CborHexadecimalStringTag CborHexadecimalStringTag
+#define CborHintThatIndicatesAnAddLvlOfIndirectionTag CborHintThatIndicatesAnAddLvlOfIndirectionTag
+#define CborHomogeneousArrayTag CborHomogeneousArrayTag
+#define CborIRegexpTag CborIRegexpTag
+#define CborIdForAFhirConstantTag CborIdForAFhirConstantTag
+#define CborIdTag CborIdTag
+#define CborIdentDefineRecStrctUseThatRecStrctDefInterpretIncValsTag CborIdentDefineRecStrctUseThatRecStrctDefInterpretIncValsTag
+#define CborIdentDefineSetOfRecStrctThatCanBeRefAsTagsInIncValTag CborIdentDefineSetOfRecStrctThatCanBeRefAsTagsInIncValTag
+#define CborIeee754Binary128BigEndianTypedArrayTag CborIeee754Binary128BigEndianTypedArrayTag
+#define CborIeee754Binary128LittleEndianTypedArrayTag CborIeee754Binary128LittleEndianTypedArrayTag
+#define CborIeee754Binary16BigEndianTypedArrayTag CborIeee754Binary16BigEndianTypedArrayTag
+#define CborIeee754Binary16LittleEndianTypedArrayTag CborIeee754Binary16LittleEndianTypedArrayTag
+#define CborIeee754Binary32BigEndianTypedArrayTag CborIeee754Binary32BigEndianTypedArrayTag
+#define CborIeee754Binary32LittleEndianTypedArrayTag CborIeee754Binary32LittleEndianTypedArrayTag
+#define CborIeee754Binary64BigEndianTypedArrayTag CborIeee754Binary64BigEndianTypedArrayTag
+#define CborIeee754Binary64LittleEndianTypedArrayTag CborIeee754Binary64LittleEndianTypedArrayTag
+#define CborIndicatesThatFileContainsCborSequencesTag CborIndicatesThatFileContainsCborSequencesTag
+#define CborIndicatesThatFileStartsWithCborLabeledNonCborDataLabelTag CborIndicatesThatFileStartsWithCborLabeledNonCborDataLabelTag
+#define CborIntelFpgaSpdmManifestTag CborIntelFpgaSpdmManifestTag
+#define CborInternationalizedResourceIdRefTag CborInternationalizedResourceIdRefTag
+#define CborInternationalizedResourceIdTag CborInternationalizedResourceIdTag
+#define CborInternetOfThingsDataPointTag CborInternetOfThingsDataPointTag
+#define CborIpldContentIdTag CborIpldContentIdTag
+#define CborIpv4Tag CborIpv4Tag
+#define CborIpv6Tag CborIpv6Tag
+#define CborLanguageTaggedStringTag CborLanguageTaggedStringTag
+#define CborMapContainsOnlyKeysThatAreOfTypeTxtStrTag CborMapContainsOnlyKeysThatAreOfTypeTxtStrTag
+#define CborMapDatatypeWithKeyValOpSetDeleteTag CborMapDatatypeWithKeyValOpSetDeleteTag
+#define CborMarkValueAsHavingStringReferencesTag CborMarkValueAsHavingStringReferencesTag
+#define CborMarkValueAsSharedTag CborMarkValueAsSharedTag
+#define CborMathematicalFiniteSetTag CborMathematicalFiniteSetTag
 #define CborMimeMessageTag CborMimeMessageTag
+#define CborMultiDimensionalArrayColumnMajorOrderTag CborMultiDimensionalArrayColumnMajorOrderTag
+#define CborMultiDimensionalArrayRowMajorOrderTag CborMultiDimensionalArrayRowMajorOrderTag
 #define CborNegativeBignumTag CborNegativeBignumTag
+#define CborNetworkAddressPrefixTag CborNetworkAddressPrefixTag
+#define CborNetworkAddressTag CborNetworkAddressTag
+#define CborNonUtf8Cesu8StringTag CborNonUtf8Cesu8StringTag
+#define CborNonUtf8Mutf8StringTag CborNonUtf8Mutf8StringTag
+#define CborNonUtf8Wtf8StringTag CborNonUtf8Wtf8StringTag
+#define CborNumberOfDaysSinceTheEpochDate19700101Tag CborNumberOfDaysSinceTheEpochDate19700101Tag
+#define CborObjectIdRelativeTo136141Tag CborObjectIdRelativeTo136141Tag
+#define CborObjectIdTag CborObjectIdTag
+#define CborObjectTypeIdTag CborObjectTypeIdTag
+#define CborPeriodTag CborPeriodTag
+#define CborPlatformvHasActionTag CborPlatformvHasActionTag
+#define CborPlatformvHasChildTag CborPlatformvHasChildTag
+#define CborPlatformvHasCompositeValueTag CborPlatformvHasCompositeValueTag
+#define CborPlatformvHasEventTag CborPlatformvHasEventTag
+#define CborPlatformvHasMappedValueTag CborPlatformvHasMappedValueTag
+#define CborPlatformvHasMetaTag CborPlatformvHasMetaTag
+#define CborPlatformvHasObjIdTag CborPlatformvHasObjIdTag
+#define CborPlatformvHasObjTagTag CborPlatformvHasObjTagTag
+#define CborPlatformvHasPropertyTag CborPlatformvHasPropertyTag
+#define CborPlatformvIsIdTag CborPlatformvIsIdTag
+#define CborPlatformvIsNameTag CborPlatformvIsNameTag
+#define CborPlatformvIsTypeTag CborPlatformvIsTypeTag
+#define CborPlatformvIsValueTag CborPlatformvIsValueTag
 #define CborPositiveBignumTag CborPositiveBignumTag
+#define CborRainsMsgTag CborRainsMsgTag
+#define CborRationalNumberTag CborRationalNumberTag
+#define CborRefNthMarkedValueTag CborRefNthMarkedValueTag
+#define CborRefTheNthPrevSeenStringTag CborRefTheNthPrevSeenStringTag
 #define CborRegularExpressionTag CborRegularExpressionTag
+#define CborRelativeObjectIdTag CborRelativeObjectIdTag
+#define CborSerialisedLangIndepObjWithTypeNameConstructorArgTag CborSerialisedLangIndepObjWithTypeNameConstructorArgTag
+#define CborSerialisedPerlObjWithClassnameConstructorArgTag CborSerialisedPerlObjWithClassnameConstructorArgTag
 #define CborSignatureTag CborSignatureTag
+#define CborSingleComplexNumberTag CborSingleComplexNumberTag
+#define CborSint16BigEndianTypedArrayTag CborSint16BigEndianTypedArrayTag
+#define CborSint16LittleEndianTypedArrayTag CborSint16LittleEndianTypedArrayTag
+#define CborSint32BigEndianTypedArrayTag CborSint32BigEndianTypedArrayTag
+#define CborSint32LittleEndianTypedArrayTag CborSint32LittleEndianTypedArrayTag
+#define CborSint64BigEndianTypedArrayTag CborSint64BigEndianTypedArrayTag
+#define CborSint64LittleEndianTypedArrayTag CborSint64LittleEndianTypedArrayTag
+#define CborSint8TypedArrayTag CborSint8TypedArrayTag
+#define CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelSgxRptTag CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelSgxRptTag
+#define CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeQuoteTag CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeQuoteTag
+#define CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeRptTag CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeRptTag
+#define CborUint16BigEndianTypedArrayTag CborUint16BigEndianTypedArrayTag
+#define CborUint16LittleEndianTypedArrayTag CborUint16LittleEndianTypedArrayTag
+#define CborUint32BigEndianTypedArrayTag CborUint32BigEndianTypedArrayTag
+#define CborUint32LittleEndianTypedArrayTag CborUint32LittleEndianTypedArrayTag
+#define CborUint64BigEndianTypedArrayTag CborUint64BigEndianTypedArrayTag
+#define CborUint64LittleEndianTypedArrayTag CborUint64LittleEndianTypedArrayTag
+#define CborUint8TypedArrayClampedArithmeticTag CborUint8TypedArrayClampedArithmeticTag
+#define CborUint8TypedArrayTag CborUint8TypedArrayTag
+#define CborUniversalGeoAreaDescriptionDescriptionOfVelocityTag CborUniversalGeoAreaDescriptionDescriptionOfVelocityTag
+#define CborUniversalGeoAreaDescriptionShapeTag CborUniversalGeoAreaDescriptionShapeTag
 #define CborUnixTime_tTag CborUnixTime_tTag
 #define CborUrlTag CborUrlTag
+#define CborYangBitsDatatypeTag CborYangBitsDatatypeTag
+#define CborYangEnumerationDatatypeTag CborYangEnumerationDatatypeTag
+#define CborYangIdentityrefDatatypeTag CborYangIdentityrefDatatypeTag
+#define CborYangInstanceIdDatatypeTag CborYangInstanceIdDatatypeTag
+#define CborYangSchemaItemIdTag CborYangSchemaItemIdTag
 /* End of cbor known tag feature flag autogenerated section */
 
 /* Error API */
