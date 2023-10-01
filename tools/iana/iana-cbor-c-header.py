@@ -513,9 +513,10 @@ def iana_cbor_tag_c_enum_name_generate(tag_value, semantics, typedef_enum_name, 
     if tiny_cbor_style_override:
         # Combine tag value and descriptive terms to form the enum name
         if typedef_enum_name.endswith("Tags"):
-            enum_name += typedef_enum_name[:-3]
+            enum_name += typedef_enum_name[:-4]
         else:
             enum_name += typedef_enum_name
+        print(enum_name)
         enum_name += variable_name_abbreviator(semantics, camel_case=True)
         if typedef_enum_name.endswith("Tags"):
             enum_name += "Tag"
