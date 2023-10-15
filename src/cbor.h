@@ -123,35 +123,46 @@ typedef enum CborKnownTags {
 
   /* 0-23 : Standards Action */
   // Standard date/time string; see Section 3.4.1; Ref: [RFC8949]
-  CborDateTimeStringTag = 0,
+  CborStdDateTimeStringTag = 0,
+  CborDateTimeStringTag = 0 /* depreciated but identifier kept for backwards compatibility */,
   // Epoch-based date/time; see Section 3.4.2; Ref: [RFC8949]
-  CborUnixTime_tTag = 1,
+  CborEpochBasedDateTimeTag = 1,
+  CborUnixTime_tTag = 1 /* depreciated but identifier kept for backwards compatibility */,
   // Unsigned bignum; see Section 3.4.3; Ref: [RFC8949]
-  CborPositiveBignumTag = 2,
+  CborUnsignedBignumTag = 2,
+  CborPositiveBignumTag = 2 /* depreciated but identifier kept for backwards compatibility */,
   // Negative bignum; see Section 3.4.3; Ref: [RFC8949]
   CborNegativeBignumTag = 3,
   // Decimal fraction; see Section 3.4.4; Ref: [RFC8949]
-  CborDecimalTag = 4,
+  CborDecimalFractionTag = 4,
+  CborDecimalTag = 4 /* depreciated but identifier kept for backwards compatibility */,
   // Bigfloat; see Section 3.4.4; Ref: [RFC8949]
   CborBigfloatTag = 5,
   // COSE Single Recipient Encrypted Data Object; Ref: [RFC9052]
-  CborCOSE_Encrypt0Tag = 16,
+  CborCoseSingleRecipientEncryptedDataObjectTag = 16,
+  CborCOSE_Encrypt0Tag = 16 /* depreciated but identifier kept for backwards compatibility */,
   // COSE Mac w/o Recipients Object; Ref: [RFC9052]
-  CborCOSE_Mac0Tag = 17,
+  CborCoseMacWORecipientsObjectTag = 17,
+  CborCOSE_Mac0Tag = 17 /* depreciated but identifier kept for backwards compatibility */,
   // COSE Single Signer Data Object; Ref: [RFC9052]
-  CborCOSE_Sign1Tag = 18,
+  CborCoseSingleSignerDataObjectTag = 18,
+  CborCOSE_Sign1Tag = 18 /* depreciated but identifier kept for backwards compatibility */,
   // COSE standalone V2 countersignature; Ref: [RFC9338]
   CborCoseStandaloneV2CountersignatureTag = 19,
   // Expected conversion to base64url encoding; see Section 3.4.5.2; Ref: [RFC8949]
-  CborExpectedBase64urlTag = 21,
+  CborExpectedConversionToBase64urlEncodingTag = 21,
+  CborExpectedBase64urlTag = 21 /* depreciated but identifier kept for backwards compatibility */,
   // Expected conversion to base64 encoding; see Section 3.4.5.2; Ref: [RFC8949]
-  CborExpectedBase64Tag = 22,
+  CborExpectedConversionToBase64EncodingTag = 22,
+  CborExpectedBase64Tag = 22 /* depreciated but identifier kept for backwards compatibility */,
   // Expected conversion to base16 encoding; see Section 3.4.5.2; Ref: [RFC8949]
-  CborExpectedBase16Tag = 23,
+  CborExpectedConversionToBase16EncodingTag = 23,
+  CborExpectedBase16Tag = 23 /* depreciated but identifier kept for backwards compatibility */,
 
   /* 24-32767 : Specification Required */
   // Encoded CBOR data item; see Section 3.4.5.1; Ref: [RFC8949]
-  CborEncodedCborTag = 24,
+  CborEncodedCborDataItemTag = 24,
+  CborEncodedCborTag = 24 /* depreciated but identifier kept for backwards compatibility */,
   // reference the nth previously seen string; Ref: [http://cbor.schmorp.de/stringref][Marc_A._Lehmann]
   CborRefTheNthPrevSeenStringTag = 25,
   // Serialised Perl object with classname and constructor arguments; Ref: [http://cbor.schmorp.de/perl-object][Marc_A._Lehmann]
@@ -167,7 +178,8 @@ typedef enum CborKnownTags {
   // Absent value in a CBOR Array; Ref: [https://github.com/svaarala/cbor-specs/blob/master/cbor-absent-tag.rst][Sami_Vaarala]
   CborAbsentValueInACborArrayTag = 31,
   // URI; see Section 3.4.5.3; Ref: [RFC8949]
-  CborUrlTag = 32,
+  CborUriTag = 32,
+  CborUrlTag = 32 /* depreciated but identifier kept for backwards compatibility */,
   // base64url; see Section 3.4.5.3; Ref: [RFC8949]
   CborBase64urlTag = 33,
   // base64; see Section 3.4.5.3; Ref: [RFC8949]
@@ -175,7 +187,8 @@ typedef enum CborKnownTags {
   // Regular expression; see Section 2.4.4.3; Ref: [RFC7049]
   CborRegularExpressionTag = 35,
   // MIME message; see Section 3.4.5.3; Ref: [RFC8949]
-  CborMimeMessageTag = 36,
+  CborMimeMsgTag = 36,
+  CborMimeMessageTag = 36 /* depreciated but identifier kept for backwards compatibility */,
   // Binary UUID ([RFC4122, Section 4.1.2]); Ref: [https://github.com/lucas-clemente/cbor-specs/blob/master/uuid.md][Lucas_Clemente]
   CborBinaryUuidTag = 37,
   // Language-tagged string; Ref: [RFC9290, Appendix A]
@@ -253,11 +266,14 @@ typedef enum CborKnownTags {
   // IEEE 754 binary128, little endian, Typed Array; Ref: [RFC8746]
   CborIeee754Binary128LittleEndianTypedArrayTag = 87,
   // COSE Encrypted Data Object; Ref: [RFC9052]
-  CborCOSE_EncryptTag = 96,
+  CborCoseEncryptedDataObjectTag = 96,
+  CborCOSE_EncryptTag = 96 /* depreciated but identifier kept for backwards compatibility */,
   // COSE MACed Data Object; Ref: [RFC9052]
-  CborCOSE_MacTag = 97,
+  CborCoseMacedDataObjectTag = 97,
+  CborCOSE_MacTag = 97 /* depreciated but identifier kept for backwards compatibility */,
   // COSE Signed Data Object; Ref: [RFC9052]
-  CborCOSE_SignTag = 98,
+  CborCoseSignedDataObjectTag = 98,
+  CborCOSE_SignTag = 98 /* depreciated but identifier kept for backwards compatibility */,
   // Number of days since the epoch date 1970-01-01; Ref: [RFC8943]
   CborNumberOfDaysSinceTheEpochDate19700101Tag = 100,
   // alternatives as given by the uint + 128; see Section 9.1; Ref: [draft-bormann-cbor-notable-tags-07]
@@ -387,7 +403,8 @@ typedef enum CborKnownTags {
   // PlatformV_IS_TYPE; Ref: [https://github.com/arthurwangtz/platformv-cbor][Wang_Tongzhou]
   CborPlatformvIsTypeTag = 50012,
   // Self-described CBOR; see Section 3.4.6; Ref: [RFC8949]
-  CborSignatureTag = 55799,
+  CborSelfDescribedCborTag = 55799,
+  CborSignatureTag = 55799 /* depreciated but identifier kept for backwards compatibility */,
   // indicates that the file contains CBOR Sequences; Ref: [RFC9277]
   CborIndicatesThatFileContainsCborSequencesTag = 55800,
   // indicates that the file starts with a CBOR-Labeled Non-CBOR Data label.; Ref: [RFC9277]
@@ -433,33 +450,33 @@ typedef enum CborKnownTags {
 #define CborBigfloatWithArbitraryExponentTag CborBigfloatWithArbitraryExponentTag
 #define CborBinaryMimeMsgTag CborBinaryMimeMsgTag
 #define CborBinaryUuidTag CborBinaryUuidTag
-#define CborCOSE_Encrypt0Tag CborCOSE_Encrypt0Tag
-#define CborCOSE_EncryptTag CborCOSE_EncryptTag
-#define CborCOSE_Mac0Tag CborCOSE_Mac0Tag
-#define CborCOSE_MacTag CborCOSE_MacTag
-#define CborCOSE_Sign1Tag CborCOSE_Sign1Tag
-#define CborCOSE_SignTag CborCOSE_SignTag
 #define CborCaptureTag CborCaptureTag
 #define CborCborEncOpenswanConfigFileAsStoredOnDiskForunitTestCasesTag CborCborEncOpenswanConfigFileAsStoredOnDiskForunitTestCasesTag
 #define CborCborWebTokenTag CborCborWebTokenTag
 #define CborCompressedByteStringTag CborCompressedByteStringTag
 #define CborConciseSoftwareIdTag CborConciseSoftwareIdTag
 #define CborCoseAlgorithmIdBaseHashValueTag CborCoseAlgorithmIdBaseHashValueTag
+#define CborCoseEncryptedDataObjectTag CborCoseEncryptedDataObjectTag
+#define CborCoseMacWORecipientsObjectTag CborCoseMacWORecipientsObjectTag
+#define CborCoseMacedDataObjectTag CborCoseMacedDataObjectTag
+#define CborCoseSignedDataObjectTag CborCoseSignedDataObjectTag
+#define CborCoseSingleRecipientEncryptedDataObjectTag CborCoseSingleRecipientEncryptedDataObjectTag
+#define CborCoseSingleSignerDataObjectTag CborCoseSingleSignerDataObjectTag
 #define CborCoseStandaloneV2CountersignatureTag CborCoseStandaloneV2CountersignatureTag
-#define CborDateTimeStringTag CborDateTimeStringTag
 #define CborDdosOpenThreatSignalingSigChnObjTag CborDdosOpenThreatSignalingSigChnObjTag
+#define CborDecimalFractionTag CborDecimalFractionTag
 #define CborDecimalFractionWithArbitraryExponentTag CborDecimalFractionWithArbitraryExponentTag
-#define CborDecimalTag CborDecimalTag
 #define CborDurationTag CborDurationTag
 #define CborEcmascriptRegexpTag CborEcmascriptRegexpTag
 #define CborEmbeddedJsonObjectTag CborEmbeddedJsonObjectTag
+#define CborEncodedCborDataItemTag CborEncodedCborDataItemTag
 #define CborEncodedCborSequenceTag CborEncodedCborSequenceTag
-#define CborEncodedCborTag CborEncodedCborTag
+#define CborEpochBasedDateTimeTag CborEpochBasedDateTimeTag
 #define CborErisBinaryReadCapabilityTag CborErisBinaryReadCapabilityTag
 #define CborErisFsImageHeaderTag CborErisFsImageHeaderTag
-#define CborExpectedBase16Tag CborExpectedBase16Tag
-#define CborExpectedBase64Tag CborExpectedBase64Tag
-#define CborExpectedBase64urlTag CborExpectedBase64urlTag
+#define CborExpectedConversionToBase16EncodingTag CborExpectedConversionToBase16EncodingTag
+#define CborExpectedConversionToBase64EncodingTag CborExpectedConversionToBase64EncodingTag
+#define CborExpectedConversionToBase64urlEncodingTag CborExpectedConversionToBase64urlEncodingTag
 #define CborExtendedBigfloatTag CborExtendedBigfloatTag
 #define CborExtendedDecimalFractionTag CborExtendedDecimalFractionTag
 #define CborExtendedRationalNumberTag CborExtendedRationalNumberTag
@@ -500,7 +517,7 @@ typedef enum CborKnownTags {
 #define CborMarkValueAsHavingStringReferencesTag CborMarkValueAsHavingStringReferencesTag
 #define CborMarkValueAsSharedTag CborMarkValueAsSharedTag
 #define CborMathematicalFiniteSetTag CborMathematicalFiniteSetTag
-#define CborMimeMessageTag CborMimeMessageTag
+#define CborMimeMsgTag CborMimeMsgTag
 #define CborMultiDimensionalArrayColumnMajorOrderTag CborMultiDimensionalArrayColumnMajorOrderTag
 #define CborMultiDimensionalArrayRowMajorOrderTag CborMultiDimensionalArrayRowMajorOrderTag
 #define CborNegativeBignumTag CborNegativeBignumTag
@@ -527,16 +544,15 @@ typedef enum CborKnownTags {
 #define CborPlatformvIsNameTag CborPlatformvIsNameTag
 #define CborPlatformvIsTypeTag CborPlatformvIsTypeTag
 #define CborPlatformvIsValueTag CborPlatformvIsValueTag
-#define CborPositiveBignumTag CborPositiveBignumTag
 #define CborRainsMsgTag CborRainsMsgTag
 #define CborRationalNumberTag CborRationalNumberTag
 #define CborRefNthMarkedValueTag CborRefNthMarkedValueTag
 #define CborRefTheNthPrevSeenStringTag CborRefTheNthPrevSeenStringTag
 #define CborRegularExpressionTag CborRegularExpressionTag
 #define CborRelativeObjectIdTag CborRelativeObjectIdTag
+#define CborSelfDescribedCborTag CborSelfDescribedCborTag
 #define CborSerialisedLangIndepObjWithTypeNameConstructorArgTag CborSerialisedLangIndepObjWithTypeNameConstructorArgTag
 #define CborSerialisedPerlObjWithClassnameConstructorArgTag CborSerialisedPerlObjWithClassnameConstructorArgTag
-#define CborSignatureTag CborSignatureTag
 #define CborSingleComplexNumberTag CborSingleComplexNumberTag
 #define CborSint16BigEndianTypedArrayTag CborSint16BigEndianTypedArrayTag
 #define CborSint16LittleEndianTypedArrayTag CborSint16LittleEndianTypedArrayTag
@@ -545,6 +561,7 @@ typedef enum CborKnownTags {
 #define CborSint64BigEndianTypedArrayTag CborSint64BigEndianTypedArrayTag
 #define CborSint64LittleEndianTypedArrayTag CborSint64LittleEndianTypedArrayTag
 #define CborSint8TypedArrayTag CborSint8TypedArrayTag
+#define CborStdDateTimeStringTag CborStdDateTimeStringTag
 #define CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelSgxRptTag CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelSgxRptTag
 #define CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeQuoteTag CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeQuoteTag
 #define CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeRptTag CborTaggedCborArrayContainsAttestEvidenceDataWithAnIntelTeeRptTag
@@ -558,8 +575,8 @@ typedef enum CborKnownTags {
 #define CborUint8TypedArrayTag CborUint8TypedArrayTag
 #define CborUniversalGeoAreaDescriptionDescriptionOfVelocityTag CborUniversalGeoAreaDescriptionDescriptionOfVelocityTag
 #define CborUniversalGeoAreaDescriptionShapeTag CborUniversalGeoAreaDescriptionShapeTag
-#define CborUnixTime_tTag CborUnixTime_tTag
-#define CborUrlTag CborUrlTag
+#define CborUnsignedBignumTag CborUnsignedBignumTag
+#define CborUriTag CborUriTag
 #define CborYangBitsDatatypeTag CborYangBitsDatatypeTag
 #define CborYangEnumerationDatatypeTag CborYangEnumerationDatatypeTag
 #define CborYangIdentityrefDatatypeTag CborYangIdentityrefDatatypeTag
