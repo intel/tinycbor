@@ -448,6 +448,8 @@ def iana_cbor_tag_c_typedef_enum_update(header_file_content: str) -> str:
         c_macro_list = {}
         for id_value, row in c_enum_list.items():
             c_macro_list[row["enum_name"]] = {"value": row["enum_name"]}
+            if "depreciated_enum_name" in row:
+                c_macro_list[row["depreciated_enum_name"]] = {"value": row["depreciated_enum_name"]}
         header_file_content = utils.update_c_const_macro(header_file_content, "cbor known tag feature flag", "/* #define the constants so we can check with #ifdef */\n", c_macro_list)
 
     return header_file_content
