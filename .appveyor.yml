@@ -5,7 +5,7 @@ image:
 - Visual Studio 2017
 - Visual Studio 2019
 install:
-- cmd: >-
+- cmd: |-
     if /i "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (
         call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x86
         set QTDIR=C:\Qt\5.13\msvc2017
@@ -20,7 +20,7 @@ install:
     echo Listing contents of %QTDIR%\bin:
 
 build_script:
-- cmd: >-
+- cmd: |-
     echo Checking qmake existence in %QTDIR%\bin
     if exist "%QTDIR%\bin\qmake.exe" (
         echo qmake found!
@@ -35,7 +35,7 @@ build_script:
     nmake -nologo -s
 
 test_script:
-- cmd: >-
+- cmd: |-
     nmake -s -nologo TESTARGS=-silent check
 
 artifacts:
