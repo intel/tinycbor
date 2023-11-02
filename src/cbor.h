@@ -45,7 +45,17 @@
 #ifdef __cplusplus
 extern "C" {
 #else
-#include <stdbool.h>
+#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#  include <stdbool.h>
+#else
+   typedef int bool;
+#  ifndef true
+#    define true 1
+#  endif
+#  ifndef false
+#    define false 0
+#  endif
+#endif
 #endif
 
 #ifndef SIZE_MAX

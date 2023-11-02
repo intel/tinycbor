@@ -41,7 +41,17 @@
 #include <string.h>
 
 #ifndef __cplusplus
-#  include <stdbool.h>
+#  if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#    include <stdbool.h>
+#  else
+     typedef int bool;
+#    ifndef true
+#      define true 1
+#    endif
+#    ifndef false
+#      define false 0
+#    endif
+#  endif
 #endif
 
 #if __STDC_VERSION__ >= 201112L || (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(__cpp_static_assert) && __cpp_static_assert >= 200410)
