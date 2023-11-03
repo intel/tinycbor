@@ -65,6 +65,10 @@ VERSION = $(shell cat $(SRCDIR)VERSION)
 SOVERSION = $(shell cut -f1-2 -d. $(SRCDIR)VERSION)
 PACKAGE = tinycbor-$(VERSION)
 
+ifneq (, $(shell which ccache))
+  CCACHE ?= ccache
+endif
+
 # Check that QMAKE is Qt 5
 ifeq ($(origin QMAKE),file)
   check_qmake = $(strip $(shell $(1) -query QT_VERSION 2>/dev/null | cut -b1))
@@ -248,9 +252,9 @@ endif
 
 %.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
-	$(CC) $(cflags) $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
+	$(CCACHE) $(CC) $(cflags) $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
 %.pic.o: %.c
 	@test -d $(@D) || $(MKDIR) $(@D)
-	$(CC) $(cflags) -fPIC $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
+	$(CCACHE) $(CC) $(cflags) -fPIC $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
 
 -include src/*.d
