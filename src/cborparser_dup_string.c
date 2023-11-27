@@ -31,10 +31,18 @@
 #ifndef __STDC_LIMIT_MACROS
 #  define __STDC_LIMIT_MACROS 1
 #endif
+#define __STDC_WANT_IEC_60559_TYPES_EXT__
 
 #include "cbor.h"
 #include "compilersupport_p.h"
-#include <stdlib.h>
+
+#if defined(CBOR_CUSTOM_ALLOC_INCLUDE)
+#  include CBOR_CUSTOM_ALLOC_INCLUDE
+#else
+#  include <stdlib.h>
+#  define cbor_malloc malloc
+#  define cbor_free   free
+#endif
 
 /**
  * \fn CborError cbor_value_dup_text_string(const CborValue *value, char **buffer, size_t *buflen, CborValue *next)
@@ -50,8 +58,8 @@
  * If \c malloc returns a NULL pointer, this function will return error
  * condition \ref CborErrorOutOfMemory.
  *
- * On success, \c{*buffer} will contain a valid pointer that must be freed by
- * calling \c{free()}. This is the case even for zero-length strings.
+ * On success, \c *buffer will contain a valid pointer that must be freed by
+ * calling \c free(). This is the case even for zero-length strings.
  *
  * The \a next pointer, if not null, will be updated to point to the next item
  * after this string. If \a value points to the last item, then \a next will be
@@ -81,8 +89,8 @@
  * If \c malloc returns a NULL pointer, this function will return error
  * condition \ref CborErrorOutOfMemory.
  *
- * On success, \c{*buffer} will contain a valid pointer that must be freed by
- * calling \c{free()}. This is the case even for zero-length strings.
+ * On success, \c *buffer will contain a valid pointer that must be freed by
+ * calling \c free(). This is the case even for zero-length strings.
  *
  * The \a next pointer, if not null, will be updated to point to the next item
  * after this string. If \a value points to the last item, then \a next will be
@@ -105,14 +113,14 @@ CborError _cbor_value_dup_string(const CborValue *value, void **buffer, size_t *
         return err;
 
     ++*buflen;
-    *buffer = malloc(*buflen);
+    *buffer = cbor_malloc(*buflen);
     if (!*buffer) {
         /* out of memory */
         return CborErrorOutOfMemory;
     }
     err = _cbor_value_copy_string(value, *buffer, buflen, next);
     if (err) {
-        free(*buffer);
+        cbor_free(*buffer);
         return err;
     }
     return CborNoError;
