@@ -216,7 +216,7 @@ typedef enum CborEncoderAppendType
     CborEncoderApendRawData = 2
 } CborEncoderAppendType;
 
-typedef CborError (*CborEncoderWriteFunction)(void *, const void *, size_t, CborEncoderAppendType);
+typedef CborError (*CborEncoderWriteFunction)(void *token, const void *data, size_t len, CborEncoderAppendType append);
 
 enum CborEncoderFlags
 {
@@ -321,20 +321,23 @@ enum CborParserIteratorFlags
 };
 
 struct CborValue;
+
+
 struct CborParserOperations
 {
-    bool (*can_read_bytes)(void *token, size_t len);
-    void *(*read_bytes)(void *token, void *dst, size_t offset, size_t len);
-    void (*advance_bytes)(void *token, size_t len);
-    CborError (*transfer_string)(void *token, const void **userptr, size_t offset, size_t len);
+    bool (*can_read_bytes)(const struct CborValue *value, size_t len);
+    void *(*read_bytes)(const struct CborValue *value, void *dst, size_t offset, size_t len);
+    void (*advance_bytes)(struct CborValue *value, size_t len);
+    CborError (*transfer_string)(struct CborValue *value, const void **userptr, size_t offset, size_t len);
 };
 
 struct CborParser
 {
     union {
         const uint8_t *end;
-        const struct CborParserOperations *ops;
-    } source;
+        void *ctx;
+    } data;
+    const struct CborParserOperations *ops;
     enum CborParserGlobalFlags flags;
 };
 typedef struct CborParser CborParser;

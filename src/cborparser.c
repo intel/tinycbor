@@ -141,6 +141,75 @@
  * \endif
  */
 
+/**
+ * \struct CborParserOperations
+ *
+ * Defines an interface for abstract document readers.  This structure is used
+ * in conjunction with \ref cbor_parser_init_reader to define how the various
+ * required operations are to be implemented.
+ *
+ *
+ * \var CborParserOperations::can_read_bytes
+ *
+ * Determines whether \a len bytes may be read from the reader.  This is
+ * called before \ref read_bytes and \ref transfer_bytes to ensure it is safe
+ * to read the requested number of bytes from the reader.
+ *
+ * \param   value   The CBOR value being parsed.
+ *
+ * \param   len     The number of bytes sought.
+ *
+ * \retval  true    \a len bytes may be read from the reader.
+ * \retval  false   Insufficient data is available to be read at this time.
+ *
+ *
+ * \var CborParserOperations::read_bytes
+ *
+ * Reads \a len bytes from the reader starting at \a offset bytes from
+ * the current read position and copies them to \a dst.  The read pointer
+ * is *NOT* modified by this operation.
+ *
+ * \param   value   The CBOR value being parsed.
+ *
+ * \param   dst     The buffer the read bytes will be copied to.
+ *
+ * \param   offset  The starting position for the read relative to the
+ *                  current read position.
+ *
+ * \param   len     The number of bytes sought.
+ *
+ *
+ * \var CborParserOperations::advance_bytes
+ *
+ * Skips past \a len bytes from the reader without reading them.  The read
+ * pointer is advanced in the process.
+ *
+ * \param   value   The CBOR value being parsed.
+ *
+ * \param   len     The number of bytes skipped.
+ *
+ *
+ * \var CborParserOperations::transfer_string
+ *
+ * Overwrite the user-supplied pointer \a userptr with the address where the
+ * data indicated by \a offset is located, then advance the read pointer
+ * \a len bytes beyond that point.
+ *
+ * This routine is used for accessing strings embedded in CBOR documents
+ * (both text and binary strings).
+ *
+ * \param   value   The CBOR value being parsed.
+ *
+ * \param   userptr The pointer that will be updated to reference the location
+ *                  of the data in the buffer.
+ *
+ * \param   offset  The starting position for the read relative to the
+ *                  current read position.
+ *
+ * \param   len     The number of bytes sought.
+ */
+
+
 static uint64_t extract_number_and_advance(CborValue *it)
 {
     /* This function is only called after we've verified that the number
@@ -332,6 +401,14 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
     return read_uint32(value, 1);
 }
 
+static void cbor_parser_init_common(CborParser *parser, CborValue *it)
+{
+    memset(parser, 0, sizeof(*parser));
+    it->parser = parser;
+    it->remaining = 1;      /* there's one type altogether, usually an array or map */
+    it->flags = 0;
+}
+
 /**
  * Initializes the CBOR parser for parsing \a size bytes beginning at \a
  * buffer. Parsing will use flags set in \a flags. The iterator to the first
@@ -344,24 +421,39 @@ uint64_t _cbor_value_decode_int64_internal(const CborValue *value)
  */
 CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, CborParser *parser, CborValue *it)
 {
-    memset(parser, 0, sizeof(*parser));
-    parser->source.end = buffer + size;
+    cbor_parser_init_common(parser, it);
+    parser->data.end = buffer + size;
     parser->flags = (enum CborParserGlobalFlags)flags;
-    it->parser = parser;
     it->source.ptr = buffer;
-    it->remaining = 1;      /* there's one type altogether, usually an array or map */
-    it->flags = 0;
     return preparse_value(it);
 }
 
-CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *token)
+/**
+ * Initializes the CBOR parser for parsing a document that is read by an
+ * abstract reader interface defined by \a ops. The iterator to the first
+ * element is returned in \a it.
+ *
+ * The \a parser structure needs to remain valid throughout the decoding
+ * process. It is not thread-safe to share one CborParser among multiple
+ * threads iterating at the same time, but the object can be copied so multiple
+ * threads can iterate.
+ *
+ * The \a ops structure defines functions that implement the read process from
+ * the buffer given, see \ref CborParserOperations for further details.
+ *
+ * The \a ctx is stored in the \ref CborParser object as `data.ctx` and may be
+ * used however the reader implementation sees fit.  For cursor-specific
+ * context information, the \ref CborValue `source.token` union member is
+ * initialised to `NULL` and may be used however the reader implementation
+ * sees fit.
+ */
+CborError cbor_parser_init_reader(const struct CborParserOperations *ops, CborParser *parser, CborValue *it, void *ctx)
 {
-    memset(parser, 0, sizeof(*parser));
-    parser->source.ops = ops;
+    cbor_parser_init_common(parser, it);
+    parser->ops = ops;
     parser->flags = CborParserFlag_ExternalSource;
-    it->parser = parser;
-    it->source.token = token;
-    it->remaining = 1;
+    parser->data.ctx = ctx;
+    it->source.token = NULL;
     return preparse_value(it);
 }
 
