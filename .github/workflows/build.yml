@@ -119,7 +119,7 @@ jobs:
         eval "$EVAL"
         # FIXME: remove -Wno-error-line below.
         export CFLAGS="$CFLAGS -Wno-error=implicit-function-declaration"
-        make OUT=.config -s -f Makefile.configure configure | tee .config
+        make OUT=.config V=1 -s -f Makefile.configure configure && cat .config
         make -k \
             CFLAGS="$CFLAGS -march=native -g1 -Wall -Wextra -Werror" \
             CPPFLAGS="-DNDEBUG -DCBOR_ENCODER_WRITER_CONTROL=-1 -DCBOR_PARSER_READER_CONTROL=-1" \
