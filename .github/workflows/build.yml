@@ -67,7 +67,7 @@ jobs:
           }
         ]
         include:
-          - os: macos-11
+          - os: macos-13
             build_cfg: { "name": "clang",
                          "flags":
                            '{ "QMAKESPEC": "macx-clang",
@@ -75,7 +75,7 @@ jobs:
                               "QMAKEFLAGS": "-config debug",
                               "MAKEFLAGS": "-s",
                               "TESTARGS": "-silent",
-                              "PATH": "/usr/local/opt/qt5/bin:$PATH"
+                              "PATH": "/usr/local/opt/qt/bin:$PATH"
                             }'
                         }
 
@@ -102,7 +102,7 @@ jobs:
           qtbase5-dev
 
     - name: install macOS software
-      if: matrix.os == 'macos-11'
+      if: runner.os == 'macOS'
       run: |
         # Doxygen 1.9.7 is broken with ifdefs again, install 1.9.4 which works.
         wget https://raw.githubusercontent.com/Homebrew/homebrew-core/41828ee36b96e35b63b2a4c8cfc2df2c3728944a/Formula/doxygen.rb
@@ -113,7 +113,7 @@ jobs:
     # Valgrind takes a long time to build, so put in a separate step
     # to make it easy to disable.
     - name: install macOS valgrind
-      if: matrix.os == 'macos-11'
+      if: runner.os == 'macOS'
       run: |
         # 3 cores on CI runners, so use make -j6 for homebrew.
         export HOMEBREW_MAKE_JOBS=6
