@@ -65,20 +65,6 @@ VERSION = $(shell cat $(SRCDIR)VERSION)
 SOVERSION = $(shell cut -f1-2 -d. $(SRCDIR)VERSION)
 PACKAGE = tinycbor-$(VERSION)
 
-# Check that QMAKE is Qt 5
-ifeq ($(origin QMAKE),file)
-  check_qmake = $(strip $(shell $(1) -query QT_VERSION 2>/dev/null | cut -b1))
-  ifneq ($(call check_qmake,$(QMAKE)),5)
-    QMAKE := qmake -qt5
-    ifneq ($(call check_qmake,$(QMAKE)),5)
-      QMAKE := qmake-qt5
-      ifneq ($(call check_qmake,$(QMAKE)),5)
-        QMAKE := @echo >&2 $(MAKEFILE): Cannot find a Qt 5 qmake; false
-      endif
-    endif
-  endif
-endif
-
 -include .config
 
 ifeq ($(wildcard .config),)

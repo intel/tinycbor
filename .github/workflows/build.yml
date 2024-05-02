@@ -108,7 +108,7 @@ jobs:
         wget https://raw.githubusercontent.com/Homebrew/homebrew-core/41828ee36b96e35b63b2a4c8cfc2df2c3728944a/Formula/doxygen.rb
         brew install doxygen.rb
         rm doxygen.rb
-        brew install qt5 cjson
+        brew install qt cjson
 
     - name: Execute tests
       run: |
