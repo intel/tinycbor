@@ -71,6 +71,7 @@ jobs:
             build_cfg: { "name": "clang",
                          "flags":
                            '{ "QMAKESPEC": "macx-clang",
+                              "EVAL": "export CC=clang && export CXX=clang++",
                               "CFLAGS": "-Oz",
                               "QMAKEFLAGS": "-config debug",
                               "MAKEFLAGS": "-s",
