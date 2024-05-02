@@ -1,3 +1,3 @@
 TEMPLATE = subdirs
-SUBDIRS = parser encoder c90 cpp tojson
+SUBDIRS = parser encoder cpp tojson
 msvc: SUBDIRS -= tojson
