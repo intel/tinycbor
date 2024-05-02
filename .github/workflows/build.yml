@@ -110,16 +110,6 @@ jobs:
         rm doxygen.rb
         brew install qt5 cjson
 
-    # Valgrind takes a long time to build, so put in a separate step
-    # to make it easy to disable.
-    - name: install macOS valgrind
-      if: runner.os == 'macOS'
-      run: |
-        # 3 cores on CI runners, so use make -j6 for homebrew.
-        export HOMEBREW_MAKE_JOBS=6
-        brew tap LouisBrunner/valgrind
-        brew install --HEAD LouisBrunner/valgrind/valgrind
-
     - name: Execute tests
       run: |
         set -x
