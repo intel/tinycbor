@@ -759,32 +759,32 @@ void tst_Parser::mapsAndArrays()
                    "{_ 1: [_ " + expected + "], \"Hello\": {_ " + expected + ": (_ )}}");
 }
 
-struct Input {
-    QByteArray data;
-    int consumed;
-};
-
 static const CborParserOperations byteArrayOps = {
-    /* can_read_bytes = */ [](void *token, size_t len) {
-        auto input = static_cast<Input *>(token);
-        return input->data.size() - input->consumed >= int(len);
+    /* can_read_bytes = */ [](const CborValue *value, size_t len) {
+        QByteArray *data = static_cast<QByteArray *>(value->parser->data.ctx);
+        uintptr_t consumed = uintptr_t(value->source.token);
+        return uintptr_t(data->size()) - consumed >= uintptr_t(len);
     },
-    /* read_bytes = */ [](void *token, void *dst, size_t offset, size_t len) {
-        auto input = static_cast<Input *>(token);
-        return memcpy(dst, input->data.constData() + input->consumed + offset, len);
+    /* read_bytes = */ [](const CborValue *value, void *dst, size_t offset, size_t len) {
+        QByteArray *data = static_cast<QByteArray *>(value->parser->data.ctx);
+        uintptr_t consumed = uintptr_t(value->source.token);
+        return memcpy(dst, data->constData() + consumed + offset, len);
     },
-    /* advance_bytes = */ [](void *token, size_t len) {
-        auto input = static_cast<Input *>(token);
-        input->consumed += int(len);
+    /* advance_bytes = */ [](CborValue *value, size_t len) {
+        uintptr_t consumed = uintptr_t(value->source.token);
+        consumed += uintptr_t(len);
+        value->source.token = reinterpret_cast<void *>(consumed);
     },
-    /* transfer_string = */ [](void *token, const void **userptr, size_t offset, size_t len) {
+    /* transfer_string = */ [](CborValue *value, const void **userptr, size_t offset, size_t len) {
         // ###
-        auto input = static_cast<Input *>(token);
-        if (input->data.size() - input->consumed < int(len + offset))
+        QByteArray *data = static_cast<QByteArray *>(value->parser->data.ctx);
+        uintptr_t consumed = uintptr_t(value->source.token);
+        if (uintptr_t(data->size()) - consumed < uintptr_t(len + offset))
             return CborErrorUnexpectedEOF;
-        input->consumed += int(offset);
-        *userptr = input->data.constData() + input->consumed;
-        input->consumed += int(len);
+        consumed += uintptr_t(offset);
+        *userptr = data->constData() + consumed;
+        consumed += uintptr_t(len);
+        value->source.token = reinterpret_cast<void *>(consumed);
         return CborNoError;
     }
 };
@@ -794,11 +794,9 @@ void tst_Parser::readerApi()
     QFETCH(QByteArray, data);
     QFETCH(QString, expected);
 
-    Input input = { data, 0 };
-
     CborParser parser;
     CborValue first;
-    CborError err = cbor_parser_init_reader(&byteArrayOps, &parser, &first, &input);
+    CborError err = cbor_parser_init_reader(&byteArrayOps, &parser, &first, &data);
     QCOMPARE(err, CborNoError);
 
     QString decoded;
@@ -807,7 +805,7 @@ void tst_Parser::readerApi()
     QCOMPARE(decoded, expected);
 
     // check we consumed everything
-    QCOMPARE(input.consumed, data.size());
+    QCOMPARE(uintptr_t(first.source.token), uintptr_t(data.size()));
 }
 
 void tst_Parser::reparse_data()
@@ -822,23 +820,23 @@ void tst_Parser::reparse()
     QFETCH(QByteArray, data);
     QFETCH(QString, expected);
 
-    Input input = { QByteArray(), 0 };
+    QByteArray buffer;
     CborParser parser;
     CborValue first;
-    CborError err = cbor_parser_init_reader(&byteArrayOps, &parser, &first, &input);
+    CborError err = cbor_parser_init_reader(&byteArrayOps, &parser, &first, &buffer);
     QCOMPARE(err, CborErrorUnexpectedEOF);
 
     for (int i = 0; i < data.size(); ++i) {
-        input.data = data.left(i);
+        buffer = data.left(i);
         err = cbor_value_reparse(&first);
         if (err != CborErrorUnexpectedEOF)
             qDebug() << "At" << i;
         QCOMPARE(err, CborErrorUnexpectedEOF);
-        QCOMPARE(input.consumed, 0);
+        QCOMPARE(uintptr_t(first.source.token), 0U);
     }
 
     // now it should work
-    input.data = data;
+    buffer = data;
     err = cbor_value_reparse(&first);
     QCOMPARE(err, CborNoError);
 
@@ -848,7 +846,7 @@ void tst_Parser::reparse()
     QCOMPARE(decoded, expected);
 
     // check we consumed everything
-    QCOMPARE(input.consumed, data.size());
+    QCOMPARE(uintptr_t(first.source.token), uintptr_t(data.size()));
 }
 
 void tst_Parser::chunkedString_data()

@@ -197,6 +197,23 @@
  */
 
 /**
+ * \file cbor.h
+ * \typedef CborEncoderWriteFunction
+ *
+ * Writer interface call-back function.  When there is data to be written to
+ * the CBOR document, this routine will be called.  The \a token parameter is
+ * taken from the \a token argument provided to \ref cbor_encoder_init_writer
+ * and may be used in any way the writer function sees fit.
+ *
+ * The \a data parameter contains a pointer to the raw bytes to be copied to
+ * the output buffer, with \a len specifying how long the payload is, which
+ * can be as small as a single byte or an entire (byte or text) string.
+ *
+ * The \a append parameter informs the writer function whether it is writing
+ * a string or general CBOR data.
+ */
+
+/**
  * Initializes a CborEncoder structure \a encoder by pointing it to buffer \a
  * buffer of size \a size. The \a flags field is currently unused and must be
  * zero.

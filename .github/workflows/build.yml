@@ -1,0 +1,140 @@
+name: CI
+permissions: read-all
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+
+# When a PR is updated, cancel the jobs from the previous version. Merges
+# do not define head_ref, so use run_id to never cancel those jobs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  TinyCBOR:
+    timeout-minutes: 45
+    # Common environment variables
+    env:
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
+      HOMEBREW_NO_ANALYTICS: 1
+
+    strategy:
+      # Always run all jobs in the matrix, even if one fails.
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        build_cfg: [
+          { "name": "gcc-no-math",
+            "flags":
+              '{ "QMAKESPEC": "linux-gcc-no-math",
+                 "EVAL": "export CXX=false && touch math.h float.h",
+                 "CFLAGS": "-ffreestanding -DCBOR_NO_FLOATING_POINT -Os",
+                 "LDFLAGS": "-Wl,--no-undefined",
+                 "LDLIBS": ""
+              }',
+          },
+          { "name": "gcc-freestanding",
+            "flags":
+              '{ "QMAKESPEC": "linux-gcc-freestanding",
+                 "EVAL": "export CXX=false",
+                 "CFLAGS": "-ffreestanding -Os",
+                 "LDFLAGS": "-Wl,--no-undefined -lm"
+              }',
+          },
+          { "name": "clang",
+            "flags":
+              '{ "QMAKESPEC": "linux-clang",
+                 "EVAL": "export CC=clang && export CXX=clang++",
+                 "CFLAGS": "-Oz",
+                 "LDFLAGS": "-Wl,--no-undefined -lm",
+                 "QMAKEFLAGS": "-config release",
+                 "MAKEFLAGS": "-s",
+                 "TESTARGS": "-silent"
+              }',
+          },
+          { "name": "linux-g++",
+            "flags":
+              '{ "QMAKESPEC": "linux-g++",
+                 "EVAL": "export CC=gcc && export CXX=g++",
+                 "CFLAGS": "-Os",
+                 "LDFLAGS": "-Wl,--no-undefined -lm",
+                 "QMAKEFLAGS": "-config release",
+                 "QT_NO_CPU_FEATURE": "rdrnd"
+              }'
+          }
+        ]
+        include:
+          - os: macos-13
+            build_cfg: { "name": "clang",
+                         "flags":
+                           '{ "QMAKESPEC": "macx-clang",
+                              "EVAL": "export CC=clang && export CXX=clang++",
+                              "CFLAGS": "-Oz",
+                              "QMAKEFLAGS": "-config debug",
+                              "MAKEFLAGS": "-s",
+                              "TESTARGS": "-silent",
+                              "PATH": "/usr/local/opt/qt/bin:$PATH"
+                            }'
+                        }
+
+    # Default job name is too long to be visible in the "Checks" tab.
+    name: ${{ matrix.os }}/${{ matrix.build_cfg.name }}
+    # The type of runner that the job will run on
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Clone tinycbor
+      uses: actions/checkout@v4
+
+    - name: install Linux software
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        # Need a recent Valgrind, otherwise debug info cannot be read.
+        sudo snap install valgrind --classic
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          doxygen \
+          jq \
+          libc6-dbg \
+          libcjson-dev \
+          libfuntools-dev \
+          qtbase5-dev
+
+    - name: install macOS software
+      if: runner.os == 'macOS'
+      run: |
+        # Doxygen 1.9.7 is broken with ifdefs again, install 1.9.4 which works.
+        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/41828ee36b96e35b63b2a4c8cfc2df2c3728944a/Formula/doxygen.rb
+        brew install doxygen.rb
+        rm doxygen.rb
+        brew install qt cjson
+
+    - name: Execute tests
+      run: |
+        set -x
+        PATH=`echo /opt/qt*/bin`:$PATH
+        eval $(echo '${{ matrix.build_cfg.flags }}' | jq -r 'to_entries[] | "\(.key)=\"\(.value)\""')
+        eval "$EVAL"
+        # FIXME: remove -Wno-error-line below.
+        export CFLAGS="$CFLAGS -Wno-error=implicit-function-declaration"
+        make OUT=.config V=1 -s -f Makefile.configure configure && cat .config
+        make -k \
+            CFLAGS="$CFLAGS -march=native -g1 -Wall -Wextra -Werror" \
+            CPPFLAGS="-DNDEBUG -DCBOR_ENCODER_WRITER_CONTROL=-1 -DCBOR_PARSER_READER_CONTROL=-1" \
+            lib/libtinycbor.a
+        size lib/libtinycbor.a | tee sizes
+        make -s clean
+        make -k \
+            CFLAGS="$CFLAGS -O0 -g" \
+            LDFLAGS="$LDFLAGS" ${LDLIBS+LDLIBS="$LDLIBS"}
+        grep -q freestanding-pass .config || make \
+            QMAKEFLAGS="$QMAKEFLAGS QMAKE_CXX=$CXX" \
+            tests/Makefile
+        grep -q freestanding-pass .config || \
+            (cd tests && make TESTARGS=-silent check -k \
+            TESTRUNNER=`which valgrind 2>/dev/null`)
+        make -s clean
+        ! [ $BUILD_DOCS ] || ./scripts/update-docs.sh

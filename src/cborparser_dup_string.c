@@ -35,14 +35,8 @@
 
 #include "cbor.h"
 #include "compilersupport_p.h"
+#include "memory.h"
 
-#if defined(CBOR_CUSTOM_ALLOC_INCLUDE)
-#  include CBOR_CUSTOM_ALLOC_INCLUDE
-#else
-#  include <stdlib.h>
-#  define cbor_malloc malloc
-#  define cbor_free   free
-#endif
 
 /**
  * \fn CborError cbor_value_dup_text_string(const CborValue *value, char **buffer, size_t *buflen, CborValue *next)
