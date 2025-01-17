@@ -44,14 +44,14 @@
 #  include <stdbool.h>
 #endif
 
-#if __STDC_VERSION__ >= 201112L || (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(__cpp_static_assert) && __cpp_static_assert >= 200410)
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(__cpp_static_assert) && __cpp_static_assert >= 200410)
 #  define cbor_static_assert(x)         static_assert(x, #x)
 #elif !defined(__cplusplus) && defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 406) && (__STDC_VERSION__ > 199901L)
 #  define cbor_static_assert(x)         _Static_assert(x, #x)
 #else
 #  define cbor_static_assert(x)         ((void)sizeof(char[2*!!(x) - 1]))
 #endif
-#if __STDC_VERSION__ >= 199901L || defined(__cplusplus)
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__cplusplus)
 /* inline is a keyword */
 #else
 /* use the definition from cbor.h */
