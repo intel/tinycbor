@@ -178,7 +178,7 @@ int main(int argc, char **argv)
 
     if (err) {
         fprintf(stderr, "CBOR parsing failure at offset %ld: %s\n",
-                it.ptr - buf, cbor_error_string(err));
+                it.source.ptr - buf, cbor_error_string(err));
         return 1;
     }
     return 0;
