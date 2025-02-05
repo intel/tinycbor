@@ -26,6 +26,7 @@
 #  include CBOR_CUSTOM_ALLOC_INCLUDE
 #else
 #  include <stdlib.h>
-#  define cbor_malloc malloc
-#  define cbor_free   free
+#  define cbor_malloc   malloc
+#  define cbor_realloc  realloc
+#  define cbor_free     free
 #endif
