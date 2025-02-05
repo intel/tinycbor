@@ -160,6 +160,18 @@ void addTextStringsData()
     QTest::newRow("_textstring5*2") << raw("\x7f\x63Hel\x62lo\xff") << "\"Hello\"";
     QTest::newRow("_textstring5*5") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "\"Hello\"";
     QTest::newRow("_textstring5*6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << "\"Hello\"";
+
+    // strings containing characters that are escaped in JSON
+    QTest::newRow("null") << raw("\x61\0") << R"("\u0000")";
+    QTest::newRow("bell") << raw("\x61\7") << R"("\u0007")";    // not \\a
+    QTest::newRow("backspace") << raw("\x61\b") << R"("\b")";
+    QTest::newRow("tab") << raw("\x61\t") << R"("\t")";
+    QTest::newRow("carriage-return") << raw("\x61\r") << R"("\r")";
+    QTest::newRow("line-feed") << raw("\x61\n") << R"("\n")";
+    QTest::newRow("form-feed") << raw("\x61\f") << R"("\f")";
+    QTest::newRow("esc") << raw("\x61\x1f") << R"("\u001f")";
+    QTest::newRow("quote") << raw("\x61\"") << R"("\"")";
+    QTest::newRow("backslash") << raw("\x61\\") << R"("\\")";
 }
 
 void addNonJsonData()
@@ -412,6 +424,15 @@ void tst_ToJson::nonStringKeyMaps_data()
     QTest::newRow("map-24-0") << raw("\xa1\x18\x18\0") << "{24: 0}";
     QTest::newRow("_map-0-24") << raw("\xbf\0\x18\x18\xff") << "{_ 0: 24}";
     QTest::newRow("_map-24-0") << raw("\xbf\x18\x18\0\xff") << "{_ 24: 0}";
+
+    // nested strings ought to be escaped
+    QTest::newRow("array-emptystring") << raw("\x81\x60") << R"([\"\"])";
+    QTest::newRow("array-string1") << raw("\x81\x61 ") << R"([\" \"])";
+
+    // and escaped chracters in strings end up doubly escaped
+    QTest::newRow("array-string-null") << raw("\x81\x61\0") << R"([\"\\u0000\"])";
+    QTest::newRow("array-string-quote") << raw("\x81\x61\"") << R"([\"\\\"\"])";
+    QTest::newRow("array-string-backslash") << raw("\x81\x61\\") << R"([\"\\\\\"])";
 }
 
 void tst_ToJson::nonStringKeyMaps()

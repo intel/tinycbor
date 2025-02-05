@@ -170,9 +170,16 @@ typedef struct ConversionStatus {
 static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType type,
                                int nestingLevel, ConversionStatus *status);
 
-static CborError dump_bytestring_base16(char **result, CborValue *it)
+static void append_hex(void *buffer, uint8_t byte)
 {
     static const char characters[] = "0123456789abcdef";
+    char *str = buffer;
+    str[0] = characters[byte >> 4];
+    str[1] = characters[byte & 0xf];
+}
+
+static CborError dump_bytestring_base16(char **result, CborValue *it)
+{
     size_t i;
     size_t n = 0;
     uint8_t *buffer;
@@ -195,8 +202,7 @@ static CborError dump_bytestring_base16(char **result, CborValue *it)
 
     for (i = 0; i < n; ++i) {
         uint8_t byte = buffer[n + i];
-        buffer[2*i]     = characters[byte >> 4];
-        buffer[2*i + 1] = characters[byte & 0xf];
+        append_hex(buffer + 2 * i, byte);
     }
     return CborNoError;
 }
@@ -291,6 +297,96 @@ static CborError dump_bytestring_base64url(char **result, CborValue *it)
     static const char alphabet[] = "ABCDEFGH" "IJKLMNOP" "QRSTUVWX" "YZabcdef"
                                    "ghijklmn" "opqrstuv" "wxyz0123" "456789-_";
     return generic_dump_base64(result, it, alphabet);
+}
+
+static CborError escape_text_string(char **str, size_t *alloc, size_t *offsetp, const char *input, size_t len)
+{
+    /* JSON requires escaping some characters in strings, so we iterate and
+     * escape as necessary
+     * https://www.rfc-editor.org/rfc/rfc8259#section-7:
+     *  All Unicode characters may be placed within the
+     *  quotation marks, except for the characters that MUST be escaped:
+     *  quotation mark, reverse solidus, and the control characters (U+0000
+     *  through U+001F).
+     * We additionally choose to escape BS, HT, CR, LF and FF.
+     */
+    char *buf = *str;
+
+    /* Ensure we have enough space for this chunk. In the worst case, we
+     * have 6 escaped characters per input character.
+     *
+     * The overflow checking here is only practically useful for 32-bit
+     * machines, as SIZE_MAX/6 for a 64-bit machine is 2.6667 exabytes.
+     * That is much more than any current architecture can even address and
+     * cbor_value_get_text_string_chunk() only works for data already
+     * loaded into memory.
+     */
+    size_t needed;
+    size_t offset = offsetp ? *offsetp : 0;
+    if (mul_check_overflow(len, 6, &needed) || add_check_overflow(needed, offset, &needed)
+            || add_check_overflow(needed, 1, &needed)) {
+        return CborErrorDataTooLarge;
+    }
+    if (!alloc || needed > *alloc) {
+        buf = cbor_realloc(buf, needed);
+        if (!buf)
+            return CborErrorOutOfMemory;
+        if (alloc)
+            *alloc = needed;
+    }
+
+    for (size_t i = 0; i < len; ++i) {
+        static const char escapeChars[] = "\b\t\n\r\f\"\\";
+        static const char escapedChars[] = "btnrf\"\\";
+        unsigned char c = input[i];
+
+        char *esc = c > 0 ? strchr(escapeChars, c) : NULL;
+        if (esc) {
+            buf[offset++] = '\\';
+            buf[offset++] = escapedChars[esc - escapeChars];
+        } else if (c <= 0x1F) {
+            buf[offset++] = '\\';
+            buf[offset++] = 'u';
+            buf[offset++] = '0';
+            buf[offset++] = '0';
+            append_hex(buf + offset, c);
+            offset += 2;
+        } else {
+            buf[offset++] = c;
+        }
+    }
+    buf[offset] = '\0';
+    *str = buf;
+    if (offsetp)
+        *offsetp = offset;
+    return CborNoError;
+}
+
+static CborError text_string_to_escaped(char **str, CborValue *it)
+{
+    size_t alloc = 0, offset = 0;
+    CborError err;
+
+    *str = NULL;
+    err = cbor_value_begin_string_iteration(it);
+    while (err == CborNoError) {
+        const char *chunk;
+        size_t len;
+        err = cbor_value_get_text_string_chunk(it, &chunk, &len, it);
+        if (err == CborNoError)
+            err = escape_text_string(str, &alloc, &offset, chunk, len);
+    }
+
+    if (likely(err == CborErrorNoMoreStringChunks)) {
+        /* success */
+        if (!*str)
+            *str = strdup("");  // wasteful, but very atypical
+        return cbor_value_finish_string_iteration(it);
+    }
+
+    cbor_free(*str);
+    *str = NULL;
+    return err;
 }
 
 static CborError add_value_metadata(FILE *out, CborType type, const ConversionStatus *status)
@@ -420,14 +516,20 @@ static CborError stringify_map_key(char **key, CborValue *it, int flags, CborTyp
     return CborErrorJsonNotImplemented;
 #else
     size_t size;
+    char *stringified;
 
-    FILE *memstream = open_memstream(key, &size);
+    FILE *memstream = open_memstream(&stringified, &size);
     if (memstream == NULL)
         return CborErrorOutOfMemory;        /* could also be EMFILE, but it's unlikely */
     CborError err = cbor_value_to_pretty_advance(memstream, it);
 
-    if (unlikely(fclose(memstream) < 0 || *key == NULL))
+    if (unlikely(fclose(memstream) < 0 || stringified == NULL))
         return CborErrorInternalError;
+    if (err == CborNoError) {
+        /* escape the stringified CBOR stream */
+        err = escape_text_string(key, NULL, NULL, stringified, size);
+    }
+    cbor_free(stringified);
     return err;
 #endif
 }
@@ -452,15 +554,14 @@ static CborError map_to_json(FILE *out, CborValue *it, int flags, int nestingLev
     const char *comma = "";
     CborError err;
     while (!cbor_value_at_end(it)) {
-        char *key;
+        char *key = NULL;
         if (fprintf(out, "%s", comma) < 0)
             return CborErrorIO;
         comma = ",";
 
         CborType keyType = cbor_value_get_type(it);
         if (likely(keyType == CborTextStringType)) {
-            size_t n = 0;
-            err = cbor_value_dup_text_string(it, &key, &n, it);
+            err = text_string_to_escaped(&key, it);
         } else if (flags & CborConvertStringifyMapKeys) {
             err = stringify_map_key(&key, it, flags, keyType);
         } else {
@@ -570,8 +671,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
             err = dump_bytestring_base64url(&str, it);
             status->flags = TypeWasNotNative;
         } else {
-            size_t n = 0;
-            err = cbor_value_dup_text_string(it, &str, &n, it);
+            err = text_string_to_escaped(&str, it);
         }
         if (err)
             return err;

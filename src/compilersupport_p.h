@@ -234,4 +234,15 @@ static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
 #endif
 }
 
+static inline bool mul_check_overflow(size_t v1, size_t v2, size_t *r)
+{
+#if ((defined(__GNUC__) && (__GNUC__ >= 5)) && !defined(__INTEL_COMPILER)) || __has_builtin(__builtin_add_overflow)
+    return __builtin_mul_overflow(v1, v2, r);
+#else
+    /* unsigned multiplications are well-defined */
+    *r = v1 * v2;
+    return *r > v1 && *r > v2;
+#endif
+}
+
 #endif /* COMPILERSUPPORT_H */
