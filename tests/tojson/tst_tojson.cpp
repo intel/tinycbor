@@ -100,13 +100,20 @@ void addFixedData()
     QTest::newRow("0") << raw("\x00") << "0";
     QTest::newRow("1") << raw("\x01") << "1";
     QTest::newRow("2^53-1") << raw("\x1b\0\x1f\xff\xff""\xff\xff\xff\xff") << "9007199254740991";
-    QTest::newRow("2^64-epsilon") << raw("\x1b\xff\xff\xff\xff""\xff\xff\xf8\x00") << "18446744073709549568";
+    QTest::newRow("2^53+1") << raw("\x1b\0\x20\0\0""\0\0\0\1") << "9007199254740993";
+    QTest::newRow("2^63-1") << raw("\x1b\x7f\xff\xff\xff""\xff\xff\xff\xff") << "9223372036854775807";
+    QTest::newRow("2^64-1") << raw("\x1b\xff\xff\xff\xff""\xff\xff\xff\xff") << "18446744073709551615";
 
     // negative integers
     QTest::newRow("-1") << raw("\x20") << "-1";
     QTest::newRow("-2") << raw("\x21") << "-2";
     QTest::newRow("-2^53+1") << raw("\x3b\0\x1f\xff\xff""\xff\xff\xff\xfe") << "-9007199254740991";
-    QTest::newRow("-2^64+epsilon") << raw("\x3b\xff\xff\xff\xff""\xff\xff\xf8\x00") << "-18446744073709549568";
+    QTest::newRow("-2^53-1") << raw("\x3b\0\x20\0\0""\0\0\0\0") << "-9007199254740993";
+    QTest::newRow("-2^63+1") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xfe") << "-9223372036854775807";
+    QTest::newRow("-2^63") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xff") << "-9223372036854775808";
+    QTest::newRow("-2^63-1") << raw("\x3b\x80\0\0\0""\0\0\0\0") << "-9223372036854775809";
+    QTest::newRow("-2^64+1") << raw("\x3b\xff\xff\xff\xff""\xff\xff\xff\xfe") << "-18446744073709551615";
+    QTest::newRow("-2^64") << raw("\x3b\xff\xff\xff\xff""\xff\xff\xff\xff") << "-18446744073709551616";
 
     QTest::newRow("false") << raw("\xf4") << "false";
     QTest::newRow("true") << raw("\xf5") << "true";
@@ -617,16 +624,6 @@ void tst_ToJson::metaData_data()
     QTest::newRow("-16777215.") << raw("\xfb\xc1\x6f\xff\xff\xe0\0\0\0") << "\"t\":251";
     QTest::newRow("2.^53-1") << raw("\xfb\x43\x3f\xff\xff""\xff\xff\xff\xff") << "\"t\":251";
     QTest::newRow("2.^64-epsilon") << raw("\xfb\x43\xef\xff\xff""\xff\xff\xff\xff") << "\"t\":251";
-
-    // integers that are too precise for double
-    QTest::newRow("2^53+1") << raw("\x1b\0\x20\0\0""\0\0\0\1")
-                            << "\"t\":0,\"v\":\"+20000000000001\"";
-    QTest::newRow("INT64_MAX-1") << raw("\x1b\x7f\xff\xff\xff""\xff\xff\xff\xfe")
-                                 << "\"t\":0,\"v\":\"+7ffffffffffffffe\"";
-    QTest::newRow("INT64_MAX+1") << raw("\x1b\x80\0\0\0""\0\0\0\1")
-                                 << "\"t\":0,\"v\":\"+8000000000000001\"";
-    QTest::newRow("-2^53-1") << raw("\x3b\0\x20\0\0""\0\0\0\0")
-                             << "\"t\":0,\"v\":\"-20000000000000\"";
 
     // simple values
     QTest::newRow("simple0") << raw("\xe0") << "\"t\":224,\"v\":0";
