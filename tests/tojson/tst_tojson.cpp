@@ -22,8 +22,10 @@
 **
 ****************************************************************************/
 
+#define __STDC_WANT_IEC_60559_TYPES_EXT__
 #include <QtTest>
 #include "cbor.h"
+#include "cborinternal_p.h"
 #include "cborjson.h"
 #include <locale.h>
 
@@ -73,6 +75,9 @@ private slots:
     void metaDataAndTagsToObjects();
     void metaDataForKeys_data();
     void metaDataForKeys();
+
+    void recursionLimit_data();
+    void recursionLimit();
 };
 #include "tst_tojson.moc"
 
@@ -716,6 +721,35 @@ void tst_ToJson::metaDataForKeys()
         expected = "{\"" + expected + "\":false,\"" + expected + "$keycbordump\":true}";
     compareOne('\xa1' + data + '\xf4', expected,
                CborConvertAddMetadata | CborConvertStringifyMapKeys);
+}
+
+void tst_ToJson::recursionLimit_data()
+{
+    static const int recursions = CBOR_PARSER_MAX_RECURSIONS + 2;
+    QTest::addColumn<QByteArray>("data");
+
+    QTest::newRow("arrays") << QByteArray(recursions, '\x81');
+    QTest::newRow("tags") << QByteArray(recursions, '\xc1');
+
+    QByteArray mapData;
+    mapData.reserve(2 * recursions);
+    for (int i = 0; i < recursions; ++i)
+        mapData.append("\xa1\x60", 2);
+    QTest::newRow("maps") << mapData;
+}
+
+void tst_ToJson::recursionLimit()
+{
+    QFETCH(QByteArray, data);
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    QString parsed;
+    err = parseOne(&first, &parsed, 0);
+
+    QCOMPARE(err, CborErrorNestingTooDeep);
 }
 
 QTEST_MAIN(tst_ToJson)

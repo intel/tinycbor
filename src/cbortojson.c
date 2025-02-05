@@ -167,7 +167,8 @@ typedef struct ConversionStatus {
     int flags;
 } ConversionStatus;
 
-static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType type, ConversionStatus *status);
+static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType type,
+                               int nestingLevel, ConversionStatus *status);
 
 static CborError dump_bytestring_base16(char **result, CborValue *it)
 {
@@ -328,11 +329,13 @@ static CborError add_value_metadata(FILE *out, CborType type, const ConversionSt
     return CborNoError;
 }
 
-static CborError find_tagged_type(CborValue *it, CborTag *tag, CborType *type)
+static CborError find_tagged_type(CborValue *it, CborTag *tag, CborType *type, int nestingLevel)
 {
     CborError err = CborNoError;
     *type = cbor_value_get_type(it);
     while (*type == CborTagType) {
+        if (nestingLevel-- == 0)
+            return CborErrorNestingTooDeep;
         cbor_value_get_tag(it, tag);    /* can't fail */
         err = cbor_value_advance_fixed(it);
         if (err)
@@ -343,7 +346,7 @@ static CborError find_tagged_type(CborValue *it, CborTag *tag, CborType *type)
     return err;
 }
 
-static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags, ConversionStatus *status)
+static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags, int nestingLevel, ConversionStatus *status)
 {
     CborTag tag;
     CborError err;
@@ -358,7 +361,7 @@ static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags, Conve
             return CborErrorIO;
 
         CborType type = cbor_value_get_type(it);
-        err = value_to_json(out, it, flags, type, status);
+        err = value_to_json(out, it, flags, type, nestingLevel, status);
         if (err)
             return err;
         if (flags & CborConvertAddMetadata && status->flags) {
@@ -374,7 +377,7 @@ static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags, Conve
     }
 
     CborType type;
-    err = find_tagged_type(it, &status->lastTag, &type);
+    err = find_tagged_type(it, &status->lastTag, &type, nestingLevel);
     if (err)
         return err;
     tag = status->lastTag;
@@ -402,7 +405,7 @@ static CborError tagged_value_to_json(FILE *out, CborValue *it, int flags, Conve
     }
 
     /* no special handling */
-    err = value_to_json(out, it, flags, type, status);
+    err = value_to_json(out, it, flags, type, nestingLevel, status);
     status->flags |= TypeWasTagged | type;
     return err;
 }
@@ -429,7 +432,7 @@ static CborError stringify_map_key(char **key, CborValue *it, int flags, CborTyp
 #endif
 }
 
-static CborError array_to_json(FILE *out, CborValue *it, int flags, ConversionStatus *status)
+static CborError array_to_json(FILE *out, CborValue *it, int flags, int nestingLevel, ConversionStatus *status)
 {
     const char *comma = "";
     while (!cbor_value_at_end(it)) {
@@ -437,14 +440,14 @@ static CborError array_to_json(FILE *out, CborValue *it, int flags, ConversionSt
             return CborErrorIO;
         comma = ",";
 
-        CborError err = value_to_json(out, it, flags, cbor_value_get_type(it), status);
+        CborError err = value_to_json(out, it, flags, cbor_value_get_type(it), nestingLevel, status);
         if (err)
             return err;
     }
     return CborNoError;
 }
 
-static CborError map_to_json(FILE *out, CborValue *it, int flags, ConversionStatus *status)
+static CborError map_to_json(FILE *out, CborValue *it, int flags, int nestingLevel, ConversionStatus *status)
 {
     const char *comma = "";
     CborError err;
@@ -474,7 +477,7 @@ static CborError map_to_json(FILE *out, CborValue *it, int flags, ConversionStat
 
         /* then, print the value */
         CborType valueType = cbor_value_get_type(it);
-        err = value_to_json(out, it, flags, valueType, status);
+        err = value_to_json(out, it, flags, valueType, nestingLevel, status);
 
         /* finally, print any metadata we may have */
         if (flags & CborConvertAddMetadata) {
@@ -497,10 +500,14 @@ static CborError map_to_json(FILE *out, CborValue *it, int flags, ConversionStat
     return CborNoError;
 }
 
-static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType type, ConversionStatus *status)
+static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType type,
+                               int nestingLevel, ConversionStatus *status)
 {
     CborError err;
     status->flags = 0;
+
+    if (nestingLevel == 0)
+        return CborErrorNestingTooDeep;
 
     switch (type) {
     case CborArrayType:
@@ -516,8 +523,8 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
             return CborErrorIO;
 
         err = (type == CborArrayType) ?
-                  array_to_json(out, &recursed, flags, status) :
-                  map_to_json(out, &recursed, flags, status);
+                  array_to_json(out, &recursed, flags, nestingLevel - 1, status) :
+                  map_to_json(out, &recursed, flags, nestingLevel - 1, status);
         if (err) {
             copy_current_position(it, &recursed);
             return err;       /* parse error */
@@ -574,7 +581,7 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
     }
 
     case CborTagType:
-        return tagged_value_to_json(out, it, flags, status);
+        return tagged_value_to_json(out, it, flags, nestingLevel - 1, status);
 
     case CborSimpleType: {
         uint8_t simple_type;
@@ -704,7 +711,8 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
 CborError cbor_value_to_json_advance(FILE *out, CborValue *value, int flags)
 {
     ConversionStatus status;
-    return value_to_json(out, value, flags, cbor_value_get_type(value), &status);
+    return value_to_json(out, value, flags, cbor_value_get_type(value), CBOR_PARSER_MAX_RECURSIONS,
+                         &status);
 }
 
 /** @} */
