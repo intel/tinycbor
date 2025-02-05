@@ -64,6 +64,8 @@ private slots:
     void taggedByteStringsToBase16();
     void taggedByteStringsToBase64_data() { taggedByteStringsToBase16_data(); }
     void taggedByteStringsToBase64();
+    void taggedByteStringsToBase64url_data() { taggedByteStringsToBase16_data(); }
+    void taggedByteStringsToBase64url();
     void taggedByteStringsToBigNum_data()  { taggedByteStringsToBase16_data(); }
     void taggedByteStringsToBigNum();
     void otherTags_data();
@@ -526,6 +528,14 @@ void tst_ToJson::taggedByteStringsToBase64()
     QFETCH(QString, base64);
 
     compareOne('\xd6' + data, '"' + base64 + '"', 0);
+}
+
+void tst_ToJson::taggedByteStringsToBase64url()
+{
+    QFETCH(QByteArray, data);
+    QFETCH(QString, base64url);
+
+    compareOne('\xd5' + data, '"' + base64url + '"', 0);
 }
 
 void tst_ToJson::taggedByteStringsToBigNum()
