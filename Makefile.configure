@@ -15,11 +15,12 @@ PROGRAM-freestanding += int main() {}
 CCFLAGS-freestanding = $(CFLAGS)
 
 PROGRAM-cjson  = \#include <stdlib.h>\n
+PROGRAM-cjson += \#include <math.h>\n
 PROGRAM-cjson += \#include <cjson/cJSON.h>\n
-PROGRAM-cjson += int main() { return cJSON_False; }
-CCFLAGS-cjson = -I$(dir $(MAKEFILE))src
+PROGRAM-cjson += int main() { double d = NAN; return cJSON_False; }
+CCFLAGS-cjson = -I. -I$(dir $(MAKEFILE))src
 PROGRAM-system-cjson = $(PROGRAM-cjson)
-CCFLAGS-system-cjson = -lcjson
+CCFLAGS-system-cjson = -I. -lcjson
 
 sink:
 	@echo >&2 Please run from the top-level Makefile.
