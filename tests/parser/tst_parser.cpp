@@ -258,7 +258,7 @@ CborError parseOneChunk(CborValue *it, QString *parsed)
         if (text)
             *parsed = '"' + QString::fromUtf8(text, len) + '"';
     } else {
-        Q_ASSERT(false);
+        Q_UNREACHABLE();
     }
     return err;
 }
