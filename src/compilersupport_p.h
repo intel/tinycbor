@@ -51,6 +51,20 @@
 #else
 #  define cbor_static_assert(x)         ((void)sizeof(char[2*!!(x) - 1]))
 #endif
+
+#if defined(__has_cpp_attribute)    // C23 and C++17
+#  if __has_cpp_attribute(fallthrough)
+#    define CBOR_FALLTHROUGH            [[fallthrough]]
+#  endif
+#endif
+#ifndef CBOR_FALLTHROUGH
+#  ifdef __GNUC__
+#    define CBOR_FALLTHROUGH            __attribute__((fallthrough))
+#  else
+#    define CBOR_FALLTHROUGH            do { } while (0)
+#  endif
+#endif
+
 #if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__cplusplus)
 /* inline is a keyword */
 #else
