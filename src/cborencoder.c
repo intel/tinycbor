@@ -213,6 +213,7 @@ void cbor_encoder_init_writer(CborEncoder *encoder, CborEncoderWriteFunction wri
 {
 #ifdef CBOR_ENCODER_WRITE_FUNCTION
     (void) writer;
+    encoder->data.writer = CBOR_NULLPTR;
 #else
     encoder->data.writer = writer;
 #endif

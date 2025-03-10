@@ -198,9 +198,11 @@
 
 #ifdef __cplusplus
 #  define CONST_CAST(t, v)  const_cast<t>(v)
+#  define CBOR_NULLPTR nullptr
 #else
 /* C-style const_cast without triggering a warning with -Wcast-qual */
 #  define CONST_CAST(t, v)  (t)(uintptr_t)(v)
+#  define CBOR_NULLPTR NULL
 #endif
 
 #ifdef __GNUC__
