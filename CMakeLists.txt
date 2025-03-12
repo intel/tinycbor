@@ -24,12 +24,12 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(tinycbor LANGUAGES C VERSION 0.7.0)
+project(TinyCBOR LANGUAGES C VERSION 0.7.0)
 
 # Set path to additional cmake scripts
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-set(TARGETS_EXPORT_NAME "tinycbor-targets")
+set(TARGETS_EXPORT_NAME "TinyCBOR-targets")
 
 option(WITH_CBOR2JSON "Compile code to convert from CBOR to JSON" ON)
 option(WITH_FREESTANDING "Compile TinyCBOR in C freestanding mode" OFF)
@@ -82,7 +82,7 @@ endif()
 generate_export_header(tinycbor BASE_NAME "cbor" EXPORT_MACRO_NAME "CBOR_API" EXPORT_FILE_NAME "tinycbor-export.h")
 
 # Check for open_memstream and store the result in HAVE_OPEN_MEMSTREAM
-include (CheckSymbolExists)
+include(CheckSymbolExists)
 check_symbol_exists(open_memstream stdio.h HAVE_OPEN_MEMSTREAM)
 check_symbol_exists(funopen stdio.h HAVE_OPEN_FUNOPEN)
 check_symbol_exists(fopencookie stdio.h HAVE_OPEN_FOPENCOOKIE)
@@ -117,7 +117,7 @@ install(
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}  # this does not actually install anything (but used by downstream projects)
 )
 
-set (PROJECT_LIBRARIES tinycbor)
+set(PROJECT_LIBRARIES TinyCBOR)
 include(PackageConfig)
 
 if(BUILD_TESTING)
