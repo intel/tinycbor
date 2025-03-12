@@ -40,6 +40,8 @@ endif()
 # Include additional modules that are used unconditionally
 include(GNUInstallDirs)
 include(GenerateExportHeader)
+include(CheckLinkerFlag)
+include(CheckSymbolExists)
 
 add_library(tinycbor
   src/cborencoder.c
@@ -90,6 +92,12 @@ set_target_properties(tinycbor PROPERTIES
 )
 if(BUILD_SHARED_LIBS)
   set_target_properties(tinycbor PROPERTIES C_VISIBILITY_PRESET hidden)
+
+  # Check if the linker supports "-z defs" (a.k.a "--no-undefined")
+  check_linker_flag(C "-Wl,-z,defs" HAVE_NO_UNDEFINED)
+  if(HAVE_NO_UNDEFINED)
+    target_link_options(tinycbor PRIVATE "-Wl,-z,defs")
+  endif()
 else()
   target_compile_definitions(tinycbor PUBLIC CBOR_STATIC_DEFINE)
 endif()
@@ -98,7 +106,6 @@ endif()
 generate_export_header(tinycbor BASE_NAME "cbor" EXPORT_MACRO_NAME "CBOR_API" EXPORT_FILE_NAME "tinycbor-export.h")
 
 # Check for open_memstream and store the result in HAVE_OPEN_MEMSTREAM
-include(CheckSymbolExists)
 check_symbol_exists(open_memstream stdio.h HAVE_OPEN_MEMSTREAM)
 check_symbol_exists(funopen stdio.h HAVE_OPEN_FUNOPEN)
 check_symbol_exists(fopencookie stdio.h HAVE_OPEN_FOPENCOOKIE)
