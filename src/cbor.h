@@ -60,11 +60,8 @@ extern "C" {
 #  define SIZE_MAX ((size_t)-1)
 #endif
 
-#ifndef CBOR_API
-#  define CBOR_API
-#endif
 #ifndef CBOR_PRIVATE_API
-#  define CBOR_PRIVATE_API
+#  define CBOR_PRIVATE_API  CBOR_API
 #endif
 #ifndef CBOR_INLINE_API
 #  if defined(__cplusplus)
