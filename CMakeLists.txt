@@ -24,7 +24,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(TinyCBOR LANGUAGES C VERSION 0.7.0)
+project(TinyCBOR LANGUAGES C VERSION 7.0)
 
 # Set path to additional cmake scripts
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
@@ -83,6 +83,10 @@ set_target_properties(tinycbor PROPERTIES
   # don't use something of a newer language level.
   C_EXTENSIONS OFF
   C_STANDARD 99
+
+  # Set version and output name
+  VERSION "0.${PROJECT_VERSION}"
+  SOVERSION "0"
 )
 
 # Generate export macros
@@ -108,11 +112,6 @@ target_include_directories(tinycbor
   PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
   PUBLIC "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>"
   PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
-
-# Set version and output name
-set_target_properties(tinycbor PROPERTIES
-  VERSION "${PROJECT_VERSION}"
-  SOVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 
 install(FILES src/cbor.h src/tinycbor-version.h ${CMAKE_BINARY_DIR}/tinycbor-export.h TYPE INCLUDE)
 install(
