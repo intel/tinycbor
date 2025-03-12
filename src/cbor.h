@@ -38,8 +38,8 @@
 #include "cbor_cfg.h"
 #endif
 
-#include "tinycbor-version.h"
 #include "tinycbor-export.h"
+#include "tinycbor-version.h"
 
 #define TINYCBOR_VERSION            ((TINYCBOR_VERSION_MAJOR << 16) | (TINYCBOR_VERSION_MINOR << 8) | TINYCBOR_VERSION_PATCH)
 

@@ -52,7 +52,6 @@ add_library(tinycbor
   src/cborpretty.c
   src/cborvalidation.c
   src/cbor.h
-  src/tinycbor-version.h
 )
 if(WITH_FREESTANDING)
   target_compile_options(tinycbor PUBLIC
@@ -122,6 +121,9 @@ generate_export_header(tinycbor
   EXPORT_MACRO_NAME "CBOR_API"
   EXPORT_FILE_NAME "tinycbor-export.h"
 )
+
+# Generate version header
+configure_file(src/tinycbor-version.h.in tinycbor-version.h)
 
 # Check for open_memstream and store the result in HAVE_OPEN_MEMSTREAM
 check_symbol_exists(open_memstream stdio.h HAVE_OPEN_MEMSTREAM)
