@@ -102,6 +102,18 @@ else()
   target_compile_definitions(tinycbor PUBLIC CBOR_STATIC_DEFINE)
 endif()
 
+# Enable warnings
+target_compile_options(tinycbor PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:-W3>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:
+    -Wall -Wextra
+    -Werror=format-security
+    -Werror=incompatible-pointer-types
+    -Werror=implicit-function-declaration
+    -Werror=int-conversion
+  >
+)
+
 # Generate export macros
 generate_export_header(tinycbor BASE_NAME "cbor" EXPORT_MACRO_NAME "CBOR_API" EXPORT_FILE_NAME "tinycbor-export.h")
 
