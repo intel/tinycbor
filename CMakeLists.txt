@@ -88,6 +88,11 @@ set_target_properties(tinycbor PROPERTIES
   VERSION "0.${PROJECT_VERSION}"
   SOVERSION "0"
 )
+if(BUILD_SHARED_LIBS)
+  set_target_properties(tinycbor PROPERTIES C_VISIBILITY_PRESET hidden)
+else()
+  target_compile_definitions(tinycbor PUBLIC CBOR_STATIC_DEFINE)
+endif()
 
 # Generate export macros
 generate_export_header(tinycbor BASE_NAME "cbor" EXPORT_MACRO_NAME "CBOR_API" EXPORT_FILE_NAME "tinycbor-export.h")
