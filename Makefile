@@ -21,7 +21,7 @@ RMDIR = rmdir
 SED = sed
 
 # Our sources
-TINYCBOR_HEADERS = src/cbor.h src/cborjson.h src/tinycbor-version.h
+TINYCBOR_HEADERS = src/cbor.h src/cborjson.h src/tinycbor-version.h src/tinycbor-export.h
 TINYCBOR_FREESTANDING_SOURCES = \
 	src/cborerrorstrings.c \
 	src/cborencoder.c \
@@ -143,6 +143,9 @@ bin/json2cbor: $(JSON2CBOR_SOURCES:.c=.o) $(BINLIBRARY)
 	@$(MKDIR) -p bin
 	$(CC) -o $@ $(LDFLAGS) $^ $(LDFLAGS_CJSON) $(LDLIBS)
 
+src/tinycbor-export.h: src/tinycbor-export.h.in
+	cp $< $@
+
 tinycbor.pc: tinycbor.pc.in
 	$(SED) > $@ < $< \
 		-e 's,@prefix@,$(prefix),' \
@@ -190,6 +193,7 @@ mostlyclean:
 	$(RM) $(TINYCBOR_SOURCES:.c=.o)
 	$(RM) $(TINYCBOR_SOURCES:.c=.pic.o)
 	$(RM) $(CBORDUMP_SOURCES:.c=.o)
+	$(RM) src/tinycbor-export.h
 
 clean: mostlyclean
 	$(RM) bin/cbordump
@@ -232,7 +236,7 @@ cflags += \
 	-Werror=int-conversion
 endif
 
-%.o: %.c
+%.o: %.c $(TINYCBOR_HEADERS)
 	@test -d $(@D) || $(MKDIR) $(@D)
 	$(CC) $(cflags) $($(basename $(notdir $@))_CCFLAGS) -c -o $@ $<
 %.pic.o: %.c

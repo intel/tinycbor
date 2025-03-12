@@ -1,6 +1,6 @@
 CFLAGS = -W3
 
-TINYCBOR_HEADERS = src\cbor.h src\cborjson.h
+TINYCBOR_HEADERS = src\cbor.h src\cborjson.h src\tinycbor-export.h
 TINYCBOR_SOURCES = \
 	src\cborerrorstrings.c \
 	src\cborencoder.c \
@@ -24,7 +24,7 @@ TINYCBOR_OBJS = \
 	src\cborpretty_stdio.obj \
 	src\cborvalidation.obj
 
-all: lib\tinycbor.lib
+all: src/tinycbor-export.h lib\tinycbor.lib
 check: tests\Makefile lib\tinycbor.lib
 	cd tests & $(MAKE) check
 silentcheck:
@@ -32,12 +32,16 @@ silentcheck:
 tests\Makefile: tests\tests.pro
 	qmake -o $@ $**
 
+src\tinycbor-export.h: src\tinycbor-export.h.in
+	copy $** $@
+
 lib\tinycbor.lib: $(TINYCBOR_OBJS)
 	-if not exist lib\NUL md lib
 	lib -nologo /out:$@ $**
 
 mostlyclean:
 	-del $(TINYCBOR_OBJS)
+	-del src\tinycbor-export.h
 clean: mostlyclean
 	-del lib\tinycbor.lib
 	if exist tests\Makefile (cd tests & $(MAKE) clean)
