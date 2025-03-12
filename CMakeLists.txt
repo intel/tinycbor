@@ -115,7 +115,11 @@ target_compile_options(tinycbor PRIVATE
 )
 
 # Generate export macros
-generate_export_header(tinycbor BASE_NAME "cbor" EXPORT_MACRO_NAME "CBOR_API" EXPORT_FILE_NAME "tinycbor-export.h")
+generate_export_header(tinycbor
+  BASE_NAME "cbor"
+  EXPORT_MACRO_NAME "CBOR_API"
+  EXPORT_FILE_NAME "tinycbor-export.h"
+)
 
 # Check for open_memstream and store the result in HAVE_OPEN_MEMSTREAM
 check_symbol_exists(open_memstream stdio.h HAVE_OPEN_MEMSTREAM)
@@ -135,9 +139,15 @@ endif()
 target_include_directories(tinycbor
   PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
   PUBLIC "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>"
-  PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+  PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
 
-install(FILES src/cbor.h src/tinycbor-version.h ${CMAKE_BINARY_DIR}/tinycbor-export.h TYPE INCLUDE)
+install(FILES
+  src/cbor.h
+  ${CMAKE_BINARY_DIR}/tinycbor-version.h
+  ${CMAKE_BINARY_DIR}/tinycbor-export.h
+  TYPE INCLUDE
+)
 install(
   TARGETS tinycbor
   EXPORT "${TARGETS_EXPORT_NAME}"
