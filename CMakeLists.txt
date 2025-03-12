@@ -35,12 +35,14 @@ set(TARGETS_EXPORT_NAME "tinycbor-targets")
 include(GNUInstallDirs)
 include(GenerateExportHeader)
 
-add_library(tinycbor SHARED
+add_library(tinycbor
   src/cborencoder.c
+  src/cborencoder_float.c
   src/cborencoder_close_container_checked.c
   src/cborerrorstrings.c
   src/cborparser.c
   src/cborparser_dup_string.c
+  src/cborparser_float.c
   src/cborpretty.c
   src/cborpretty_stdio.c
   src/cbortojson.c
