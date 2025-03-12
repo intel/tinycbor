@@ -78,6 +78,13 @@ else()
   target_compile_definitions(tinycbor PUBLIC CBOR_NO_FLOATING_POINT)
 endif()
 
+set_target_properties(tinycbor PROPERTIES
+  # Force this library to link as C and compile as C99, to ensure we
+  # don't use something of a newer language level.
+  C_EXTENSIONS OFF
+  C_STANDARD 99
+)
+
 # Generate export macros
 generate_export_header(tinycbor BASE_NAME "cbor" EXPORT_MACRO_NAME "CBOR_API" EXPORT_FILE_NAME "tinycbor-export.h")
 
