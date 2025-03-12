@@ -1,4 +1,4 @@
-version: 0.6-build-{build}
+version: build-{build}
 pull_requests:
   do_not_increment_build_number: true
 image:
@@ -13,16 +13,18 @@ install:
     set path=%PATH%;%QTDIR%\bin
 build_script:
 - cmd: >-
-    nmake -f Makefile.nmake -nologo CFLAGS="-W3 -Os -MDd"
+    cmake -S. -Bbuild -GNinja -DWITH_CBOR2JSON=OFF -DBUILD_TESTING=ON -DCMAKE_C_FLAGS="-W3 -Os -MDd" -DCMAKE_CXX_FLAGS="-W3 -O2 -MDd"
 
-    cd tests
+    ninja -C build
 
-    qmake CONFIG-=release CONFIG+=debug
-
-    nmake -nologo -s
 test_script:
 - cmd: >-
-    nmake -s -nologo TESTARGS=-silent check
+    ctest --test-dir build --output-on-failure --output-junit ctest.junitxml
+
+after_test:
+- cmd: >-
+    curl -F file=@build/ctest.junitxml https://ci.appveyor.com/api/testresults/junit/%APPVEYOR_JOB_ID%
+
 artifacts:
-- path: lib\tinycbor.lib
+#- path: build\tinycbor.lib
 deploy: off
