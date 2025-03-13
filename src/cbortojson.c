@@ -381,7 +381,9 @@ static CborError text_string_to_escaped(char **str, CborValue *it)
         /* success */
         if (!*str)
             *str = strdup("");  // wasteful, but very atypical
-        return cbor_value_finish_string_iteration(it);
+        err = cbor_value_finish_string_iteration(it);
+        if (likely(err == CborNoError))
+            return CborNoError;
     }
 
     cbor_free(*str);
