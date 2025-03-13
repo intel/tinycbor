@@ -22,13 +22,7 @@
 **
 ****************************************************************************/
 
-#define _BSD_SOURCE 1
-#define _DEFAULT_SOURCE 1
-#define _GNU_SOURCE 1
-#ifndef __STDC_LIMIT_MACROS
-#  define __STDC_LIMIT_MACROS 1
-#endif
-#define __STDC_WANT_IEC_60559_TYPES_EXT__
+#include "cborinternalmacros_p.h"
 
 #include "cbor.h"
 #include "cborjson.h"
