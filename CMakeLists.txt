@@ -31,25 +31,52 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 set(TARGETS_EXPORT_NAME "tinycbor-targets")
 
+option(WITH_CBOR2JSON "Compile code to convert from CBOR to JSON" ON)
+option(WITH_FREESTANDING "Compile TinyCBOR in C freestanding mode" OFF)
+if(WITH_FLOATING_POINT AND NOT WITH_FREESTANDING)
+  option(WITH_FLOATING_POINT "Use floating point code in TinyCBOR" ON)
+endif()
+
 # Include additional modules that are used unconditionally
 include(GNUInstallDirs)
 include(GenerateExportHeader)
 
 add_library(tinycbor
   src/cborencoder.c
-  src/cborencoder_float.c
   src/cborencoder_close_container_checked.c
   src/cborerrorstrings.c
   src/cborparser.c
-  src/cborparser_dup_string.c
-  src/cborparser_float.c
   src/cborpretty.c
-  src/cborpretty_stdio.c
-  src/cbortojson.c
   src/cborvalidation.c
   src/cbor.h
   src/tinycbor-version.h
 )
+if(WITH_FREESTANDING)
+  target_compile_options(tinycbor PUBLIC
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffreestanding>
+  )
+else()
+  target_sources(tinycbor PRIVATE
+    src/cborparser_dup_string.c
+    src/cborpretty_stdio.c
+  )
+  if(WITH_CBOR2JSON)
+    target_sources(tinycbor PRIVATE
+      src/cbortojson.c
+    )
+  endif()
+endif()
+if(WITH_FLOATING_POINT)
+  target_sources(tinycbor PRIVATE
+    src/cborencoder_float.c
+    src/cborparser_float.c
+  )
+  if(NOT WIN32)
+    target_link_libraries(tinycbor m)
+  endif()
+else()
+  target_compile_definitions(tinycbor PUBLIC CBOR_NO_FLOATING_POINT)
+endif()
 
 # Generate export macros
 generate_export_header(tinycbor BASE_NAME "cbor" EXPORT_MACRO_NAME "CBOR_API" EXPORT_FILE_NAME "tinycbor-export.h")
