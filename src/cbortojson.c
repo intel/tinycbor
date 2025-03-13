@@ -744,8 +744,10 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
             status->flags |= r == FP_NAN ? NumberWasNaN :
                                            NumberWasInfinite | (val < 0 ? NumberWasNegative : 0);
         } else {
-            uint64_t ival = (uint64_t)fabs(val);
-            if ((double)ival == fabs(val)) {
+            const double limit = (UINT32_MAX + 1.0) * (UINT32_MAX + 1.0);  /* 2^64 */
+            uint64_t ival = 0;
+            double aval = fabs(val);
+            if (aval < limit && (double)(ival = (uint64_t)aval) == aval) {
                 /* print as integer so we get the full precision */
                 r = fprintf(out, "%s%" PRIu64, val < 0 ? "-" : "", ival);
                 status->flags |= TypeWasNotNative;   /* mark this integer number as a double */
