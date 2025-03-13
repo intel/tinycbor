@@ -188,7 +188,10 @@ static CborError dump_bytestring_base16(char **result, CborValue *it)
         return err;
 
     /* a Base16 (hex) output is twice as big as our buffer */
-    buffer = (uint8_t *)cbor_malloc(n * 2 + 1);
+    size_t needed;
+    if (mul_check_overflow(n, 2, &needed) || add_check_overflow(needed, 1, &needed))
+        return CborErrorDataTooLarge;
+    buffer = (uint8_t *)cbor_malloc(needed);
     if (buffer == NULL)
         /* out of memory */
         return CborErrorOutOfMemory;
@@ -216,8 +219,12 @@ static CborError generic_dump_base64(char **result, CborValue *it, const char al
         return err;
 
     /* a Base64 output (untruncated) has 4 bytes for every 3 in the input */
-    size_t len = (n + 5) / 3 * 4;
-    buffer = (uint8_t *)cbor_malloc(len + 1);
+    size_t len, needed;
+    if (add_check_overflow(n, 5, &len) || mul_check_overflow(len / 3, 4, &len)
+            || add_check_overflow(len, 1, &needed)) {
+        return CborErrorDataTooLarge;
+    }
+    buffer = (uint8_t *)cbor_malloc(needed);
     if (buffer == NULL)
         /* out of memory */
         return CborErrorOutOfMemory;
