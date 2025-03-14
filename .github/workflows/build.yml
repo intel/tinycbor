@@ -30,36 +30,36 @@ jobs:
         build_cfg:
         - name: gcc-no-math
           cmakeflags: >-
-            -DCMAKE_C_FLAGS="-Os"
+            -DCMAKE_C_FLAGS="-Os -Werror"
             -DWITH_FLOATING_POINT=OFF
             -DWITH_FREESTANDING=ON
         - name: gcc-freestanding
           cmakeflags: >-
-            -DCMAKE_C_FLAGS="-Os"
+            -DCMAKE_C_FLAGS="-Os -Werror"
             -DWITH_FREESTANDING=ON
         - name: clang
           cmakeflags: >-
             -DBUILD_SHARED_LIBS=ON
             -DCMAKE_C_COMPILER=clang
-            -DCMAKE_C_FLAGS="-Oz -g"
+            -DCMAKE_C_FLAGS="-Oz -g -Werror"
             -DCMAKE_CXX_COMPILER=clang++
-            -DCMAKE_CXX_FLAGS="-O2 -g"
+            -DCMAKE_CXX_FLAGS="-O2 -g -Werror"
         - name: linux-g++
           cmakeflags: >-
             -DBUILD_SHARED_LIBS=ON
             -DCMAKE_C_COMPILER=gcc
-            -DCMAKE_C_FLAGS="-Os -g"
+            -DCMAKE_C_FLAGS="-Os -g -Werror"
             -DCMAKE_CXX_COMPILER=g++
-            -DCMAKE_CXX_FLAGS="-O2 -g"
+            -DCMAKE_CXX_FLAGS="-O2 -g -Werror"
         include:
         - os: macos-13
           build_cfg:
             name: clang
             cmakeflags: >-
               -DCMAKE_C_COMPILER=clang
-              -DCMAKE_C_FLAGS="-Oz -g"
+              -DCMAKE_C_FLAGS="-Oz -g -Werror"
               -DCMAKE_CXX_COMPILER=clang++
-              -DCMAKE_CXX_FLAGS="-O2 -g"
+              -DCMAKE_CXX_FLAGS="-O2 -g -Werror"
 
 
     # Default job name is too long to be visible in the "Checks" tab.
