@@ -107,35 +107,35 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
 {
     int type = v.userType();
     switch (type) {
-    case QVariant::Int:
-    case QVariant::LongLong:
+    case QMetaType::Int:
+    case QMetaType::LongLong:
         return cbor_encode_int(encoder, v.toLongLong());
 
-    case QVariant::UInt:
-    case QVariant::ULongLong:
+    case QMetaType::UInt:
+    case QMetaType::ULongLong:
         return cbor_encode_uint(encoder, v.toULongLong());
 
-    case QVariant::Bool:
+    case QMetaType::Bool:
         return cbor_encode_boolean(encoder, v.toBool());
 
-    case QVariant::Invalid:
+    case QMetaType::UnknownType:
         return cbor_encode_undefined(encoder);
 
     case QMetaType::VoidStar:
         return cbor_encode_null(encoder);
 
-    case QVariant::Double:
+    case QMetaType::Double:
         return cbor_encode_double(encoder, v.toDouble());
 
     case QMetaType::Float:
         return cbor_encode_float(encoder, v.toFloat());
 
-    case QVariant::String: {
+    case QMetaType::QString: {
         QByteArray string = v.toString().toUtf8();
         return cbor_encode_text_string(encoder, string.constData(), string.length());
     }
 
-    case QVariant::ByteArray: {
+    case QMetaType::QByteArray: {
         QByteArray string = v.toByteArray();
         return cbor_encode_byte_string(encoder, reinterpret_cast<const quint8 *>(string.constData()), string.length());
     }
@@ -158,7 +158,7 @@ CborError encodeVariant(CborEncoder *encoder, const QVariant &v)
                 return err;
             return static_cast<CborError>(err | encodeVariant(encoder, v.value<Tag>().tagged));
         }
-        if (type == QVariant::List || type == qMetaTypeId<IndeterminateLengthArray>()) {
+        if (type == QMetaType::QVariantList || type == qMetaTypeId<IndeterminateLengthArray>()) {
             CborEncoder sub;
             QVariantList list = v.toList();
             size_t len = list.length();
