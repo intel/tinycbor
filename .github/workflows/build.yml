@@ -37,29 +37,53 @@ jobs:
           cmakeflags: >-
             -DCMAKE_C_FLAGS="-Os -Werror"
             -DWITH_FREESTANDING=ON
+        - name: gcc-small
+          cmakeflags: >-
+            -DBUILD_TESTING=OFF
+            -DCMAKE_C_FLAGS="-Os -Werror"
+        - name: clang-small
+          cmakeflags: >-
+            -DBUILD_TESTING=OFF
+            -DCMAKE_C_COMPILER=clang
+            -DCMAKE_C_FLAGS="-Oz -g -Werror"
         - name: clang
           cmakeflags: >-
             -DBUILD_SHARED_LIBS=ON
+            -DCMAKE_BUILD_TYPE=Debug
             -DCMAKE_C_COMPILER=clang
-            -DCMAKE_C_FLAGS="-Oz -g -Werror"
+            -DCMAKE_C_FLAGS_DEBUG="-Werror"
             -DCMAKE_CXX_COMPILER=clang++
-            -DCMAKE_CXX_FLAGS="-O2 -g -Werror"
+            -DCMAKE_CXX_FLAGS_DEBUG="-Werror"
         - name: linux-g++
           cmakeflags: >-
             -DBUILD_SHARED_LIBS=ON
+            -DCMAKE_BUILD_TYPE=Debug
             -DCMAKE_C_COMPILER=gcc
-            -DCMAKE_C_FLAGS="-Os -g -Werror"
+            -DCMAKE_C_FLAGS_DEBUG="-Werror"
             -DCMAKE_CXX_COMPILER=g++
-            -DCMAKE_CXX_FLAGS="-O2 -g -Werror"
+            -DCMAKE_CXX_FLAGS_DEBUG="-Werror"
         include:
         - os: macos-13
           build_cfg:
-            name: clang
+            name: clang-small
             cmakeflags: >-
+              -DBUILD_TESTING=OFF
               -DCMAKE_C_COMPILER=clang
               -DCMAKE_C_FLAGS="-Oz -g -Werror"
               -DCMAKE_CXX_COMPILER=clang++
               -DCMAKE_CXX_FLAGS="-O2 -g -Werror"
+        - os: macos-13
+          build_cfg:
+            name: clang
+            cmakeflags: >-
+              -DBUILD_SHARED_LIBS=ON
+              -DCMAKE_BUILD_TYPE=Debug
+              -DCMAKE_C_COMPILER=clang
+              -DCMAKE_C_FLAGS_DEBUG="-Werror -fsanitize=address"
+              -DCMAKE_CXX_COMPILER=clang++
+              -DCMAKE_CXX_FLAGS_DEBUG="-Werror -fsanitize=address"
+              -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address"
+              -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address"
 
 
     # Default job name is too long to be visible in the "Checks" tab.
