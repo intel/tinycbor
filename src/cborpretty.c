@@ -164,7 +164,7 @@ static inline bool convertToUint64(double v, uint64_t *absolute)
      *    value, chosen in an implementation-defined manner.
      */
     supremum = -2.0 * INT64_MIN;     /* -2 * (- 2^63) == 2^64 */
-    if (v >= supremum)
+    if (!(v < supremum)) /* out of range or NaN */
         return false;
 
     /* Now we can convert, these two conversions cannot be UB */
