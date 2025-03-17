@@ -308,7 +308,7 @@ static CborError container_to_pretty(CborStreamFunction stream, void *out, CborV
     const char *comma = "";
     CborError err = CborNoError;
 
-    if (!recursionsLeft) {
+    if (recursionsLeft <= 0) {
         printRecursionLimit(stream, out);
         while (!cbor_value_at_end(it) && !err) {
             err = cbor_value_advance(it);
@@ -356,6 +356,9 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
             copy_current_position(it, &recursed);
             return err;       /* parse error */
         }
+        /* N.B. recursionsLeft can be zero, in which case container_to_pretty is called with
+         * recursionsLeft = -1 and reports that nesting is too deep.
+         */
         err = container_to_pretty(stream, out, &recursed, type, flags, recursionsLeft - 1);
         if (err) {
             copy_current_position(it, &recursed);
@@ -452,7 +455,7 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
         err = stream(out, "%" PRIu64 "%s(", tag, get_indicator(it, flags));
         if (!err)
             err = cbor_value_advance_fixed(it);
-        if (!err && recursionsLeft)
+        if (!err && recursionsLeft > 0)
             err = value_to_pretty(stream, out, it, flags, recursionsLeft - 1);
         else if (!err)
             printRecursionLimit(stream, out);
