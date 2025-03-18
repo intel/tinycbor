@@ -24,7 +24,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(TinyCBOR LANGUAGES C VERSION 7.0)
+project(tinycbor LANGUAGES C CXX VERSION 7.0)
 
 # Set path to additional cmake scripts
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
@@ -84,6 +84,7 @@ endif()
 set_target_properties(tinycbor PROPERTIES
   # Force this library to link as C and compile as C99, to ensure we
   # don't use something of a newer language level.
+  LINKER_LANGUAGE C
   C_EXTENSIONS OFF
   C_STANDARD 99
 
