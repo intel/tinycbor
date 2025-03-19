@@ -125,6 +125,9 @@ generate_export_header(tinycbor
 # Generate version header
 configure_file(src/tinycbor-version.h.in tinycbor-version.h)
 
+# Generate pkgconfig file
+configure_file(tinycbor.pc.in tinycbor.pc @ONLY)
+
 # Check for open_memstream and store the result in HAVE_OPEN_MEMSTREAM
 check_symbol_exists(open_memstream stdio.h HAVE_OPEN_MEMSTREAM)
 check_symbol_exists(funopen stdio.h HAVE_OPEN_FUNOPEN)
@@ -156,6 +159,10 @@ install(FILES
   ${PROJECT_BINARY_DIR}/tinycbor-version.h
   ${PROJECT_BINARY_DIR}/tinycbor-export.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tinycbor
+)
+install(FILES
+  ${CMAKE_BINARY_DIR}/tinycbor.pc
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 install(
   TARGETS tinycbor
