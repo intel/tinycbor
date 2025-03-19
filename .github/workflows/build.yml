@@ -48,6 +48,7 @@ jobs:
             -DCMAKE_C_FLAGS="-Oz -g -Werror"
         - name: clang
           cmakeflags: >-
+            -DBUILD_EXAMPLES=ON
             -DBUILD_SHARED_LIBS=ON
             -DCMAKE_BUILD_TYPE=Debug
             -DCMAKE_C_COMPILER=clang
@@ -56,6 +57,7 @@ jobs:
             -DCMAKE_CXX_FLAGS_DEBUG="-Werror"
         - name: linux-g++
           cmakeflags: >-
+            -DBUILD_EXAMPLES=ON
             -DBUILD_SHARED_LIBS=ON
             -DCMAKE_BUILD_TYPE=Debug
             -DCMAKE_C_COMPILER=gcc
@@ -68,15 +70,16 @@ jobs:
             name: clang-small
             cmakeflags: >-
               -DBUILD_TESTING=OFF
+              -DBUILD_TOOLS=OFF
               -DCMAKE_C_COMPILER=clang
               -DCMAKE_C_FLAGS="-Oz -g -Werror"
               -DCMAKE_CXX_COMPILER=clang++
               -DCMAKE_CXX_FLAGS="-O2 -g -Werror"
-              -DWITH_TOOLS=OFF
         - os: macos-15-intel
           build_cfg:
             name: clang
             cmakeflags: >-
+              -DBUILD_EXAMPLES=ON
               -DBUILD_SHARED_LIBS=ON
               -DCMAKE_BUILD_TYPE=Debug
               -DCMAKE_C_COMPILER=clang
