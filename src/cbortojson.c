@@ -644,28 +644,11 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         return CborNoError;
     }
 
-    case CborIntegerType: {
-        double num;     /* JS numbers are IEEE double precision */
-        uint64_t val;
-        cbor_value_get_raw_integer(it, &val);    /* can't fail */
-        num = (double)val;
-
-        if (cbor_value_is_negative_integer(it)) {
-            num = -num - 1;                     /* convert to negative */
-            if ((uint64_t)(-num - 1) != val) {
-                status->flags = NumberPrecisionWasLost | NumberWasNegative;
-                status->originalNumber = val;
-            }
-        } else {
-            if ((uint64_t)num != val) {
-                status->flags = NumberPrecisionWasLost;
-                status->originalNumber = val;
-            }
-        }
-        if (fprintf(out, "%.0f", num) < 0)  /* this number has no fraction, so no decimal points please */
-            return CborErrorIO;
-        break;
-    }
+    case CborIntegerType:
+    case CborNullType:
+    case CborBooleanType:
+        /* just use cborpretty.c */
+        return cbor_value_to_pretty_advance(out, it);
 
     case CborByteStringType:
     case CborTextStringType: {
@@ -696,24 +679,11 @@ static CborError value_to_json(FILE *out, CborValue *it, int flags, CborType typ
         break;
     }
 
-    case CborNullType:
-        if (fprintf(out, "null") < 0)
-            return CborErrorIO;
-        break;
-
     case CborUndefinedType:
         status->flags = TypeWasNotNative;
         if (fprintf(out, "\"undefined\"") < 0)
             return CborErrorIO;
         break;
-
-    case CborBooleanType: {
-        bool val;
-        cbor_value_get_boolean(it, &val);       /* can't fail */
-        if (fprintf(out, val ? "true" : "false") < 0)
-            return CborErrorIO;
-        break;
-    }
 
 #ifndef CBOR_NO_FLOATING_POINT
     case CborDoubleType: {
