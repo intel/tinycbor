@@ -27,7 +27,7 @@ cmake_minimum_required(VERSION 3.10)
 project(tinycbor LANGUAGES C CXX VERSION 7.0)
 
 # Set path to additional cmake scripts
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 set(TARGETS_EXPORT_NAME "TinyCBOR-targets")
 
@@ -142,14 +142,14 @@ endif()
 
 target_include_directories(tinycbor
   PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
-  PUBLIC "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>"
+  PUBLIC "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>"
   PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
 install(FILES
-  src/cbor.h
-  ${CMAKE_BINARY_DIR}/tinycbor-version.h
-  ${CMAKE_BINARY_DIR}/tinycbor-export.h
+  ${PROJECT_SOURCE_DIR}/src/cbor.h
+  ${PROJECT_BINARY_DIR}/tinycbor-version.h
+  ${PROJECT_BINARY_DIR}/tinycbor-export.h
   TYPE INCLUDE
 )
 install(
