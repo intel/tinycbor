@@ -150,7 +150,7 @@ install(FILES
   ${PROJECT_SOURCE_DIR}/src/cbor.h
   ${PROJECT_BINARY_DIR}/tinycbor-version.h
   ${PROJECT_BINARY_DIR}/tinycbor-export.h
-  TYPE INCLUDE
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tinycbor
 )
 install(
   TARGETS tinycbor
