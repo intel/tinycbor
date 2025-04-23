@@ -22,7 +22,7 @@
 **
 ****************************************************************************/
 
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 #include <stdarg.h>
 #include <stdio.h>
 

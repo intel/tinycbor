@@ -24,12 +24,12 @@
 
 #include "cborinternalmacros_p.h"
 
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 #include "cborjson.h"
 #include "cborinternal_p.h"
 #include "compilersupport_p.h"
 #include "cborinternal_p.h"
-#include <memory.h>
+#include "memory.h"
 
 #include <inttypes.h>
 #include <stdio.h>

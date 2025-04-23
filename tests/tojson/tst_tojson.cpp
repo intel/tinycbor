@@ -24,7 +24,7 @@
 
 #define __STDC_WANT_IEC_60559_TYPES_EXT__
 #include <QtTest>
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 #include "cborinternal_p.h"
 #include "cborjson.h"
 #include <locale.h>
