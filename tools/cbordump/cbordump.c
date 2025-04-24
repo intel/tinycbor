@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 #define _POSIX_C_SOURCE 200809L
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 #include "cborjson.h"
 #include <errno.h>
 #include <stdio.h>

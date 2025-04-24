@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 #include <QtTest>
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
 #include <qfloat16.h>
