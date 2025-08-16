@@ -51,7 +51,6 @@ add_library(tinycbor
   src/cborparser.c
   src/cborpretty.c
   src/cborvalidation.c
-  src/cbor.h
 )
 if(WITH_FREESTANDING)
   target_compile_options(tinycbor PUBLIC
@@ -141,13 +140,13 @@ if(NOT HAVE_OPEN_MEMSTREAM)
 endif()
 
 target_include_directories(tinycbor
-  PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
+  PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   PUBLIC "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>"
   PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
 install(FILES
-  ${PROJECT_SOURCE_DIR}/src/cbor.h
+  ${PROJECT_SOURCE_DIR}/include/tinycbor/cbor.h
   ${PROJECT_BINARY_DIR}/tinycbor-version.h
   ${PROJECT_BINARY_DIR}/tinycbor-export.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tinycbor
