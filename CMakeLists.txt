@@ -31,10 +31,10 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 set(TARGETS_EXPORT_NAME "TinyCBOR-targets")
 
-option(WITH_CBOR2JSON "Compile code to convert from CBOR to JSON" ON)
+option(WITH_FLOATING_POINT "Use floating point code in TinyCBOR" ON)
 option(WITH_FREESTANDING "Compile TinyCBOR in C freestanding mode" OFF)
 if(WITH_FLOATING_POINT AND NOT WITH_FREESTANDING)
-  option(WITH_FLOATING_POINT "Use floating point code in TinyCBOR" ON)
+  option(WITH_CBOR2JSON "Compile code to convert from CBOR to JSON" ON)
   option(WITH_TOOLS "Compile the TinyCBOR tools" ON)
 endif()
 
