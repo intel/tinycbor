@@ -174,12 +174,13 @@ int main(int argc, char **argv)
     CborError err = cbor_parser_init(buf, length, 0, &parser, &it);
     if (!err)
         err = dumprecursive(&it, 0);
-    free(buf);
 
     if (err) {
         fprintf(stderr, "CBOR parsing failure at offset %ld: %s\n",
                 cbor_value_get_next_byte(&it) - buf, cbor_error_string(err));
+        free(buf);
         return 1;
     }
+    free(buf);
     return 0;
 }
