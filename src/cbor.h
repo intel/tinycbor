@@ -230,8 +230,16 @@ struct CborEncoder
         CborEncoderWriteFunction writer;
     } data;
     uint8_t *end;
+#ifdef __i386__
+    uint32_t remaining;
+    int flags;
+#elifdef __x86_64__
+    uint64_t remaining : 58;
+    int flags : 6;
+#else
     size_t remaining;
     int flags;
+#endif
 };
 typedef struct CborEncoder CborEncoder;
 
