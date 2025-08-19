@@ -329,9 +329,10 @@ static CborError escape_text_string(char **str, size_t *alloc, size_t *offsetp, 
         return CborErrorDataTooLarge;
     }
     if (!alloc || needed > *alloc) {
-        buf = cbor_realloc(buf, needed);
-        if (!buf)
+        char *tmp = cbor_realloc(buf, needed);
+        if (!tmp)
             return CborErrorOutOfMemory;
+        buf = tmp;
         if (alloc)
             *alloc = needed;
     }
