@@ -345,6 +345,8 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
         /* recursive type */
         CborValue recursed;
         const char *indicator = get_indicator(it, flags);
+        if (!indicator)
+            return err;
         const char *space = *indicator ? " " : indicator;
 
         err = stream(out, "%c%s%s", type == CborArrayType ? '[' : '{', indicator, space);
@@ -389,8 +391,12 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
                 err = stream(out, "-18446744073709551616");
             }
         }
-        if (!err)
-            err = stream(out, "%s", get_indicator(it, flags));
+        if (!err) {
+            const char *indicator = get_indicator(it, flags);
+            if (!indicator)
+                return err;
+            err = stream(out, "%s", indicator);
+        }
         break;
     }
 
@@ -452,7 +458,10 @@ static CborError value_to_pretty(CborStreamFunction stream, void *out, CborValue
     case CborTagType: {
         CborTag tag;
         cbor_value_get_tag(it, &tag);       /* can't fail */
-        err = stream(out, "%" PRIu64 "%s(", tag, get_indicator(it, flags));
+        const char *indicator = get_indicator(it, flags);
+        if (!indicator)
+            return err;
+        err = stream(out, "%" PRIu64 "%s(", tag, indicator);
         if (!err)
             err = cbor_value_advance_fixed(it);
         if (!err && recursionsLeft > 0)
