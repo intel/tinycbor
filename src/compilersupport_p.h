@@ -44,14 +44,32 @@
 #  include <stdbool.h>
 #endif
 
-#if __STDC_VERSION__ >= 201112L || (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(__cpp_static_assert) && __cpp_static_assert >= 200410)
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(__cpp_static_assert) && __cpp_static_assert >= 200410)
 #  define cbor_static_assert(x)         static_assert(x, #x)
 #elif !defined(__cplusplus) && defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 406) && (__STDC_VERSION__ > 199901L)
 #  define cbor_static_assert(x)         _Static_assert(x, #x)
 #else
 #  define cbor_static_assert(x)         ((void)sizeof(char[2*!!(x) - 1]))
 #endif
-#if __STDC_VERSION__ >= 199901L || defined(__cplusplus)
+
+#if defined(__has_cpp_attribute) && defined(__cplusplus)    // C++17
+#  if __has_cpp_attribute(fallthrough)
+#    define CBOR_FALLTHROUGH            [[fallthrough]]
+#  endif
+#elif defined(__has_c_attribute) && !defined(__cplusplus)   // C23
+#  if __has_c_attribute(fallthrough)
+#    define CBOR_FALLTHROUGH            [[fallthrough]]
+#  endif
+#endif
+#ifndef CBOR_FALLTHROUGH
+#  ifdef __GNUC__
+#    define CBOR_FALLTHROUGH            __attribute__((fallthrough))
+#  else
+#    define CBOR_FALLTHROUGH            do { } while (0)
+#  endif
+#endif
+
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__cplusplus)
 /* inline is a keyword */
 #else
 /* use the definition from cbor.h */
@@ -184,9 +202,11 @@
 
 #ifdef __cplusplus
 #  define CONST_CAST(t, v)  const_cast<t>(v)
+#  define CBOR_NULLPTR nullptr
 #else
 /* C-style const_cast without triggering a warning with -Wcast-qual */
 #  define CONST_CAST(t, v)  (t)(uintptr_t)(v)
+#  define CBOR_NULLPTR NULL
 #endif
 
 #ifdef __GNUC__
@@ -215,6 +235,17 @@ static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
     /* unsigned additions are well-defined */
     *r = v1 + v2;
     return v1 > v1 + v2;
+#endif
+}
+
+static inline bool mul_check_overflow(size_t v1, size_t v2, size_t *r)
+{
+#if ((defined(__GNUC__) && (__GNUC__ >= 5)) && !defined(__INTEL_COMPILER)) || __has_builtin(__builtin_add_overflow)
+    return __builtin_mul_overflow(v1, v2, r);
+#else
+    /* unsigned multiplications are well-defined */
+    *r = v1 * v2;
+    return *r > v1 && *r > v2;
 #endif
 }
 
