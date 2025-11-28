@@ -52,12 +52,8 @@
 #  define cbor_static_assert(x)         ((void)sizeof(char[2*!!(x) - 1]))
 #endif
 
-#if defined(__has_cpp_attribute) && defined(__cplusplus)    // C++17
+#if defined(__has_cpp_attribute)    // C23 and C++17
 #  if __has_cpp_attribute(fallthrough)
-#    define CBOR_FALLTHROUGH            [[fallthrough]]
-#  endif
-#elif defined(__has_c_attribute) && !defined(__cplusplus)   // C23
-#  if __has_c_attribute(fallthrough)
 #    define CBOR_FALLTHROUGH            [[fallthrough]]
 #  endif
 #endif
@@ -209,22 +205,22 @@
 #  define CBOR_NULLPTR NULL
 #endif
 
-#ifdef __GNUC__
-#ifndef likely
+#ifdef likely
+/* something has already defined likely(), accept it */
+#elif defined(__GNUC__)
 #  define likely(x)     __builtin_expect(!!(x), 1)
-#endif
-#ifndef unlikely
 #  define unlikely(x)   __builtin_expect(!!(x), 0)
-#endif
-#  define unreachable() __builtin_unreachable()
-#elif defined(_MSC_VER)
-#  define likely(x)     (x)
-#  define unlikely(x)   (x)
-#  define unreachable() __assume(0)
 #else
 #  define likely(x)     (x)
 #  define unlikely(x)   (x)
-#  define unreachable() do {} while (0)
+#endif
+
+#ifdef unreachable
+/* C23 has unreachable() */
+#elif defined(__GNUC__)
+#  define unreachable() __builtin_unreachable()
+#elif defined(_MSC_VER)
+#  define unreachable() __assume(0)
 #endif
 
 static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
