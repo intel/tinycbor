@@ -72,6 +72,7 @@ jobs:
               -DCMAKE_C_FLAGS="-Oz -g -Werror"
               -DCMAKE_CXX_COMPILER=clang++
               -DCMAKE_CXX_FLAGS="-O2 -g -Werror"
+              -DWITH_TOOLS=OFF
         - os: macos-15-intel
           build_cfg:
             name: clang
