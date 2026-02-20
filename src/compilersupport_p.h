@@ -225,6 +225,8 @@
 #  define unreachable() __builtin_unreachable()
 #elif defined(_MSC_VER)
 #  define unreachable() __assume(0)
+#else
+#  define unreachable()
 #endif
 
 static inline bool add_check_overflow(size_t v1, size_t v2, size_t *r)
