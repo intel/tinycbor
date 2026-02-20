@@ -24,7 +24,7 @@
 
 #include "cborinternalmacros_p.h"
 
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 #include "compilersupport_p.h"
 #include "memory.h"
 

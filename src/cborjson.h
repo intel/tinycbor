@@ -25,7 +25,7 @@
 #ifndef CBORJSON_H
 #define CBORJSON_H
 
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 
 #ifdef __cplusplus
 extern "C" {
