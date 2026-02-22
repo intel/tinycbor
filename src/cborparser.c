@@ -453,7 +453,8 @@ CborError cbor_value_validate_basic(const CborValue *it)
  */
 CborError cbor_value_advance_fixed(CborValue *it)
 {
-    cbor_assert(it->type != CborInvalidType);
+    if (it->type == CborInvalidType)
+        return CborErrorIllegalType;
     cbor_assert(is_fixed_type(it->type));
     if (!it->remaining)
         return CborErrorAdvancePastEOF;
@@ -505,7 +506,8 @@ static CborError advance_recursive(CborValue *it, int nestingLevel)
  */
 CborError cbor_value_advance(CborValue *it)
 {
-    cbor_assert(it->type != CborInvalidType);
+    if (it->type == CborInvalidType)
+        return CborErrorIllegalType;
     if (!it->remaining)
         return CborErrorAdvancePastEOF;
     return advance_recursive(it, CBOR_PARSER_MAX_RECURSIONS);
