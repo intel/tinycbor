@@ -38,7 +38,7 @@
 #if defined(HAVE_OPEN_FUNOPEN)
 typedef int RetType;
 typedef int LenType;
-#elif defined(HAVE_OPEN_FOPENCOOKIE)
+#elif defined(__PICOLIBC__) || defined(HAVE_OPEN_FOPENCOOKIE)
 typedef ssize_t RetType;
 typedef size_t LenType;
 #else
@@ -54,7 +54,11 @@ struct Buffer
     size_t alloc;
 };
 
+#ifdef __PICOLIBC__
+static RetType write_to_buffer(void *cookie, const void *data, LenType len)
+#else
 static RetType write_to_buffer(void *cookie, const char *data, LenType len)
+#endif
 {
     struct Buffer *b = (struct Buffer *)cookie;
     char *ptr = *b->ptr;
@@ -99,7 +103,7 @@ FILE *open_memstream(char **bufptr, size_t *lenptr)
     *bufptr = NULL;
     *lenptr = 0;
 
-#if defined(HAVE_OPEN_FUNOPEN)
+#if defined(__PICOLIBC__) || defined(HAVE_OPEN_FUNOPEN)
     return funopen(b, NULL, write_to_buffer, NULL, close_buffer);
 #elif defined(HAVE_OPEN_FOPENCOOKIE)
     static const cookie_io_functions_t vtable = {
