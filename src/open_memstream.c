@@ -35,12 +35,20 @@
 #if defined(__unix__) || defined(__APPLE__)
 #  include <unistd.h>
 #endif
-#if defined(HAVE_OPEN_FUNOPEN)
+#if defined(HAVE_OPEN_FUNOPEN) || defined(HAVE_OPEN_FUNOPEN_SSIZE)
+#  if defined(HAVE_OPEN_FUNOPEN_SSIZE)
+typedef ssize_t RetType;
+typedef size_t LenType;
+typedef const void *WriteBufType;
+#  else
 typedef int RetType;
 typedef int LenType;
+typedef const char *WriteBufType;
+#  endif
 #elif defined(HAVE_OPEN_FOPENCOOKIE)
 typedef ssize_t RetType;
 typedef size_t LenType;
+typedef const char *WriteBufType;
 #else
 #  error "Cannot implement open_memstream!"
 #endif
@@ -54,7 +62,7 @@ struct Buffer
     size_t alloc;
 };
 
-static RetType write_to_buffer(void *cookie, const char *data, LenType len)
+static RetType write_to_buffer(void *cookie, WriteBufType data, LenType len)
 {
     struct Buffer *b = (struct Buffer *)cookie;
     char *ptr = *b->ptr;
