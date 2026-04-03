@@ -44,6 +44,7 @@ include(GNUInstallDirs)
 include(GenerateExportHeader)
 include(CheckLinkerFlag)
 include(CheckSymbolExists)
+include(CheckCSourceCompiles)
 
 add_library(tinycbor
   src/cborencoder.c
@@ -131,13 +132,41 @@ configure_file(tinycbor.pc.in tinycbor.pc @ONLY)
 
 # Check for open_memstream and store the result in HAVE_OPEN_MEMSTREAM
 check_symbol_exists(open_memstream stdio.h HAVE_OPEN_MEMSTREAM)
-check_symbol_exists(funopen stdio.h HAVE_OPEN_FUNOPEN)
+# Check for funopen - try traditional BSD signature first (int/const char*/int),
+# then the POSIX-like variant used by picolibc (ssize_t/const void*/size_t).
+set(_saved_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
+if(MSVC)
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} /we4028 /we4113")
+else()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror=incompatible-pointer-types")
+endif()
+check_c_source_compiles("
+#include <stdio.h>
+static int write_fn(void *c, const char *b, int n) { (void)c; (void)b; return n; }
+static int close_fn(void *c) { (void)c; return 0; }
+int main(void) { funopen(NULL, NULL, write_fn, NULL, close_fn); return 0; }
+" HAVE_OPEN_FUNOPEN)
+if(NOT HAVE_OPEN_FUNOPEN)
+  check_c_source_compiles("
+#include <stdio.h>
+#include <sys/types.h>
+static ssize_t write_fn(void *c, const void *b, size_t n) { (void)c; (void)b; return (ssize_t)n; }
+static int close_fn(void *c) { (void)c; return 0; }
+int main(void) { funopen(NULL, NULL, write_fn, NULL, close_fn); return 0; }
+" HAVE_OPEN_FUNOPEN_SSIZE)
+endif()
+set(CMAKE_REQUIRED_FLAGS "${_saved_CMAKE_REQUIRED_FLAGS}")
+unset(_saved_CMAKE_REQUIRED_FLAGS)
 check_symbol_exists(fopencookie stdio.h HAVE_OPEN_FOPENCOOKIE)
 
 if(NOT HAVE_OPEN_MEMSTREAM)
-  if (HAVE_OPEN_FUNOPEN)
+  if (HAVE_OPEN_FUNOPEN OR HAVE_OPEN_FUNOPEN_SSIZE)
     message(STATUS "implementing open_memstream using funopen()")
-    target_compile_definitions(tinycbor PRIVATE HAVE_OPEN_FUNOPEN)
+    if(HAVE_OPEN_FUNOPEN_SSIZE)
+      target_compile_definitions(tinycbor PRIVATE HAVE_OPEN_FUNOPEN_SSIZE)
+    else()
+      target_compile_definitions(tinycbor PRIVATE HAVE_OPEN_FUNOPEN)
+    endif()
     target_sources(tinycbor PRIVATE src/open_memstream.c)
   elseif (HAVE_OPEN_FOPENCOOKIE)
     message(STATUS "implementing open_memstream using fopencookie()")
