@@ -24,7 +24,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(tinycbor LANGUAGES C CXX VERSION 7.0)
+project(tinycbor LANGUAGES C VERSION 7.0)
 
 # Set path to additional cmake scripts
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
@@ -56,7 +56,7 @@ add_library(tinycbor
 )
 if(WITH_FREESTANDING)
   target_compile_options(tinycbor PUBLIC
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffreestanding>
+    $<$<NOT:$<C_COMPILER_ID:MSVC>>:-ffreestanding>
   )
 else()
   target_sources(tinycbor PRIVATE
@@ -106,8 +106,8 @@ endif()
 
 # Enable warnings
 target_compile_options(tinycbor PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:-W3>
-  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:
+  $<$<C_COMPILER_ID:MSVC>:-W3>
+  $<$<NOT:$<C_COMPILER_ID:MSVC>>:
     -Wall -Wextra
     -Werror=format-security
     -Werror=incompatible-pointer-types
@@ -181,6 +181,7 @@ if(BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
 if(BUILD_TESTING)
+  enable_language(CXX)
   enable_testing()
   add_subdirectory(tests)
 endif()
