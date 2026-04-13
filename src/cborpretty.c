@@ -29,6 +29,9 @@
 #include "compilersupport_p.h"
 #include "utf8_p.h"
 
+// Include sys/types.h before inttypes.h to work around issue with
+// certain versions of GCC and newlib which causes omission of PRIx64
+#include <sys/types.h>
 #include <inttypes.h>
 #include <string.h>
 
