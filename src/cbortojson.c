@@ -31,6 +31,9 @@
 #include "cborinternal_p.h"
 #include <memory.h>
 
+// Include sys/types.h before inttypes.h to work around issue with
+// certain versions of GCC and newlib which causes omission of PRIx64
+#include <sys/types.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
