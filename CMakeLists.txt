@@ -162,7 +162,7 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tinycbor
 )
 install(FILES
-  ${CMAKE_BINARY_DIR}/tinycbor.pc
+  ${CMAKE_CURRENT_BINARY_DIR}/tinycbor.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 install(
