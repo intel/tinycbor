@@ -22,8 +22,10 @@
 **
 ****************************************************************************/
 
+#define __STDC_WANT_IEC_60559_TYPES_EXT__
 #include <QtTest>
 #include "cbor.h"
+#include "cborinternal_p.h"
 #include "cborjson.h"
 #include <locale.h>
 
@@ -75,6 +77,9 @@ private slots:
     void metaDataAndTagsToObjects();
     void metaDataForKeys_data();
     void metaDataForKeys();
+
+    void recursionLimit_data();
+    void recursionLimit();
 };
 #include "tst_tojson.moc"
 
@@ -95,13 +100,20 @@ void addFixedData()
     QTest::newRow("0") << raw("\x00") << "0";
     QTest::newRow("1") << raw("\x01") << "1";
     QTest::newRow("2^53-1") << raw("\x1b\0\x1f\xff\xff""\xff\xff\xff\xff") << "9007199254740991";
-    QTest::newRow("2^64-epsilon") << raw("\x1b\xff\xff\xff\xff""\xff\xff\xf8\x00") << "18446744073709549568";
+    QTest::newRow("2^53+1") << raw("\x1b\0\x20\0\0""\0\0\0\1") << "9007199254740993";
+    QTest::newRow("2^63-1") << raw("\x1b\x7f\xff\xff\xff""\xff\xff\xff\xff") << "9223372036854775807";
+    QTest::newRow("2^64-1") << raw("\x1b\xff\xff\xff\xff""\xff\xff\xff\xff") << "18446744073709551615";
 
     // negative integers
     QTest::newRow("-1") << raw("\x20") << "-1";
     QTest::newRow("-2") << raw("\x21") << "-2";
     QTest::newRow("-2^53+1") << raw("\x3b\0\x1f\xff\xff""\xff\xff\xff\xfe") << "-9007199254740991";
-    QTest::newRow("-2^64+epsilon") << raw("\x3b\xff\xff\xff\xff""\xff\xff\xf8\x00") << "-18446744073709549568";
+    QTest::newRow("-2^53-1") << raw("\x3b\0\x20\0\0""\0\0\0\0") << "-9007199254740993";
+    QTest::newRow("-2^63+1") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xfe") << "-9223372036854775807";
+    QTest::newRow("-2^63") << raw("\x3b\x7f\xff\xff\xff""\xff\xff\xff\xff") << "-9223372036854775808";
+    QTest::newRow("-2^63-1") << raw("\x3b\x80\0\0\0""\0\0\0\0") << "-9223372036854775809";
+    QTest::newRow("-2^64+1") << raw("\x3b\xff\xff\xff\xff""\xff\xff\xff\xfe") << "-18446744073709551615";
+    QTest::newRow("-2^64") << raw("\x3b\xff\xff\xff\xff""\xff\xff\xff\xff") << "-18446744073709551616";
 
     QTest::newRow("false") << raw("\xf4") << "false";
     QTest::newRow("true") << raw("\xf5") << "true";
@@ -157,6 +169,18 @@ void addTextStringsData()
     QTest::newRow("_textstring5*2") << raw("\x7f\x63Hel\x62lo\xff") << "\"Hello\"";
     QTest::newRow("_textstring5*5") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "\"Hello\"";
     QTest::newRow("_textstring5*6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << "\"Hello\"";
+
+    // strings containing characters that are escaped in JSON
+    QTest::newRow("null") << raw("\x61\0") << R"("\u0000")";
+    QTest::newRow("bell") << raw("\x61\7") << R"("\u0007")";    // not \\a
+    QTest::newRow("backspace") << raw("\x61\b") << R"("\b")";
+    QTest::newRow("tab") << raw("\x61\t") << R"("\t")";
+    QTest::newRow("carriage-return") << raw("\x61\r") << R"("\r")";
+    QTest::newRow("line-feed") << raw("\x61\n") << R"("\n")";
+    QTest::newRow("form-feed") << raw("\x61\f") << R"("\f")";
+    QTest::newRow("esc") << raw("\x61\x1f") << R"("\u001f")";
+    QTest::newRow("quote") << raw("\x61\"") << R"("\"")";
+    QTest::newRow("backslash") << raw("\x61\\") << R"("\\")";
 }
 
 void addNonJsonData()
@@ -409,6 +433,15 @@ void tst_ToJson::nonStringKeyMaps_data()
     QTest::newRow("map-24-0") << raw("\xa1\x18\x18\0") << "{24: 0}";
     QTest::newRow("_map-0-24") << raw("\xbf\0\x18\x18\xff") << "{_ 0: 24}";
     QTest::newRow("_map-24-0") << raw("\xbf\x18\x18\0\xff") << "{_ 24: 0}";
+
+    // nested strings ought to be escaped
+    QTest::newRow("array-emptystring") << raw("\x81\x60") << R"([\"\"])";
+    QTest::newRow("array-string1") << raw("\x81\x61 ") << R"([\" \"])";
+
+    // and escaped chracters in strings end up doubly escaped
+    QTest::newRow("array-string-null") << raw("\x81\x61\0") << R"([\"\\u0000\"])";
+    QTest::newRow("array-string-quote") << raw("\x81\x61\"") << R"([\"\\\"\"])";
+    QTest::newRow("array-string-backslash") << raw("\x81\x61\\") << R"([\"\\\\\"])";
 }
 
 void tst_ToJson::nonStringKeyMaps()
@@ -592,16 +625,6 @@ void tst_ToJson::metaData_data()
     QTest::newRow("2.^53-1") << raw("\xfb\x43\x3f\xff\xff""\xff\xff\xff\xff") << "\"t\":251";
     QTest::newRow("2.^64-epsilon") << raw("\xfb\x43\xef\xff\xff""\xff\xff\xff\xff") << "\"t\":251";
 
-    // integers that are too precise for double
-    QTest::newRow("2^53+1") << raw("\x1b\0\x20\0\0""\0\0\0\1")
-                            << "\"t\":0,\"v\":\"+20000000000001\"";
-    QTest::newRow("INT64_MAX-1") << raw("\x1b\x7f\xff\xff\xff""\xff\xff\xff\xfe")
-                                 << "\"t\":0,\"v\":\"+7ffffffffffffffe\"";
-    QTest::newRow("INT64_MAX+1") << raw("\x1b\x80\0\0\0""\0\0\0\1")
-                                 << "\"t\":0,\"v\":\"+8000000000000001\"";
-    QTest::newRow("-2^53-1") << raw("\x3b\0\x20\0\0""\0\0\0\0")
-                             << "\"t\":0,\"v\":\"-20000000000000\"";
-
     // simple values
     QTest::newRow("simple0") << raw("\xe0") << "\"t\":224,\"v\":0";
     QTest::newRow("simple19") << raw("\xf3") << "\"t\":224,\"v\":19";
@@ -726,6 +749,35 @@ void tst_ToJson::metaDataForKeys()
         expected = "{\"" + expected + "\":false,\"" + expected + "$keycbordump\":true}";
     compareOne('\xa1' + data + '\xf4', expected,
                CborConvertAddMetadata | CborConvertStringifyMapKeys);
+}
+
+void tst_ToJson::recursionLimit_data()
+{
+    static const int recursions = CBOR_PARSER_MAX_RECURSIONS + 2;
+    QTest::addColumn<QByteArray>("data");
+
+    QTest::newRow("arrays") << QByteArray(recursions, '\x81');
+    QTest::newRow("tags") << QByteArray(recursions, '\xc1');
+
+    QByteArray mapData;
+    mapData.reserve(2 * recursions);
+    for (int i = 0; i < recursions; ++i)
+        mapData.append("\xa1\x60", 2);
+    QTest::newRow("maps") << mapData;
+}
+
+void tst_ToJson::recursionLimit()
+{
+    QFETCH(QByteArray, data);
+    CborParser parser;
+    CborValue first;
+    CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
+    QVERIFY2(!err, QByteArray("Got error \"") + cbor_error_string(err) + "\"");
+
+    QString parsed;
+    err = parseOne(&first, &parsed, 0);
+
+    QCOMPARE(err, CborErrorNestingTooDeep);
 }
 
 QTEST_MAIN(tst_ToJson)

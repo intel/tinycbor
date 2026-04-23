@@ -22,16 +22,7 @@
 **
 ****************************************************************************/
 
-#ifndef _BSD_SOURCE
-#define _BSD_SOURCE 1
-#endif
-#ifndef _DEFAULT_SOURCE
-#define _DEFAULT_SOURCE 1
-#endif
-#ifndef __STDC_LIMIT_MACROS
-#  define __STDC_LIMIT_MACROS 1
-#endif
-#define __STDC_WANT_IEC_60559_TYPES_EXT__
+#include "cborinternalmacros_p.h"
 
 #include "cbor.h"
 #include "cborinternal_p.h"
@@ -213,6 +204,7 @@ void cbor_encoder_init_writer(CborEncoder *encoder, CborEncoderWriteFunction wri
 {
 #ifdef CBOR_ENCODER_WRITE_FUNCTION
     (void) writer;
+    encoder->data.writer = CBOR_NULLPTR;
 #else
     encoder->data.writer = writer;
 #endif
@@ -484,7 +476,7 @@ CborError cbor_encode_byte_string(CborEncoder *encoder, const uint8_t *string, s
  */
 CborError cbor_encode_raw(CborEncoder *encoder, const uint8_t *raw, size_t length)
 {
-    return append_to_buffer(encoder, raw, length, CborEncoderApendRawData);
+    return append_to_buffer(encoder, raw, length, CborEncoderAppendRawData);
 }
 
 /**

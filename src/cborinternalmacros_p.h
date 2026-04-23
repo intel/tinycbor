@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Intel Corporation
+** Copyright (C) 2025 Intel Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,15 @@
 **
 ****************************************************************************/
 
-#if defined(CBOR_CUSTOM_ALLOC_INCLUDE)
-#  include CBOR_CUSTOM_ALLOC_INCLUDE
-#else
-#  include <stdlib.h>
-#  define cbor_malloc   malloc
-#  define cbor_realloc  realloc
-#  define cbor_free     free
+#ifndef _BSD_SOURCE
+#  define _BSD_SOURCE 1
+#endif
+#ifndef _DEFAULT_SOURCE
+#  define _DEFAULT_SOURCE 1
+#endif
+#ifndef __STDC_LIMIT_MACROS
+#  define __STDC_LIMIT_MACROS 1
+#endif
+#ifndef __STDC_WANT_IEC_60559_TYPES_EXT__
+#  define __STDC_WANT_IEC_60559_TYPES_EXT__
 #endif

@@ -38,6 +38,10 @@
 #  include <windows.h>
 #endif
 
+#ifndef CBOR_PARSER_MAX_RECURSIONS
+#  define CBOR_PARSER_MAX_RECURSIONS 1024
+#endif
+
 #ifndef QCOMPARE_EQ
 // added for Qt 6.4
 #  define QCOMPARE_EQ QCOMPARE
@@ -264,7 +268,7 @@ CborError parseOneChunk(CborValue *it, QString *parsed)
         if (text)
             *parsed = '"' + QString::fromUtf8(text, len) + '"';
     } else {
-        Q_ASSERT(false);
+        Q_UNREACHABLE();
     }
     return err;
 }

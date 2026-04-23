@@ -35,10 +35,10 @@
 #if defined(__unix__) || defined(__APPLE__)
 #  include <unistd.h>
 #endif
-#ifdef __APPLE__
+#if defined(HAVE_OPEN_FUNOPEN)
 typedef int RetType;
 typedef int LenType;
-#elif __linux__
+#elif defined(HAVE_OPEN_FOPENCOOKIE)
 typedef ssize_t RetType;
 typedef size_t LenType;
 #else
@@ -99,9 +99,9 @@ FILE *open_memstream(char **bufptr, size_t *lenptr)
     *bufptr = NULL;
     *lenptr = 0;
 
-#ifdef __APPLE__
+#if defined(HAVE_OPEN_FUNOPEN)
     return funopen(b, NULL, write_to_buffer, NULL, close_buffer);
-#elif __linux__
+#elif defined(HAVE_OPEN_FOPENCOOKIE)
     static const cookie_io_functions_t vtable = {
         NULL,
         write_to_buffer,
