@@ -407,6 +407,7 @@ CborError cbor_parser_init(const uint8_t *buffer, size_t size, uint32_t flags, C
     memset(parser, 0, sizeof(*parser));
     parser->data.end = buffer + size;
     parser->flags = (enum CborParserGlobalFlags)flags;
+    parser->ops = CBOR_NULLPTR;
     it->parser = parser;
     it->source.ptr = buffer;
     it->remaining = 1;      /* there's one type altogether, usually an array or map */
