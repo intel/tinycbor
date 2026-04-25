@@ -214,7 +214,7 @@ typedef enum CborEncoderAppendType
     CborEncoderAppendRawData = 2
 } CborEncoderAppendType;
 
-typedef CborError (*CborEncoderWriteFunction)(void *, const void *, size_t, CborEncoderAppendType);
+typedef CborError (*CborEncoderWriteFunction)(void *token, const void *data, size_t len, CborEncoderAppendType append);
 
 enum CborEncoderFlags
 {
