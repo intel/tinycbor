@@ -205,7 +205,7 @@ static inline void copy_current_position(CborValue *dst, const CborValue *src)
 static inline bool can_read_bytes(const CborValue *it, size_t n)
 {
     if (CBOR_PARSER_READER_CONTROL >= 0) {
-        if (it->parser->flags & CborParserFlag_ExternalSource || CBOR_PARSER_READER_CONTROL != 0) {
+        if (it->parser->ops != CBOR_NULLPTR || CBOR_PARSER_READER_CONTROL != 0) {
 #ifdef CBOR_PARSER_CAN_READ_BYTES_FUNCTION
             return CBOR_PARSER_CAN_READ_BYTES_FUNCTION(it, n);
 #else
