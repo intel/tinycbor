@@ -319,8 +319,6 @@ enum CborParserIteratorFlags
 };
 
 struct CborValue;
-
-
 struct CborParserOperations
 {
     bool (*can_read_bytes)(void *token, size_t len);
