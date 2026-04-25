@@ -810,28 +810,28 @@ void tst_Parser::mapsAndArrays()
 static const CborParserOperations byteArrayOps = {
     /* can_read_bytes = */ [](const CborValue *value, size_t len) {
         QByteArray *data = static_cast<QByteArray *>(value->parser->data.ctx);
-        uintptr_t consumed = uintptr_t(value->source.token);
-        return uintptr_t(data->size()) - consumed >= uintptr_t(len);
+        ptrdiff_t consumed = ptrdiff_t(value->source.token);
+        return ptrdiff_t(data->size()) - consumed >= ptrdiff_t(len);
     },
     /* read_bytes = */ [](const CborValue *value, void *dst, size_t offset, size_t len) {
         QByteArray *data = static_cast<QByteArray *>(value->parser->data.ctx);
-        uintptr_t consumed = uintptr_t(value->source.token);
+        ptrdiff_t consumed = ptrdiff_t(value->source.token);
         return memcpy(dst, data->constData() + consumed + offset, len);
     },
     /* advance_bytes = */ [](CborValue *value, size_t len) {
-        uintptr_t consumed = uintptr_t(value->source.token);
-        consumed += uintptr_t(len);
+        ptrdiff_t consumed = ptrdiff_t(value->source.token);
+        consumed += ptrdiff_t(len);
         value->source.token = reinterpret_cast<void *>(consumed);
     },
     /* transfer_string = */ [](CborValue *value, const void **userptr, size_t offset, size_t len) {
         // ###
         QByteArray *data = static_cast<QByteArray *>(value->parser->data.ctx);
-        uintptr_t consumed = uintptr_t(value->source.token);
-        if (uintptr_t(data->size()) - consumed < uintptr_t(len + offset))
+        ptrdiff_t consumed = ptrdiff_t(value->source.token);
+        if (ptrdiff_t(data->size()) - consumed < ptrdiff_t(len + offset))
             return CborErrorUnexpectedEOF;
-        consumed += uintptr_t(offset);
+        consumed += ptrdiff_t(offset);
         *userptr = data->constData() + consumed;
-        consumed += uintptr_t(len);
+        consumed += ptrdiff_t(len);
         value->source.token = reinterpret_cast<void *>(consumed);
         return CborNoError;
     }
