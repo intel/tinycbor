@@ -96,7 +96,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Clone tinycbor
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: install Linux software
       if: matrix.os == 'ubuntu-latest'
