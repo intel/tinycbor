@@ -531,6 +531,10 @@ static CborError stringify_map_key(char **key, CborValue *it, int flags, CborTyp
     if (err == CborNoError) {
         /* escape the stringified CBOR stream */
         err = escape_text_string(key, NULL, NULL, stringified, size);
+        if (err) {
+            free(*key);
+            *key = NULL;
+        }
     }
     cbor_free(stringified);
     return err;
