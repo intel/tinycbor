@@ -80,6 +80,8 @@ private slots:
 
     void recursionLimit_data();
     void recursionLimit();
+    void invalidUtf8Strings_data();
+    void invalidUtf8Strings();
 };
 #include "tst_tojson.moc"
 
@@ -166,6 +168,7 @@ void addTextStringsData()
     QTest::newRow("_emptytextstring") << raw("\x7f\xff") << "\"\"";
     QTest::newRow("_emptytextstring2") << raw("\x7f\x60\xff") << "\"\"";
     QTest::newRow("_emptytextstring3") << raw("\x7f\x60\x60\xff") << "\"\"";
+    QTest::newRow("_textstream1*2") << raw("\x7f\x60\x61z\xff") << "\"z\"";
     QTest::newRow("_textstring5*2") << raw("\x7f\x63Hel\x62lo\xff") << "\"Hello\"";
     QTest::newRow("_textstring5*5") << raw("\x7f\x61H\x61""e\x61l\x61l\x61o\xff") << "\"Hello\"";
     QTest::newRow("_textstring5*6") << raw("\x7f\x61H\x61""e\x61l\x60\x61l\x61o\xff") << "\"Hello\"";
@@ -181,6 +184,18 @@ void addTextStringsData()
     QTest::newRow("esc") << raw("\x61\x1f") << R"("\u001f")";
     QTest::newRow("quote") << raw("\x61\"") << R"("\"")";
     QTest::newRow("backslash") << raw("\x61\\") << R"("\\")";
+
+    // valid UTF-8 that is not US-ASCII
+    using namespace Qt::StringLiterals;
+    QTest::newRow("u0080") << raw("\x62\xc2\x80") << u"\"\u0080\""_s;
+    QTest::newRow("u00ff") << raw("\x62\xc3\xbf") << u"\"\u00ff\""_s;
+    QTest::newRow("u0100") << raw("\x62\xc4\x80") << u"\"\u0100\""_s;
+    QTest::newRow("u07ff") << raw("\x62\xdf\xbf") << u"\"\u07ff\""_s;
+    QTest::newRow("u0800") << raw("\x63\xe0\xa0\x80") << u"\"\u0800\""_s;
+    QTest::newRow("u1000") << raw("\x63\xe1\x80\x80") << u"\"\u1000\""_s;
+    QTest::newRow("uffff") << raw("\x63\xef\xbf\xbf") << u"\"\uffff\""_s;
+    QTest::newRow("U00010000") << raw("\x64\xf0\x90\x80\x80") << u"\"\U00010000\""_s;
+    QTest::newRow("U0010ffff") << raw("\x64\xf4\x8f\xbf\xbf") << u"\"\U0010ffff\""_s;
 }
 
 void addNonJsonData()
@@ -230,7 +245,18 @@ CborError parseOne(CborValue *it, QString *parsed, int flags)
     CborError err = cbor_value_to_json_advance(f, it, flags);
     fclose(f);
 
-    *parsed = QString::fromLatin1(buffer);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 11, 0)
+    QStringDecoder decoder(QStringDecoder::Utf8);
+    *parsed = decoder.decode(QByteArrayView(buffer, size));
+
+    auto result = decoder.finalize();
+    if (result.error != QStringDecoder::FinalizeResultError::NoError)
+        *parsed = "<UTF-8 decode error>";
+#else
+    // no QStringDecoder::finalize
+    *parsed = QString::fromUtf8(buffer, size);
+#endif
+
     free(buffer);
     return err;
 }
@@ -766,9 +792,8 @@ void tst_ToJson::recursionLimit_data()
     QTest::newRow("maps") << mapData;
 }
 
-void tst_ToJson::recursionLimit()
+static void parseForError(const QByteArray &data, CborError expectedError)
 {
-    QFETCH(QByteArray, data);
     CborParser parser;
     CborValue first;
     CborError err = cbor_parser_init(reinterpret_cast<const quint8 *>(data.constData()), data.length(), 0, &parser, &first);
@@ -777,7 +802,80 @@ void tst_ToJson::recursionLimit()
     QString parsed;
     err = parseOne(&first, &parsed, 0);
 
-    QCOMPARE(err, CborErrorNestingTooDeep);
+    QCOMPARE(err, expectedError);
+}
+
+void tst_ToJson::recursionLimit()
+{
+    QFETCH(QByteArray, data);
+    parseForError(data, CborErrorNestingTooDeep);
+}
+
+void tst_ToJson::invalidUtf8Strings_data()
+{
+    // copied from tst_Parser::strictValidation_data()
+    QTest::addColumn<QByteArray>("data");
+
+    // UTF-8 sequences with invalid continuation bytes
+    QTest::newRow("invalid-utf8-bad-continuation-1char") << raw("\x61\x80");
+    QTest::newRow("invalid-utf8-bad-continuation-2chars-1") << raw("\x62\xc2\xc0");
+    QTest::newRow("invalid-utf8-bad-continuation-2chars-2") << raw("\x62\xc3\xdf");
+    QTest::newRow("invalid-utf8-bad-continuation-2chars-3") << raw("\x62\xc7\xf0");
+    QTest::newRow("invalid-utf8-bad-continuation-3chars-1") << raw("\x63\xe0\xa0\xc0");
+    QTest::newRow("invalid-utf8-bad-continuation-3chars-2") << raw("\x63\xe0\xc0\xa0");
+    QTest::newRow("invalid-utf8-bad-continuation-4chars-1") << raw("\x64\xf0\x90\x80\xc0");
+    QTest::newRow("invalid-utf8-bad-continuation-4chars-2") << raw("\x64\xf0\x90\xc0\x80");
+    QTest::newRow("invalid-utf8-bad-continuation-4chars-3") << raw("\x64\xf0\xc0\x80\x80");
+    // Too short UTF-8 sequences (in an array so there's a byte after that would make it valid UTF-8 if it were part of the string)
+    QTest::newRow("invalid-utf8-too-short-2chars") << raw("\x82\x61\xc2\x80");
+    QTest::newRow("invalid-utf8-too-short-3chars-1") << raw("\x82\x61\xe0\x80");
+    QTest::newRow("invalid-utf8-too-short-3chars-2") << raw("\x82\x62\xe0\xa0\x80");
+    QTest::newRow("invalid-utf8-too-short-4chars-1") << raw("\x82\x61\xf0\x80");
+    QTest::newRow("invalid-utf8-too-short-4chars-2") << raw("\x82\x62\xf0\x90\x80");
+    QTest::newRow("invalid-utf8-too-short-4chars-3") << raw("\x82\x63\xf0\x90\x80\x80");
+    // UTF-16 surrogages encoded in UTF-8
+    QTest::newRow("invalid-utf8-hi-surrogate") << raw("\x63\xed\xa0\x80");
+    QTest::newRow("invalid-utf8-lo-surrogate") << raw("\x63\xed\xb0\x80");
+    QTest::newRow("invalid-utf8-surrogate-pair") << raw("\x66\xed\xa0\x80\xed\xb0\x80");
+    // Non-Unicode UTF-8 sequences
+    QTest::newRow("invalid-utf8-non-unicode-1") << raw("\x64\xf4\x90\x80\x80");
+    QTest::newRow("invalid-utf8-non-unicode-2") << raw("\x65\xf8\x88\x80\x80\x80");
+    QTest::newRow("invalid-utf8-non-unicode-3") << raw("\x66\xfc\x84\x80\x80\x80\x80");
+    QTest::newRow("invalid-utf8-non-unicode-4") << raw("\x66\xfd\xbf\xbf\xbf\xbf\xbf");
+    // invalid bytes in UTF-8
+    QTest::newRow("invalid-utf8-fe") << raw("\x61\xfe");
+    QTest::newRow("invalid-utf8-ff") << raw("\x61\xff");
+    // Overlong sequences
+    QTest::newRow("invalid-utf8-overlong-1-2") << raw("\x62\xc1\x81");
+    QTest::newRow("invalid-utf8-overlong-1-3") << raw("\x63\xe0\x81\x81");
+    QTest::newRow("invalid-utf8-overlong-1-4") << raw("\x64\xf0\x80\x81\x81");
+    QTest::newRow("invalid-utf8-overlong-1-5") << raw("\x65\xf8\x80\x80\x81\x81");
+    QTest::newRow("invalid-utf8-overlong-1-6") << raw("\x66\xfc\x80\x80\x80\x81\x81");
+    QTest::newRow("invalid-utf8-overlong-2-3") << raw("\x63\xe0\x82\x80");
+    QTest::newRow("invalid-utf8-overlong-2-4") << raw("\x64\xf0\x80\x82\x80");
+    QTest::newRow("invalid-utf8-overlong-2-5") << raw("\x65\xf8\x80\x80\x82\x80");
+    QTest::newRow("invalid-utf8-overlong-2-6") << raw("\x66\xfc\x80\x80\x80\x82\x80");
+    QTest::newRow("invalid-utf8-overlong-3-4") << raw("\x64\xf0\x80\xa0\x80");
+    QTest::newRow("invalid-utf8-overlong-3-5") << raw("\x65\xf8\x80\x80\xa0\x80");
+    QTest::newRow("invalid-utf8-overlong-3-6") << raw("\x66\xfc\x80\x80\x80\xa0\x80");
+    QTest::newRow("invalid-utf8-overlong-4-5") << raw("\x65\xf8\x80\x84\x80\x80");
+    QTest::newRow("invalid-utf8-overlong-4-6") << raw("\x66\xfc\x80\x80\x84\x80\x80");
+    // valid UTF-8 but split into CBOR chunks
+    QTest::newRow("invalid-utf8-split-u0080") << raw("\x7f\x61\xc2\x61\x80\xff");
+    QTest::newRow("invalid-utf8-split-u00ff") << raw("\x7f\x61\xc3\x61\xbf\xff");
+    QTest::newRow("invalid-utf8-split-u0100") << raw("\x7f\x61\xc4\x61\x80\xff");
+    QTest::newRow("invalid-utf8-split-u07ff") << raw("\x7f\x61\xdf\x61\xbf\xff");
+    QTest::newRow("invalid-utf8-split-u0800") << raw("\x7f\x61\xe0\x62\xa0\x80\xff");
+    QTest::newRow("invalid-utf8-split-u1000") << raw("\x7f\x62\xe1\x80\x61\x80\xff");
+    QTest::newRow("invalid-utf8-split-uffff") << raw("\x7f\x61\xef\x62\xbf\xbf\xff");
+    QTest::newRow("invalid-utf8-split-U00010000") << raw("\x7f\x61\xf0\x63\x90\x80\x80\xff");
+    QTest::newRow("invalid-utf8-split-U0010ffff") << raw("\x7f\x62\xf4\x8f\x62\xbf\xbf\xff");
+}
+
+void tst_ToJson::invalidUtf8Strings()
+{
+    QFETCH(QByteArray, data);
+    parseForError(data, CborErrorInvalidUtf8TextString);
 }
 
 QTEST_MAIN(tst_ToJson)

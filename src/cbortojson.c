@@ -29,7 +29,8 @@
 #include "cborinternal_p.h"
 #include "compilersupport_p.h"
 #include "cborinternal_p.h"
-#include <memory.h>
+#include "memory.h"
+#include "utf8_p.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -314,7 +315,7 @@ static CborError escape_text_string(char **str, size_t *alloc, size_t *offsetp, 
     char *buf = *str;
 
     /* Ensure we have enough space for this chunk. In the worst case, we
-     * have 6 escaped characters per input character.
+     * have 6 escaped characters per input character ("\u00xx").
      *
      * The overflow checking here is only practically useful for 32-bit
      * machines, as SIZE_MAX/6 for a 64-bit machine is 2.6667 exabytes.
@@ -334,15 +335,19 @@ static CborError escape_text_string(char **str, size_t *alloc, size_t *offsetp, 
             return CborErrorOutOfMemory;
         if (alloc)
             *alloc = needed;
+        *str = buf;
     }
 
-    for (size_t i = 0; i < len; ++i) {
+    const uint8_t *ptr = (uint8_t *)input;
+    const uint8_t *end = ptr + len;
+    while (ptr < end) {
         static const char escapeChars[] = "\b\t\n\r\f\"\\";
         static const char escapedChars[] = "btnrf\"\\";
-        unsigned char c = input[i];
+        unsigned char c = *ptr++;
 
         char *esc = c > 0 ? strchr(escapeChars, c) : NULL;
         if (esc) {
+            // use short, escaped form
             buf[offset++] = '\\';
             buf[offset++] = escapedChars[esc - escapeChars];
         } else if (c <= 0x1F) {
@@ -350,14 +355,24 @@ static CborError escape_text_string(char **str, size_t *alloc, size_t *offsetp, 
             buf[offset++] = 'u';
             buf[offset++] = '0';
             buf[offset++] = '0';
-            append_hex(buf + offset, c);
+            append_hex(buf + offset, (uint8_t)c);
             offset += 2;
-        } else {
+        } else if (c < 0x80) {
+            // typical case (US-ASCII)
             buf[offset++] = c;
+        } else {
+            // get a single UTF-8 code point
+            ptrdiff_t codepointlen;
+            const uint8_t *start = --ptr;   // backtrack 'c'
+            if (unlikely(get_utf8(&ptr, end) == ~0U))
+                return CborErrorInvalidUtf8TextString;
+            codepointlen = ptr - start;
+            memcpy(buf + offset, start, codepointlen);
+            offset += codepointlen;
+            continue;
         }
     }
     buf[offset] = '\0';
-    *str = buf;
     if (offsetp)
         *offsetp = offset;
     return CborNoError;
@@ -531,6 +546,10 @@ static CborError stringify_map_key(char **key, CborValue *it, int flags, CborTyp
     if (err == CborNoError) {
         /* escape the stringified CBOR stream */
         err = escape_text_string(key, NULL, NULL, stringified, size);
+        if (err) {
+            free(*key);
+            *key = NULL;
+        }
     }
     cbor_free(stringified);
     return err;
