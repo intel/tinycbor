@@ -272,9 +272,11 @@ static const char *resolve_indicator(const CborValue *it, int flags)
         return no_indicator;
 
     /* determine whether to show anything */
-    if ((flags & CborPrettyIndicateIndeterminateLength) &&
-            additional_information == IndefiniteLength)
-        return indicators[IndefiniteLength - Value8Bit];
+    if (additional_information == IndefiniteLength) {
+        if (flags & CborPrettyIndicateIndeterminateLength)
+            return indicators[IndefiniteLength - Value8Bit];
+        return no_indicator;
+    }
     if ((flags & CborPrettyIndicateOverlongNumbers) == 0)
         return no_indicator;
 
