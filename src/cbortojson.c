@@ -341,7 +341,7 @@ static CborError escape_text_string(char **str, size_t *alloc, size_t *offsetp, 
         static const char escapedChars[] = "btnrf\"\\";
         unsigned char c = input[i];
 
-        char *esc = c > 0 ? strchr(escapeChars, c) : NULL;
+        const char *esc = c > 0 ? strchr(escapeChars, c) : NULL;
         if (esc) {
             buf[offset++] = '\\';
             buf[offset++] = escapedChars[esc - escapeChars];
