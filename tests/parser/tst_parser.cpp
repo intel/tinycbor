@@ -157,7 +157,11 @@ struct ParserWrapper
     uint8_t *allocateMemory(size_t);
     void freeMemory();
 
+#if defined(Q_PROCESSOR_X86)
     static const size_t PageSize = 4096;
+#else
+    static inline const size_t PageSize = getpagesize();
+#endif
     static inline size_t mmapAllocation(size_t n)
     {
         // round up and add one page
