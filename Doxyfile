@@ -1,5 +1,5 @@
 PROJECT_NAME           = "TinyCBOR $(VERSION) API"
-OUTPUT_DIRECTORY       = ../doc
+OUTPUT_DIRECTORY       = doc
 ABBREVIATE_BRIEF       =
 SHORT_NAMES            = YES
 JAVADOC_AUTOBRIEF      = YES
@@ -18,7 +18,7 @@ GENERATE_DEPRECATEDLIST= NO
 SHOW_USED_FILES        = NO
 WARN_IF_UNDOCUMENTED   = NO
 WARN_LOGFILE           = doxygen.log
-INPUT                  = .
+INPUT                  = src
 FILE_PATTERNS          = *.h \
                          *.c \
                          *.dox
