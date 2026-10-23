@@ -129,7 +129,7 @@
   </tr>
   <tr>
     <td>1</td>
-    <td>integer</td>
+    <td>numeric (integer or floating-point)</td>
     <td>Epoch-based date/time</td>
   </tr>
   <tr>
@@ -169,17 +169,17 @@
   </tr>
   <tr>
     <td>21</td>
-    <td>byte string, array, map</td>
+    <td>any</td>
     <td>Expected conversion to base64url encoding</td>
   </tr>
   <tr>
     <td>22</td>
-    <td>byte string, array, map</td>
+    <td>any</td>
     <td>Expected conversion to base64 encoding</td>
   </tr>
   <tr>
     <td>23</td>
-    <td>byte string, array, map</td>
+    <td>any</td>
     <td>Expected conversion to base16 encoding</td>
   </tr>
   <tr>
@@ -238,7 +238,8 @@
 struct KnownTagData { uint32_t tag; uint32_t types; };
 static const struct KnownTagData knownTagData[] = {
     { 0, (uint32_t)CborTextStringType },
-    { 1, (uint32_t)(CborIntegerType+1) },
+    { 1, (uint32_t)(CborIntegerType+1) | ((uint32_t)CborHalfFloatType << 8) |
+         ((uint32_t)CborFloatType << 16) | ((uint32_t)CborDoubleType << 24)},
     { 2, (uint32_t)CborByteStringType },
     { 3, (uint32_t)CborByteStringType },
     { 4, (uint32_t)CborArrayType },
@@ -246,9 +247,9 @@ static const struct KnownTagData knownTagData[] = {
     { 16, (uint32_t)CborArrayType },
     { 17, (uint32_t)CborArrayType },
     { 18, (uint32_t)CborArrayType },
-    { 21, (uint32_t)CborByteStringType | ((uint32_t)CborArrayType << 8) | ((uint32_t)CborMapType << 16) },
-    { 22, (uint32_t)CborByteStringType | ((uint32_t)CborArrayType << 8) | ((uint32_t)CborMapType << 16) },
-    { 23, (uint32_t)CborByteStringType | ((uint32_t)CborArrayType << 8) | ((uint32_t)CborMapType << 16) },
+    { 21, 0U /* any type allowed */ },
+    { 22, 0U /* any type allowed */ },
+    { 23, 0U /* any type allowed */ },
     { 24, (uint32_t)CborByteStringType },
     { 32, (uint32_t)CborTextStringType },
     { 33, (uint32_t)CborTextStringType },
