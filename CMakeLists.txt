@@ -24,7 +24,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(tinycbor LANGUAGES C VERSION 7.0)
+project(tinycbor LANGUAGES C VERSION 7.2)
 
 # Set path to additional cmake scripts
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
