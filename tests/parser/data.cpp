@@ -60,7 +60,7 @@ void addIntegers()
                                 << quint64(std::numeric_limits<qint64>::max())
                                 << std::numeric_limits<qint64>::max() << false << true;
     QTest::newRow("UINT64_MAX") << raw("\x1b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
-                                << std::numeric_limits<quint64>::max() << qint64(-123456) << false << false;
+                                << std::numeric_limits<quint64>::max() << qint64(-1) << false << false;
 
     // negative integers
     QTest::newRow("-1") << raw("\x20") << Q_UINT64_C(0) << Q_INT64_C(-1) << true << true;
@@ -81,11 +81,11 @@ void addIntegers()
                                << quint64(std::numeric_limits<qint64>::max())
                                << std::numeric_limits<qint64>::min()
                                << true << true;
-    QTest::newRow("INT64_MIN-1") << raw("\x3b\x80\0\0\0""\0\0\0\0") << Q_UINT64_C(9223372036854775808) << qint64(-123456) << true << false;
+    QTest::newRow("INT64_MIN-1") << raw("\x3b\x80\0\0\0""\0\0\0\0") << Q_UINT64_C(9223372036854775808) << qint64(9223372036854775807) << true << false;
     QTest::newRow("-UINT64_MAX") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xfe")
-                                 << (std::numeric_limits<quint64>::max() - 1) << qint64(-123456) << true << false;
+                                 << (std::numeric_limits<quint64>::max() - 1) << qint64(1) << true << false;
     QTest::newRow("-UINT64_MAX+1") << raw("\x3b" "\xff\xff\xff\xff" "\xff\xff\xff\xff")
-                                   << std::numeric_limits<quint64>::max() << qint64(-123456) << true << false;
+                                   << std::numeric_limits<quint64>::max() << qint64(0) << true << false;
 }
 
 [[maybe_unused]] void addFloatingPoint()
