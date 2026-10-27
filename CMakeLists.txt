@@ -39,6 +39,14 @@ if(WITH_FLOATING_POINT AND NOT WITH_FREESTANDING)
   option(BUILD_TOOLS "Compile the TinyCBOR tools" ON)
 endif()
 
+# Allow disabling installation when TinyCBOR is used via add_subdirectory().
+option(ENABLE_INSTALL "Install TinyCBOR files" ON)
+macro(tinycbor_install)
+  if(ENABLE_INSTALL)
+    install(${ARGN})
+  endif()
+endmacro()
+
 # Include additional modules that are used unconditionally
 include(GNUInstallDirs)
 include(GenerateExportHeader)
@@ -184,17 +192,17 @@ target_include_directories(tinycbor
   PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
-install(FILES
+tinycbor_install(FILES
   ${PROJECT_SOURCE_DIR}/src/cbor.h
   ${PROJECT_BINARY_DIR}/tinycbor-version.h
   ${PROJECT_BINARY_DIR}/tinycbor-export.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tinycbor
 )
-install(FILES
+tinycbor_install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/tinycbor.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
-install(
+tinycbor_install(
   TARGETS tinycbor
   EXPORT "${TARGETS_EXPORT_NAME}"
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}   # import library
