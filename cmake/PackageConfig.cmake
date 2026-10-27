@@ -19,7 +19,7 @@ write_basic_package_version_file(
   COMPATIBILITY SameMinorVersion
 )
 
-install(FILES
+tinycbor_install(FILES
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
   COMPONENT devel
@@ -27,7 +27,7 @@ install(FILES
 )
 
 if (PROJECT_LIBRARIES OR PROJECT_STATIC_LIBRARIES)
-  install(
+  tinycbor_install(
     EXPORT "${TARGETS_EXPORT_NAME}"
     FILE ${TARGETS_EXPORT_NAME}.cmake
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
