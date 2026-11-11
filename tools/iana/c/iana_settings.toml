@@ -1,0 +1,12 @@
+
+[cbor]
+spacing_string = "  "
+style_override = "tiny_cbor"
+generated_header_filepath = '../../../src/cbor.h'
+cache_directory_path = './cache/cbor/'
+
+[cbor.simple_value]
+name = "CborSimpleValue"
+
+[cbor.tag_source]
+name = "CborKnownTags"
