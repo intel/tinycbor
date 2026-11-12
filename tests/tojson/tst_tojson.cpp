@@ -29,6 +29,16 @@
 #include "cborjson.h"
 #include <locale.h>
 
+// musl's printf() truncates the decimal representation of 2^64 instead of
+// rounding to nearest, so it formats it as 1.8446744073709551e+19 instead of
+// the correctly-rounded 1.8446744073709552e+19 (glibc, MSVC, Apple's and
+// BSD's libcs do round correctly). See issue #352.
+#if defined(__linux__) && !defined(__GLIBC__) && !defined(__UCLIBC__) && !defined(__BIONIC__)
+#  define FLOAT_2_64  "1.8446744073709551e+19"
+#else
+#  define FLOAT_2_64  "1.8446744073709552e+19"
+#endif
+
 extern "C" FILE *open_memstream(char **bufptr, size_t *sizeptr);
 
 class tst_ToJson : public QObject
@@ -139,8 +149,8 @@ void addFixedData()
     QTest::newRow("2.^53-1") << raw("\xfb\x43\x3f\xff\xff""\xff\xff\xff\xff") << "9007199254740991";
     QTest::newRow("2.f^64-epsilon") << raw("\xfa\x5f\x7f\xff\xff") << "18446742974197923840";
     QTest::newRow("2.^64-epsilon") << raw("\xfb\x43\xef\xff\xff""\xff\xff\xff\xff") << "18446744073709549568";
-    QTest::newRow("2.f^64") << raw("\xfa\x5f\x80\0\0") << "1.8446744073709552e+19";
-    QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << "1.8446744073709552e+19";
+    QTest::newRow("2.f^64") << raw("\xfa\x5f\x80\0\0") << FLOAT_2_64;
+    QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << FLOAT_2_64;
 
     // infinities and NaN are not supported in JSON, they convert to null
     QTest::newRow("nan_f16") << raw("\xf9\x7e\x00") << "null";
@@ -424,8 +434,8 @@ void tst_ToJson::nonStringKeyMaps_data()
     QTest::newRow("2.^53-1") << raw("\xfb\x43\x3f\xff\xff""\xff\xff\xff\xff") << "9007199254740991.";
     QTest::newRow("2.f^64-epsilon") << raw("\xfa\x5f\x7f\xff\xff") << "18446742974197923840.f";
     QTest::newRow("2.^64-epsilon") << raw("\xfb\x43\xef\xff\xff""\xff\xff\xff\xff") << "18446744073709549568.";
-    QTest::newRow("2.f^64") << raw("\xfa\x5f\x80\0\0") << "1.8446744073709552e+19f";
-    QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << "1.8446744073709552e+19";
+    QTest::newRow("2.f^64") << raw("\xfa\x5f\x80\0\0") << FLOAT_2_64 "f";
+    QTest::newRow("2.^64") << raw("\xfb\x43\xf0\0\0\0\0\0\0") << FLOAT_2_64;
 
     QTest::newRow("nan_f16") << raw("\xf9\x7e\x00") << "nan";
     QTest::newRow("nan_f") << raw("\xfa\x7f\xc0\0\0") << "nan";
