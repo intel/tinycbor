@@ -1,0 +1,46 @@
+[OPTIONS]
+Compiled file=index.chm
+Compatibility=1.1
+Full-text search=Yes
+Contents file=index.hhc
+Default Window=main
+Default topic=index.html
+Index file=index.hhk
+Language=0x409 English (United States)
+Binary TOC=YES
+Create CHI file=YES
+Title=TinyCBOR 7.2 API
+
+[WINDOWS]
+main="TinyCBOR 7.2 API","index.hhc","index.hhk","index.html","index.html",,,,,0x23520,,0x70387e,,,,,,,,0
+
+[FILES]
+a00002_source.html
+a00008_source.html
+a00023.html
+a00023_source.html
+a00035.html
+a00035_source.html
+a00044_source.html
+a00057.html
+a00058.html
+a00059.html
+a00060.html
+a00061.html
+a00065.html
+a00085.html
+annotated.html
+classes.html
+dir_68267d1309a1af8e8297ef4c3efbcdba.html
+doxygen_crawl.html
+files.html
+globals.html
+globals_func.html
+globals_type.html
+globals_vars.html
+index.html
+topics.html
+doxygen.svg
+doxygen.css
+navtree.css
+tabs.css
