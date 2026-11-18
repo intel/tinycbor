@@ -431,19 +431,23 @@ CBOR_INLINE_API CborError cbor_value_get_uint64(const CborValue *value, uint64_t
 
 CBOR_INLINE_API CborError cbor_value_get_int64(const CborValue *value, int64_t *result)
 {
+    uint64_t v;
     assert(cbor_value_is_integer(value));
-    *result = (int64_t) _cbor_value_extract_int64_helper(value);
+    v = _cbor_value_extract_int64_helper(value);
     if (value->flags & CborIteratorFlag_NegativeInteger)
-        *result = -*result - 1;
+        v = -v - 1;
+    *result = (int64_t) v;
     return CborNoError;
 }
 
 CBOR_INLINE_API CborError cbor_value_get_int(const CborValue *value, int *result)
 {
+    unsigned v;
     assert(cbor_value_is_integer(value));
-    *result = (int) _cbor_value_extract_int64_helper(value);
+    v = (unsigned) _cbor_value_extract_int64_helper(value);
     if (value->flags & CborIteratorFlag_NegativeInteger)
-        *result = -*result - 1;
+        v = -v - 1;
+    *result = (int) v;
     return CborNoError;
 }
 

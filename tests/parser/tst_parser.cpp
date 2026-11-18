@@ -376,16 +376,21 @@ void tst_Parser::integers()
         QVERIFY(cbor_value_is_unsigned_integer(&w.first));
     }
 
+    // even if this isn't in int64_t's range, these should just silently
+    // truncate with no UB
     int64_t value;
-    if (inInt64Range) {
-        cbor_value_get_int64(&w.first, &value);
-        QCOMPARE(qint64(value), expectedValue);
-    }
+    err = cbor_value_get_int64(&w.first, &value);
+    QCOMPARE(err, CborNoError);
+    QCOMPARE(qint64(value), expectedValue);
+    int ivalue;
+    err = cbor_value_get_int(&w.first, &ivalue);
+    QCOMPARE(err, CborNoError);
+    QCOMPARE(qint64(value), expectedValue);
 
+    // but these check
     err = cbor_value_get_int64_checked(&w.first, &value);
     QCOMPARE(err, inInt64Range ? CborNoError : CborErrorDataTooLarge);
 
-    int ivalue;
     bool inIntRange = inInt64Range && (expectedValue == int(expectedValue));
     err = cbor_value_get_int_checked(&w.first, &ivalue);
     QCOMPARE(err, inIntRange ? CborNoError : CborErrorDataTooLarge);
