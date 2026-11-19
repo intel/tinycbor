@@ -1,0 +1,40 @@
+TinyCBOR fuzzers
+----------------
+
+These are libFuzzer-style fuzzers for TinyCBOR, also used by OSS-Fuzz.
+
+  parser_fuzzer     parses the input as a sequence of CBOR items, visiting
+                    every item and extracting every value; optionally uses
+                    the reader API (cbor_parser_init_reader)
+  validate_fuzzer   cbor_value_validate() with any combination of flags
+  tojson_fuzzer     cbor_value_to_json_advance() with any combination of flags
+  pretty_fuzzer     cbor_value_to_pretty_advance_flags() and
+                    cbor_value_to_pretty_stream() with any combination of flags
+  encoder_fuzzer    interprets the input as a sequence of encoder commands,
+                    then parses the result back and compares it
+
+For all fuzzers except encoder_fuzzer, the first 4 bytes of the input are a
+configuration word (flags, mode) and the rest is the CBOR payload. The seed
+corpus in corpus/ uses a zero configuration word followed by the CBOR data
+from the unit tests; cbor.dict is a dictionary for those fuzzers.
+
+The assert()s in TinyCBOR check that the API is used correctly, so the
+fuzzers must be built without NDEBUG: an assertion failure is a bug in the
+fuzzer. The fuzzers also abort if the library contradicts its documented
+behaviour (for example, if cbor_value_validate() succeeds but parsing the same
+data fails).
+
+To build with Clang and libFuzzer:
+
+  cmake -S. -Bbuild -DBUILD_FUZZERS=ON \
+        -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_C_FLAGS="-g -O1 -fsanitize=fuzzer-no-link,address,undefined" \
+        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+  cmake --build build
+
+LIB_FUZZING_ENGINE selects what to link the fuzzers with (default:
+-fsanitize=fuzzer; if set in the environment, as in OSS-Fuzz, that is used).
+
+To run:
+
+  build/fuzz/parser_fuzzer -dict=fuzz/cbor.dict new-corpus fuzz/corpus
